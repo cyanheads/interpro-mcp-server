@@ -1,0 +1,9 @@
+{
+  "interpro-mcp-server": {
+    "command": "npx",
+    "args": ["-y", "@cyanheads/interpro-mcp-server"],
+    "env": {
+      "MCP_TRANSPORT_TYPE": "stdio"
+    }
+  }
+}

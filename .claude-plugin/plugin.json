@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "interpro-mcp-server",
+  "version": "0.1.0",
+  "description": "Search InterPro entries, map protein domains and functional sites, and find proteins by domain via MCP. STDIO or Streamable HTTP.",
+  "author": {
+    "name": "cyanheads",
+    "email": "casey@caseyjhand.com",
+    "url": "https://github.com/cyanheads"
+  },
+  "homepage": "https://github.com/cyanheads/interpro-mcp-server#readme",
+  "repository": "https://github.com/cyanheads/interpro-mcp-server",
+  "license": "Apache-2.0",
+  "keywords": ["mcp", "mcp-server", "model-context-protocol", "ai-agents", "ai-tools", "typescript", "cyanheads", "interpro", "pfam", "protein-domains", "bioinformatics"],
+  "mcpServers": {
+    "interpro-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "@cyanheads/interpro-mcp-server"],
+      "env": {
+        "MCP_TRANSPORT_TYPE": "stdio"
+      }
+    }
+  }
+}
