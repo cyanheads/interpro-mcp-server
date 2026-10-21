@@ -1,6 +1,6 @@
 {
   "name": "interpro-mcp-server",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Search InterPro entries, map protein domains and functional sites, and find proteins by domain via MCP. STDIO or Streamable HTTP.",
   "author": {
     "name": "cyanheads",
