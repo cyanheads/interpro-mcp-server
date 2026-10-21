@@ -2,7 +2,7 @@
  * @fileoverview Validated accession routing and fixed-origin InterPro URLs.
  * @module services/interpro/routing
  */
-import { validationError } from '@cyanheads/mcp-ts-core/errors';
+import { notFound, validationError } from '@cyanheads/mcp-ts-core/errors';
 import { AccessionSchema, type SourceDatabase } from './schemas.js';
 
 /** Canonical API origin; no upstream continuation URL is fetched directly. */
@@ -28,27 +28,41 @@ export const ENTRY_ROUTES: readonly { source: SourceDatabase; pattern: RegExp; e
     { source: 'sfld', pattern: /^SFLD[A-Z]?\d+$/i, example: 'SFLDF00001' },
     { source: 'antifam', pattern: /^ANF\d+$/i, example: 'ANF00001' },
   ];
+/** Pfam clan (`CL`) and CDD superfamily (`cl`) accessions name sets, never entries. */
+const CLAN_PATTERN = /^cl\d+$/i;
 /** Resolve one entry accession without guessing alternate databases after a miss. */
 export function resolveEntry(
   accession: string,
   sourceDatabase?: SourceDatabase,
 ): { accession: string; sourceDatabase: SourceDatabase } {
   const safe = AccessionSchema.parse(accession);
+  if (CLAN_PATTERN.test(safe))
+    throw notFound(`${safe} is a set accession, not an entry accession.`, {
+      reason: 'entry_not_found',
+      retryable: false,
+      accession: safe,
+      recovery: {
+        hint: 'Call interpro_get_clan with this accession to read the set and its member entries.',
+      },
+    });
   const inferred = ENTRY_ROUTES.find((route) => route.pattern.test(safe))?.source;
   if (inferred && sourceDatabase && inferred !== sourceDatabase)
-    throw validationError('Accession prefix conflicts with sourceDatabase.', {
-      reason: 'database_mismatch',
-      retryable: false,
-      accession: safe,
-      sourceDatabase,
-    });
+    throw validationError(
+      `Accession ${safe} routes to sourceDatabase ${inferred} by its prefix, not ${sourceDatabase}.`,
+      {
+        reason: 'database_mismatch',
+        retryable: false,
+        accession: safe,
+        sourceDatabase,
+        inferredSourceDatabase: inferred,
+      },
+    );
   const source = sourceDatabase ?? inferred;
   if (!source)
-    throw validationError('Accession requires an explicit sourceDatabase.', {
-      reason: 'accession_source_unknown',
-      retryable: false,
-      accession: safe,
-    });
+    throw validationError(
+      `Accession ${safe} matches no standard prefix, and no sourceDatabase was supplied.`,
+      { reason: 'accession_source_unknown', retryable: false, accession: safe },
+    );
   return {
     accession: inferred ? (source === 'cdd' ? safe.toLowerCase() : safe.toUpperCase()) : safe,
     sourceDatabase: source,
@@ -60,28 +74,37 @@ export function resolveClan(
   sourceDatabase?: 'pfam' | 'cdd' | 'pirsf',
 ): { accession: string; sourceDatabase: 'pfam' | 'cdd' | 'pirsf' } {
   const safe = AccessionSchema.parse(accession);
-  const isCl = /^cl\d+$/i.test(safe);
+  const isCl = CLAN_PATTERN.test(safe);
+  const isPirsf = /^PIRSF\d+$/i.test(safe);
   const inferred = /^CL\d+$/.test(safe)
     ? 'pfam'
     : /^cl\d+$/.test(safe)
       ? 'cdd'
-      : /^PIRSF\d+$/i.test(safe)
+      : isPirsf
         ? 'pirsf'
         : undefined;
   if (
-    (/^PIRSF\d+$/i.test(safe) && sourceDatabase && sourceDatabase !== 'pirsf') ||
+    (isPirsf && sourceDatabase && sourceDatabase !== 'pirsf') ||
     (isCl && sourceDatabase === 'pirsf')
   )
-    throw validationError('Clan accession conflicts with sourceDatabase.', {
-      reason: 'database_mismatch',
-      retryable: false,
-    });
+    throw validationError(
+      `Set accession ${safe} routes to sourceDatabase ${inferred ?? 'pfam or cdd'} by its prefix, not ${sourceDatabase}.`,
+      {
+        reason: 'database_mismatch',
+        retryable: false,
+        accession: safe,
+        sourceDatabase,
+        ...(inferred ? { inferredSourceDatabase: inferred } : {}),
+      },
+    );
   const source = sourceDatabase ?? inferred;
   if (!source)
-    throw validationError('Clan accession requires an explicit sourceDatabase.', {
-      reason: 'accession_source_unknown',
-      retryable: false,
-    });
+    throw validationError(
+      isCl
+        ? `Set accession ${safe} has a mixed-case CL prefix, which can name a Pfam or CDD set, and no sourceDatabase was supplied.`
+        : `Set accession ${safe} matches no set prefix, and no sourceDatabase was supplied.`,
+      { reason: 'accession_source_unknown', retryable: false, accession: safe },
+    );
   return {
     accession: isCl
       ? source === 'cdd'

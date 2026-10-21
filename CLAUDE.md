@@ -1,6 +1,6 @@
 # Developer Protocol
 
-**Server:** interpro-mcp-server
+**Server:** @cyanheads/interpro-mcp-server
 **Version:** 0.1.0
 **Framework:** [@cyanheads/mcp-ts-core](https://www.npmjs.com/package/@cyanheads/mcp-ts-core) `^0.13.15`
 **Engines:** Bun ≥1.4.0, Node ≥24.0.0
@@ -32,7 +32,7 @@ Tailor suggestions to what's actually missing or stale — don't recite the full
 
 ## Core Rules
 
-- **Keep `docs/idea.md` private.** Exclude it from git, npm, bundles, Docker images, and every other distribution surface.
+- **Keep gitignored planning notes under `docs/` private.** Exclude them from git, npm, bundles, Docker images, and every other distribution surface, and never reference them from public docs.
 - **Editing agents never commit, tag, push, or publish.** They hand verified working-tree changes to the orchestrator.
 - **Logic throws, framework catches.** Tool/resource handlers are pure — throw on failure, no `try/catch`. Plain `Error` is fine; the framework catches, classifies, and formats. Use error factories (`notFound()`, `validationError()`, etc.) when the error code matters.
 - **Use `ctx.log`** for request-scoped logging. No `console` calls.
@@ -48,136 +48,73 @@ Tailor suggestions to what's actually missing or stale — don't recite the full
 
 ### Tool
 
+Abridged from `src/mcp-server/tools/definitions/interpro-get-entry.tool.ts`. All six tools share this shape: a service call through `service.begin(ctx)`, `ctx.enrich` for notices, a per-tool `errors` contract, and the shared `formatInterpro` formatter.
+
 ```ts
 import { tool, z } from '@cyanheads/mcp-ts-core';
+import { formatInterpro } from '@/services/interpro/format.js';
+import { getInterproService } from '@/services/interpro/interpro-service.js';
+import { resolveEntry } from '@/services/interpro/routing.js';
 
-export const searchItems = tool('search_items', {
-  description: 'Search inventory items by query.',
-  annotations: { readOnlyHint: true },
+export const interproGetEntry = tool('interpro_get_entry', {
+  title: 'InterPro entry metadata',
+  description: 'Retrieve one InterPro or member-database entry, including description, hierarchy, …',
+  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
+  auth: ['tool:interpro_get_entry:read'],
   input: z.object({
-    query: z.string().describe('Search terms'),
-    limit: z.number().int().min(1).max(100).default(10).describe('Max results (1–100)'),
+    accession: AccessionSchema.describe('InterPro or member-database entry accession, such as IPR011615 or PF00870; no URL syntax.'),
+    sourceDatabase: optionalString(SourceDatabaseSchema).describe('Database slug; inferred from standard accession prefixes when omitted.'),
+    includeThumbnail: z.boolean().default(false).describe('Include each Wikipedia thumbnail image …'),
   }),
-  output: z.object({
-    items: z.array(z.object({
-      id: z.string().describe('Item ID'),
-      name: z.string().describe('Item name'),
-    })).describe('Matching items'),
-  }),
-  auth: ['inventory:read'],
+  output: z.object({ accession: z.string().describe('…'), entry: EntryMetadataSchema.describe('…'), /* … */ }),
+  enrichment: { notice: z.string().optional().describe('Omitted Wikipedia thumbnail size and how to include it.') },
+  errors: [
+    { reason: 'entry_not_found', code: JsonRpcErrorCode.NotFound, when: '…', retryable: false,
+      recovery: 'Call interpro_search_entries in the correct database, or interpro_list_reference with topic accession_patterns.',
+      thrownBy: 'service' },
+    ...UPSTREAM_ERRORS,
+  ],
 
   async handler(input, ctx) {
-    const items = await findItems(input.query, input.limit);
-    ctx.log.info('Search completed', { query: input.query, count: items.length });
-    return { items };
+    const target = resolveEntry(input.accession, input.sourceDatabase);
+    const service = getInterproService();
+    const response = await service.request(
+      service.begin(ctx),
+      ['entry', target.sourceDatabase, target.accession],
+      {},
+      detailSchema(EntryMetadataSchema),
+      { missing: { reason: 'entry_not_found', ...target } },
+    );
+    // …project thumbnails, ctx.enrich.notice(…)
+    return { ...target, entry: response.data.metadata, url: '…', sourceUrl: response.sourceUrl };
   },
 
-  // format() populates content[] — the markdown twin of structuredContent.
-  // Different clients read different surfaces (Claude Code → structuredContent,
-  // Claude Desktop → content[]); both must carry the same data.
-  // Enforced at lint time: every field in `output` must appear in the rendered text.
-  format: (result) => [{
-    type: 'text',
-    text: result.items.map(i => `**${i.id}**: ${i.name}`).join('\n'),
-  }],
+  // format() populates content[] — the twin of structuredContent. Different clients
+  // read different surfaces, so both must carry the same data; the lint step checks
+  // that every `output` field appears in the rendered text.
+  format: formatInterpro,
 });
 ```
 
-### Resource
-
-```ts
-import { resource, z } from '@cyanheads/mcp-ts-core';
-import { notFound } from '@cyanheads/mcp-ts-core/errors';
-
-export const itemData = resource('inventory://{itemId}', {
-  description: 'Fetch an inventory item by ID.',
-  params: z.object({ itemId: z.string().describe('Item identifier') }),
-  auth: ['inventory:read'],
-  async handler(params, ctx) {
-    const item = await ctx.state.get(`item/${params.itemId}`);
-    if (!item) throw notFound(`Item ${params.itemId} not found`, { itemId: params.itemId });
-    return item;
-  },
-});
-```
-
-### Prompt
-
-```ts
-import { prompt, z } from '@cyanheads/mcp-ts-core';
-
-export const reviewCode = prompt('review_code', {
-  description: 'Review code for issues and best practices.',
-  args: z.object({
-    code: z.string().describe('Code to review'),
-    language: z.string().optional().describe('Programming language'),
-  }),
-  generate: (args) => [
-    { role: 'user', content: { type: 'text', text: `Review this ${args.language ?? ''} code:\n${args.code}` } },
-  ],
-});
-```
-
-### Server config
-
-```ts
-// src/config/server-config.ts — lazy-parsed, separate from framework config
-import { z } from '@cyanheads/mcp-ts-core';
-import { parseEnvConfig } from '@cyanheads/mcp-ts-core/config';
-
-const ServerConfigSchema = z.object({
-  apiKey: z.string().describe('External API key'),
-  maxResults: z.coerce.number().default(100),
-  verboseLogging: z.stringbool().default(false).describe('Enable verbose logging'),
-});
-
-let _config: z.infer<typeof ServerConfigSchema> | undefined;
-export function getServerConfig() {
-  _config ??= parseEnvConfig(ServerConfigSchema, {
-    apiKey: 'MY_API_KEY',
-    maxResults: 'MY_MAX_RESULTS',
-    verboseLogging: 'MY_VERBOSE_LOGGING',
-  });
-  return _config;
-}
-```
-
-`parseEnvConfig` maps Zod schema paths → env var names so errors name the variable (`MY_API_KEY`) not the path (`apiKey`). Throws `ConfigurationError`, which the framework prints as a clean startup banner.
-
-For env booleans use `z.stringbool()`, never `z.coerce.boolean()` — `Boolean("false")` is `true`, so a coerced flag can't be disabled through the environment. `z.stringbool()` parses `true/false/1/0/yes/no/on/off` and rejects anything else, so `=false` actually disables.
+There are no resources or prompts and no server-specific environment variables: the InterPro API is keyless and every limit is fixed in `src/services/interpro/`.
 
 ### Server identity and instructions
 
-`createApp()` accepts optional identity fields forwarded to the SDK's `initialize` response and the server manifest (`/.well-known/mcp.json`):
+`src/index.ts` passes `name` and `title` as the bare `interpro-mcp-server` and server-level `instructions` sent on every `initialize`:
 
 ```ts
 await createApp({
-  name: 'my-mcp-server',
-  title: 'My Server',                         // human-readable display name
-  websiteUrl: 'https://github.com/owner/repo', // canonical homepage URL
-  description: 'One-line description.',        // wins over MCP_SERVER_DESCRIPTION
-  icons: [{ src: 'https://example.com/icon.png', sizes: ['48x48'], mimeType: 'image/png' }],
-  instructions: 'Use shortcut alpha for the most common case.', // session-level context
+  name: 'interpro-mcp-server',
+  title: 'interpro-mcp-server',
+  tools: [/* six definitions */],
+  sessionMode: 'stateless',
+  setup() { initInterproService(); },
+  teardown() { disposeInterproService(); },
+  instructions: '…',
 });
 ```
 
-`instructions` is optional server-level orientation, sent on every `initialize` as session-level context. Use it for deployment guidance (connection aliases, regional notes, scope hints) instead of repeating the same context across tool descriptions. Client adoption is uneven, but there's no downside when set.
-
-### Session posture and shutdown
-
-Two more `createApp()` options shape how the server runs rather than how it presents itself:
-
-```ts
-await createApp({
-  sessionMode: 'stateless',          // or { default: 'stateful', require: 'stateful' }
-  setup(core) { startMyWatcher(core.config); },
-  async teardown() { await stopMyWatcher(); },
-});
-```
-
-`sessionMode` declares the HTTP session posture in `src/` instead of leaving it to a deployment's `MCP_SESSION_MODE`, which still wins whenever it carries a meaningful value (an empty string and an unsubstituted `${…}` placeholder read as unset and fall through to the option). Add `require: 'stateful'` when a tool asks the caller for input mid-handler via `ctx.requestInput`: startup then fails with a `ConfigurationError` rather than serving a mode in which a 2025-era client can never answer the prompt. Stdio is never refused.
-
-`teardown(core)` is the `setup()` counterpart — release a watcher, socket, or non-`unref()`'d timer there. It runs after the transport stops and before the logger closes, on every shutdown path, and a signal-triggered shutdown then exits the process explicitly (0, or 1 if a step never settles within the framework's 10 s ceiling).
+`sessionMode` declares the HTTP session posture in `src/` instead of leaving it to a deployment's `MCP_SESSION_MODE`, which still wins whenever it carries a meaningful value (an empty string and an unsubstituted `${…}` placeholder read as unset and fall through to the option). `teardown()` is the `setup()` counterpart; it runs after the transport stops and before the logger closes, on every shutdown path.
 
 ---
 
@@ -188,13 +125,9 @@ Handlers receive a unified `ctx` object. Key properties:
 | Property | Description |
 |:---------|:------------|
 | `ctx.log` | Request-scoped logger — `.debug()`, `.info()`, `.notice()`, `.warning()`, `.error()`. Auto-correlates requestId, traceId, tenantId. Dual-sink: Pino **and** `notifications/message` to the client, so treat it as client-visible. |
-| `ctx.state` | Tenant-scoped KV — `.get(key)`, `.set(key, value, { ttl? })`, `.delete(key)`, `.getMany(keys)`, `.list(prefix, { cursor, limit })`. Accepts any JSON-serializable value; reads return its JSON form (a `Date` comes back as an ISO string). |
-| `ctx.requestInput` | Suspend and ask the caller for more input — `return ctx.requestInput({ inputRequests: { key: inputRequired.elicit({ message, requestedSchema }) } })`. Never returns; the handler is re-entered with the answers. Always present. |
-| `ctx.inputs` | The request's responses — `.accepted(key, schema)`, `.view(key)`, `.state()`, `.dropped` — limited to what the client declared (`elicitation` and its form/url modes, `sampling`, `roots`). Client-supplied: a consent gate trusts only a `ctx.state` record it stored when it asked, bound to the operation, caller, and target (see the `api-context` skill). |
-| `ctx.clientCapabilities` | What the client declared for this request, `undefined` when no view exists. Decides whether to ask for optional context (e.g. roots); never a reason to skip a consent prompt. |
 | `ctx.enrich` | Success-path agent context (empty-result notices, query echo, pagination totals) — `ctx.enrich(...)` or `.notice()` / `.total()` / `.echo()` / `.truncated()`. Reaches `structuredContent` and `content[]`; lands only when the definition declares an `enrichment` block (no-op otherwise). |
-| `ctx.content` | Non-text content blocks — `.image(data, mimeType)`, `.audio(data, mimeType)`, or `ctx.content(block)` for a raw block. Prepended to `content[]` after `format()`; never enters `structuredContent`. |
-| `ctx.signal` | `AbortSignal` for cancellation. |
+| `ctx.fail` | Throws a typed failure for a reason declared in the tool's `errors` contract. |
+| `ctx.signal` | `AbortSignal` for cancellation; the service composes it with its per-call deadline. |
 | `ctx.requestId` | Request ID — the one every log record of the call carries and its error envelope returns as `data.requestId`. |
 | `ctx.tenantId` | Tenant ID from JWT; `'default'` for stdio or HTTP with auth off. |
 
@@ -249,19 +182,24 @@ See framework CLAUDE.md and the `api-errors` skill for the full auto-classificat
 ```text
 src/
   index.ts                              # createApp() entry point
-  config/
-    server-config.ts                    # Server-specific env vars (Zod schema)
   services/
-    [domain]/
-      [domain]-service.ts               # Domain service (init/accessor pattern)
-      types.ts                          # Domain types
+    interpro/
+      interpro-service.ts               # Paced, cancellable request boundary (init/accessor pattern)
+      http-adapter.ts                   # node:https HTTP/1.1 transport with 204 handling
+      routing.ts                        # Accession → database routing, fixed-origin URL building
+      schemas.ts                        # Wire and output Zod schemas
+      cursors.ts                        # Opaque cursor envelopes
+      budget.ts                         # 100,000-byte response budget and whole-item fitting
+      relationships.ts                  # Clan relationship-graph slicing
+      reference.ts                      # Static vocabulary for interpro_list_reference
+      format.ts                         # Shared content[] formatter
+      upstream-errors.ts                # Shared upstream error contract rows
   mcp-server/
     tools/definitions/
-      [tool-name].tool.ts               # Tool definitions
-    resources/definitions/
-      [resource-name].resource.ts       # Resource definitions
-    prompts/definitions/
-      [prompt-name].prompt.ts           # Prompt definitions
+      interpro-[name].tool.ts           # Six tool definitions
+tests/
+  services/                             # Service, adapter, and budget tests
+  tools/                                # Tool contract tests
 ```
 
 ---
@@ -270,9 +208,9 @@ src/
 
 | What | Convention | Example |
 |:-----|:-----------|:--------|
-| Files | kebab-case with suffix | `search-docs.tool.ts` |
-| Tool/resource/prompt names | snake_case | `search_docs` |
-| Directories | kebab-case | `src/services/doc-search/` |
+| Files | kebab-case with suffix | `interpro-get-entry.tool.ts` |
+| Tool/resource/prompt names | snake_case | `interpro_get_entry` |
+| Directories | kebab-case | `src/services/interpro/` |
 | Descriptions | Single string or template literal, no `+` concatenation | `'Search items by query and filter.'` |
 
 ---
@@ -346,11 +284,17 @@ When you complete a skill's checklist, check the boxes and add a completion time
 | `bun run format` | Auto-fix formatting (safe fixes only) |
 | `bun run format:unsafe` | Also apply Biome's unsafe autofixes — review the diff; they can change behavior |
 | `bun run test` | Run tests (Vitest — use `bun run test`, not `bun test`) |
+| `bun run test:coverage` | Run tests with Istanbul coverage |
+| `bun run start` | Run the built server with the configured transport |
 | `bun run start:stdio` | Production mode (stdio) |
 | `bun run start:http` | Production mode (HTTP) |
+| `bun run release:github` | Create the GitHub Release from the annotated tag |
+| `bun run publish-mcp` | Publish `server.json` to the MCP Registry |
 | `bun run changelog:build` | Regenerate `CHANGELOG.md` from `changelog/*.md` |
 | `bun run changelog:check` | Verify `CHANGELOG.md` is in sync (used by devcheck) |
 | `bun run bundle` | Build, pack, and clean a `.mcpb` for one-click Claude Desktop install |
+
+**Waived `devcheck` warnings.** `bun run devcheck` emits six `format-parity-depth-limit` warnings, for the `…fragments[].start`, `…fragments[].end`, and `…fragments[].dc-status` output fields of `interpro_find_proteins_by_domain` and `interpro_get_protein_domains`. The schema is finite but deeper than the framework's depth-8 parity walker, and tests prove both surfaces render those fields. The owner waived exactly these six, pending [cyanheads/mcp-ts-core#531](https://github.com/cyanheads/mcp-ts-core/issues/531). Don't flatten or weaken the schema, and don't add suppressions to clear them. Any other warning, or a seventh of this kind, still blocks shipping.
 
 **CI is one file.** `.github/workflows/codeql.yml` (scaffolded) is the only GitHub Actions workflow: CodeQL is GitHub-owned end to end, and the file runs only while the repo's CodeQL *default setup* is turned off. Verification — `devcheck`, tests, the release gates — runs locally; don't add a workflow that re-runs it.
 

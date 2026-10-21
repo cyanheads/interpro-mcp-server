@@ -4,12 +4,18 @@
  */
 import { tool, z } from '@cyanheads/mcp-ts-core';
 import { JsonRpcErrorCode } from '@cyanheads/mcp-ts-core/errors';
-import { continuation, decodeCursor, encodeCursor } from '@/services/interpro/cursors.js';
+import {
+  continuation,
+  decodeCursor,
+  encodeCursor,
+  pageGuidance,
+} from '@/services/interpro/cursors.js';
 import { formatInterpro, normalizeImages } from '@/services/interpro/format.js';
 import { getInterproService } from '@/services/interpro/interpro-service.js';
 import { resolveEntry } from '@/services/interpro/routing.js';
 import {
   AccessionSchema,
+  defaultedString,
   JsonValueSchema,
   LocationSchema,
   listSchema,
@@ -18,7 +24,9 @@ import {
   ProteinMetadataSchema,
   SourceDatabaseSchema,
 } from '@/services/interpro/schemas.js';
+import { UPSTREAM_ERRORS } from '@/services/interpro/upstream-errors.js';
 
+const MAX_LIMIT = 50;
 const QuerySchema = z.object({
   accession: z.string().describe('Canonical entry accession.'),
   sourceDatabase: SourceDatabaseSchema,
@@ -66,16 +74,20 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
   auth: ['tool:interpro_find_proteins_by_domain:read'],
   input: z.object({
-    accession: AccessionSchema,
+    accession: AccessionSchema.describe(
+      'InterPro or member-database entry accession, such as IPR011615 or PF00870; no URL syntax.',
+    ),
     sourceDatabase: optionalString(SourceDatabaseSchema).describe(
       'Entry database slug, inferred from standard accession prefixes when omitted.',
     ),
-    taxonId: z
-      .string()
-      .trim()
-      .regex(/^[1-9][0-9]*$/)
-      .default('9606')
-      .describe('Positive NCBI taxonomy identifier; defaults to human 9606.'),
+    taxonId: defaultedString(
+      z
+        .string()
+        .trim()
+        .max(10)
+        .regex(/^[1-9][0-9]*$/)
+        .default('9606'),
+    ).describe('Positive NCBI taxonomy identifier of at most 10 digits; defaults to human 9606.'),
     reviewedOnly: z
       .boolean()
       .default(true)
@@ -84,7 +96,7 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
       .number()
       .int()
       .min(1)
-      .max(50)
+      .max(MAX_LIMIT)
       .default(20)
       .describe('Page size from 1 to 50; defaults to 20.'),
     cursor: optionalString(z.string().trim().max(4096)).describe(
@@ -116,6 +128,15 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
       thrownBy: 'service',
     },
     {
+      reason: 'entry_not_found',
+      code: JsonRpcErrorCode.NotFound,
+      when: 'The accession is a set accession, or InterPro rejects it for its database with HTTP 404.',
+      retryable: false,
+      recovery:
+        'Call interpro_search_entries in the correct database, or interpro_list_reference with topic accession_patterns.',
+      thrownBy: 'service',
+    },
+    {
       reason: 'entry_withdrawn',
       code: JsonRpcErrorCode.NotFound,
       when: 'InterPro reports a withdrawn record with HTTP 410.',
@@ -133,51 +154,7 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
         'Retry the same tool later; call interpro_list_reference with topic release to check upstream availability.',
       thrownBy: 'service',
     },
-    {
-      reason: 'upstream_response_too_large',
-      code: JsonRpcErrorCode.ServiceUnavailable,
-      when: 'An upstream response exceeds 4 MiB.',
-      retryable: false,
-      recovery:
-        'Retry list tools with a smaller limit, or retrieve individual members with interpro_get_entry instead of a large clan.',
-      thrownBy: 'service',
-    },
-    {
-      reason: 'upstream_rejected',
-      code: JsonRpcErrorCode.ServiceUnavailable,
-      when: 'InterPro returns an unhandled redirect or client rejection.',
-      retryable: false,
-      recovery:
-        'Retry the same tool later; call interpro_list_reference with topic release to check upstream availability.',
-      thrownBy: 'service',
-    },
-    {
-      reason: 'upstream_unavailable',
-      code: JsonRpcErrorCode.ServiceUnavailable,
-      when: 'InterPro has a network or server failure; HTTP 501 is not retryable.',
-      retryable: true,
-      recovery:
-        'Retry the same tool later; call interpro_list_reference with topic release to check upstream availability.',
-      thrownBy: 'service',
-    },
-    {
-      reason: 'upstream_timeout',
-      code: JsonRpcErrorCode.Timeout,
-      when: 'InterPro returns HTTP 408/504 or an attempt exceeds its deadline.',
-      retryable: true,
-      recovery:
-        'Retry with a smaller limit where available, then repeat the same tool after waiting.',
-      thrownBy: 'service',
-    },
-    {
-      reason: 'upstream_rate_limited',
-      code: JsonRpcErrorCode.RateLimited,
-      when: 'InterPro returns HTTP 429.',
-      retryable: true,
-      recovery:
-        'Wait for retryAfter when supplied, then repeat the same tool with fewer concurrent calls.',
-      thrownBy: 'service',
-    },
+    ...UPSTREAM_ERRORS,
     {
       reason: 'database_mismatch',
       code: JsonRpcErrorCode.ValidationError,
@@ -219,7 +196,15 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
       ],
       { page_size: input.limit, cursor },
       listSchema(ProteinResultSchema),
-      { continuation: cursor !== undefined },
+      {
+        continuation: cursor !== undefined,
+        missing: {
+          reason: 'entry_not_found',
+          accession: query.accession,
+          sourceDatabase: query.sourceDatabase,
+          list: true,
+        },
+      },
     );
     const proteins = normalizeImages(response.data?.results ?? []);
     const next = continuation(response.data?.next ?? null, new Set(cursor ? [cursor] : []));
@@ -234,7 +219,17 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
     };
     ctx.enrich.total(page.total);
     ctx.enrich.echo(JSON.stringify(query));
-    if (next) ctx.enrich.truncated({ shown: proteins.length, cap: input.limit });
+    if (next)
+      ctx.enrich.truncated({
+        shown: proteins.length,
+        cap: input.limit,
+        guidance: pageGuidance(
+          'interpro_find_proteins_by_domain',
+          'proteins',
+          input.limit,
+          MAX_LIMIT,
+        ),
+      });
     if (!proteins.length)
       ctx.enrich.notice(
         'No proteins matched the applied entry and taxon. Retry interpro_find_proteins_by_domain with reviewedOnly=false or another taxonId; use interpro_get_entry to verify the accession.',

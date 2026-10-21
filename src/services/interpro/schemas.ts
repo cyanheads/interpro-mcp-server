@@ -41,16 +41,21 @@ export const EntryTypeSchema = z
     'binding_site',
     'conserved_site',
     'ptm',
+    'region',
+    'coiled_coil',
+    'disordered',
   ])
   .describe('Entry annotation type.');
 /** A validated database route. */
 export type SourceDatabase = z.infer<typeof SourceDatabaseSchema>;
+/** A blank or whitespace-only string from a form client reads as omitted. */
+const omitBlank = (value: unknown) =>
+  typeof value === 'string' && value.trim() === '' ? undefined : value;
 /** Form clients may submit blank optional strings. */
 export const optionalString = <T extends z.ZodType>(schema: T) =>
-  z.preprocess(
-    (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
-    schema.optional(),
-  );
+  z.preprocess(omitBlank, schema.optional());
+/** A blank string takes the `.default()` that `schema` declares, as an omitted one does. */
+export const defaultedString = <T extends z.ZodType>(schema: T) => z.preprocess(omitBlank, schema);
 /** Safe identifiers are encoded as a single path segment after validation. */
 export const AccessionSchema = z
   .string()
@@ -59,7 +64,13 @@ export const AccessionSchema = z
   .max(100)
   .regex(/^[A-Za-z0-9_.:-]+$/)
   .refine((value) => value !== '.' && value !== '..', 'Dot segments are not accessions.')
-  .describe('Entry or set accession; no URL syntax.');
+  .describe('Identifier encoded as one path segment; no URL syntax.');
+/**
+ * Whether an upstream value is exactly an accession, the only form server-written text may name
+ * it in. The schema trims, so a value padded with blank lines must not pass as one.
+ */
+export const isAccession = (value: unknown): value is string =>
+  typeof value === 'string' && AccessionSchema.safeParse(value).data === value;
 /** Canonical UniProt accessions exclude isoform suffixes. */
 export const ProteinAccessionSchema = z
   .string()

@@ -4,6 +4,7 @@
  */
 import { z } from '@cyanheads/mcp-ts-core';
 import { DOCUMENTATION_URL, ENTRY_ROUTES } from './routing.js';
+import type { SourceDatabase } from './schemas.js';
 
 /** Available reference topics; only release performs network operations. */
 export const ReferenceTopicSchema = z
@@ -26,7 +27,7 @@ export const ReferenceItemSchema = z
   .describe('One reference vocabulary item.');
 /** A reference vocabulary row. */
 export type ReferenceItem = z.infer<typeof ReferenceItemSchema>;
-const databaseLabels: Record<string, string> = {
+const databaseLabels: Record<SourceDatabase, string> = {
   interpro: 'InterPro',
   pfam: 'Pfam',
   prosite: 'PROSITE patterns',
@@ -56,6 +57,21 @@ const types = [
   ['binding_site', 'Binding site', 'Residues involved in binding.'],
   ['conserved_site', 'Conserved site', 'A conserved functional sequence site.'],
   ['ptm', 'Post-translational modification', 'A post-translational modification site.'],
+  [
+    'region',
+    'Region',
+    'A sequence region; AntiFam signatures of spurious protein predictions use this type.',
+  ],
+  [
+    'coiled_coil',
+    'Coiled coil',
+    'A coiled-coil region, where alpha-helices wind around each other.',
+  ],
+  [
+    'disordered',
+    'Disordered region',
+    'An intrinsically disordered region without a fixed three-dimensional structure.',
+  ],
 ] as const;
 const taxa = [
   ['9606', 'Human'],
@@ -91,7 +107,7 @@ export function staticReference(topic: Exclude<z.infer<typeof ReferenceTopicSche
   return {
     items: ENTRY_ROUTES.map(({ source, pattern, example }) => ({
       id: source,
-      label: databaseLabels[source] as string,
+      label: databaseLabels[source],
       sourceDatabase: source,
       accessionPattern: pattern.source,
       example,

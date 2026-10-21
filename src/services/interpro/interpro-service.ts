@@ -20,7 +20,7 @@ import {
 } from '@cyanheads/mcp-ts-core/utils';
 import { type InterproFetch, interproHttpFetch, MAX_RESPONSE_BYTES } from './http-adapter.js';
 import { apiUrl } from './routing.js';
-import { JsonObjectSchema, JsonValueSchema } from './schemas.js';
+import { isAccession, JsonObjectSchema, JsonValueSchema } from './schemas.js';
 
 const pacer = createPacer({
   name: 'interpro',
@@ -33,10 +33,40 @@ export interface InterproCall {
   readonly ctx: Context;
   readonly deadline: number;
 }
+/** The record a request addresses, reported under `reason` when InterPro has no such record. */
+export interface MissingRecord {
+  readonly accession: string;
+  /** A list scoped to the record: 204 is a valid empty page, so only 404 reports it missing. */
+  readonly list?: boolean;
+  readonly reason: 'entry_not_found' | 'protein_not_found' | 'clan_not_found';
+  readonly sourceDatabase: string;
+}
+/** Upstream fields of a 410 body that are echoed in the withdrawal error. */
+const WITHDRAWAL_FIELDS: ReadonlySet<string> = new Set([
+  'accession',
+  'source_database',
+  'deletion_date',
+  'short_name',
+  'history',
+]);
+/**
+ * Single-line forms a withdrawal date or short name must match whole before the message names it;
+ * any other upstream value stays in error data only.
+ */
+const WITHDRAWAL_DATE = /^\d{4}-\d{2}-\d{2}(?:T[\d:.]+Z?)?$/;
+const SHORT_NAME = /^[A-Za-z0-9_.:+-]{1,100}$/;
+const RECORD_NOUNS = {
+  entry_not_found: 'entry',
+  clan_not_found: 'set',
+  protein_not_found: 'protein',
+} as const;
+/** Name a record in a caller-facing message, e.g. `entry PF00870 in pfam`. */
+const describeRecord = ({ reason, accession, sourceDatabase }: MissingRecord) =>
+  `${RECORD_NOUNS[reason]} ${accession} in ${sourceDatabase}`;
 /** Domain status handling selected by the tool workflow. */
 export interface RequestOptions {
   readonly continuation?: boolean;
-  readonly missing?: 'entry_not_found' | 'protein_not_found' | 'clan_not_found';
+  readonly missing?: MissingRecord;
 }
 /** Validated response plus headers needed for release consistency. */
 export interface InterproResponse<T> {
@@ -95,21 +125,26 @@ export class InterproService {
                 redirect: 'manual',
               });
               attemptSignal.throwIfAborted();
-              if ((response.status === 204 || response.status === 404) && options.missing)
-                throw notFound('InterPro could not find the requested record.', {
-                  reason: options.missing,
-                  retryable: false,
-                  status: response.status,
-                  accession: segments.at(-1),
-                });
-              if (response.status === 204)
-                return { data: null, sourceUrl, headers: response.headers };
               if ((response.status === 400 || response.status === 404) && options.continuation)
                 throw validationError('InterPro rejected the continuation cursor.', {
                   reason: 'invalid_cursor',
                   retryable: false,
                   status: response.status,
                 });
+              const { missing } = options;
+              if (
+                missing &&
+                (response.status === 404 || (response.status === 204 && !missing.list))
+              )
+                throw notFound(`InterPro could not find ${describeRecord(missing)}.`, {
+                  reason: missing.reason,
+                  retryable: false,
+                  status: response.status,
+                  accession: missing.accession,
+                  sourceDatabase: missing.sourceDatabase,
+                });
+              if (response.status === 204)
+                return { data: null, sourceUrl, headers: response.headers };
               if (response.status === 410) {
                 const body = await readBody(response, attemptSignal);
                 let withdrawal: Record<string, unknown> = {};
@@ -118,23 +153,33 @@ export class InterproService {
                   withdrawal = Object.fromEntries(
                     Object.entries(parsed).filter(
                       ([key, value]) =>
-                        [
-                          'accession',
-                          'source_database',
-                          'deletion_date',
-                          'short_name',
-                          'history',
-                        ].includes(key) && JSON.stringify(value).length <= 4096,
+                        WITHDRAWAL_FIELDS.has(key) && JSON.stringify(value).length <= 4096,
                     ),
                   );
                 } catch {
                   /* A withdrawn record need not include valid metadata. */
                 }
-                throw notFound('InterPro reports that the requested record was withdrawn.', {
+                const { accession, deletion_date: deleted, short_name: shortName } = withdrawal;
+                const subject = missing
+                  ? describeRecord(missing)
+                  : isAccession(accession)
+                    ? `record ${accession}`
+                    : 'the requested record';
+                const on =
+                  typeof deleted === 'string' && WITHDRAWAL_DATE.test(deleted)
+                    ? ` on ${deleted}`
+                    : '';
+                const named =
+                  typeof shortName === 'string' && SHORT_NAME.test(shortName)
+                    ? ` (short name ${shortName})`
+                    : '';
+                throw notFound(`InterPro reports that ${subject} was withdrawn${on}${named}.`, {
                   reason: 'entry_withdrawn',
                   retryable: false,
                   status: 410,
                   ...withdrawal,
+                  // The canonical accession the message names wins over upstream's spelling.
+                  ...(missing ? { accession: missing.accession } : {}),
                 });
               }
               if (!response.ok) {

@@ -4,11 +4,17 @@
  */
 import { tool, z } from '@cyanheads/mcp-ts-core';
 import { JsonRpcErrorCode } from '@cyanheads/mcp-ts-core/errors';
-import { continuation, decodeCursor, encodeCursor } from '@/services/interpro/cursors.js';
+import {
+  continuation,
+  decodeCursor,
+  encodeCursor,
+  pageGuidance,
+} from '@/services/interpro/cursors.js';
 import { formatInterpro, normalizeImages } from '@/services/interpro/format.js';
 import { getInterproService } from '@/services/interpro/interpro-service.js';
 import { ENTRY_ROUTES } from '@/services/interpro/routing.js';
 import {
+  defaultedString,
   EntrySummarySchema,
   EntryTypeSchema,
   JsonValueSchema,
@@ -17,7 +23,9 @@ import {
   PageSchema,
   SourceDatabaseSchema,
 } from '@/services/interpro/schemas.js';
+import { UPSTREAM_ERRORS } from '@/services/interpro/upstream-errors.js';
 
+const MAX_LIMIT = 100;
 const QuerySchema = z.object({
   sourceDatabase: SourceDatabaseSchema,
   query: z.string().optional().describe('Applied text search.'),
@@ -38,7 +46,7 @@ export const interproSearchEntries = tool('interpro_search_entries', {
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
   auth: ['tool:interpro_search_entries:read'],
   input: z.object({
-    sourceDatabase: SourceDatabaseSchema.default('interpro').describe(
+    sourceDatabase: defaultedString(SourceDatabaseSchema.default('interpro')).describe(
       'Database to search; defaults to interpro.',
     ),
     query: optionalString(z.string().trim().min(1).max(300)).describe(
@@ -64,7 +72,7 @@ export const interproSearchEntries = tool('interpro_search_entries', {
       .number()
       .int()
       .min(1)
-      .max(100)
+      .max(MAX_LIMIT)
       .default(20)
       .describe('Page size, from 1 to 100; defaults to 20.'),
     cursor: optionalString(z.string().trim().max(4096)).describe(
@@ -106,6 +114,15 @@ export const interproSearchEntries = tool('interpro_search_entries', {
       thrownBy: 'service',
     },
     {
+      reason: 'entry_withdrawn',
+      code: JsonRpcErrorCode.NotFound,
+      when: 'InterPro answers the search with HTTP 410, reporting a withdrawn record.',
+      retryable: false,
+      recovery:
+        'Repeat interpro_search_entries with integratedInto set to a current InterPro accession, or without it; consult interpro_list_reference with topic databases for source names.',
+      thrownBy: 'service',
+    },
+    {
       reason: 'upstream_shape_invalid',
       code: JsonRpcErrorCode.ServiceUnavailable,
       when: 'Upstream JSON, structure, or continuation is incompatible.',
@@ -114,51 +131,7 @@ export const interproSearchEntries = tool('interpro_search_entries', {
         'Retry the same tool later; call interpro_list_reference with topic release to check upstream availability.',
       thrownBy: 'service',
     },
-    {
-      reason: 'upstream_response_too_large',
-      code: JsonRpcErrorCode.ServiceUnavailable,
-      when: 'An upstream response exceeds 4 MiB.',
-      retryable: false,
-      recovery:
-        'Retry list tools with a smaller limit, or retrieve individual members with interpro_get_entry instead of a large clan.',
-      thrownBy: 'service',
-    },
-    {
-      reason: 'upstream_rejected',
-      code: JsonRpcErrorCode.ServiceUnavailable,
-      when: 'InterPro returns an unhandled redirect or client rejection.',
-      retryable: false,
-      recovery:
-        'Retry the same tool later; call interpro_list_reference with topic release to check upstream availability.',
-      thrownBy: 'service',
-    },
-    {
-      reason: 'upstream_unavailable',
-      code: JsonRpcErrorCode.ServiceUnavailable,
-      when: 'InterPro has a network or server failure; HTTP 501 is not retryable.',
-      retryable: true,
-      recovery:
-        'Retry the same tool later; call interpro_list_reference with topic release to check upstream availability.',
-      thrownBy: 'service',
-    },
-    {
-      reason: 'upstream_timeout',
-      code: JsonRpcErrorCode.Timeout,
-      when: 'InterPro returns HTTP 408/504 or an attempt exceeds its deadline.',
-      retryable: true,
-      recovery:
-        'Retry with a smaller limit where available, then repeat the same tool after waiting.',
-      thrownBy: 'service',
-    },
-    {
-      reason: 'upstream_rate_limited',
-      code: JsonRpcErrorCode.RateLimited,
-      when: 'InterPro returns HTTP 429.',
-      retryable: true,
-      recovery:
-        'Wait for retryAfter when supplied, then repeat the same tool with fewer concurrent calls.',
-      thrownBy: 'service',
-    },
+    ...UPSTREAM_ERRORS,
   ],
   async handler(input, ctx) {
     if (input.integratedInto && input.sourceDatabase === 'interpro')
@@ -199,7 +172,12 @@ export const interproSearchEntries = tool('interpro_search_entries', {
     };
     ctx.enrich.total(page.total);
     ctx.enrich.echo(JSON.stringify(query));
-    if (next) ctx.enrich.truncated({ shown: entries.length, cap: input.limit });
+    if (next)
+      ctx.enrich.truncated({
+        shown: entries.length,
+        cap: input.limit,
+        guidance: pageGuidance('interpro_search_entries', 'entries', input.limit, MAX_LIMIT),
+      });
     if (!entries.length) {
       const memberText =
         input.sourceDatabase === 'interpro' &&

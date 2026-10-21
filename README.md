@@ -1,0 +1,264 @@
+<div align="center">
+  <h1>@cyanheads/interpro-mcp-server</h1>
+  <p><b>Search InterPro entries, map protein domains and functional sites, and find proteins by domain via MCP. STDIO or Streamable HTTP.</b>
+  <div>6 Tools</div>
+  </p>
+</div>
+
+<div align="center">
+
+[![Version](https://img.shields.io/badge/Version-0.1.0-blue.svg?style=flat-square)](./CHANGELOG.md) [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg?style=flat-square)](./LICENSE) [![Docker](https://img.shields.io/badge/Docker-ghcr.io-2496ED?style=flat-square&logo=docker&logoColor=white)](https://github.com/users/cyanheads/packages/container/package/interpro-mcp-server) [![MCP SDK](https://img.shields.io/badge/MCP%20SDK-^2.3.1-green.svg?style=flat-square)](https://modelcontextprotocol.io/) [![npm](https://img.shields.io/npm/v/@cyanheads/interpro-mcp-server?style=flat-square&logo=npm&logoColor=white)](https://www.npmjs.com/package/@cyanheads/interpro-mcp-server) [![TypeScript](https://img.shields.io/badge/TypeScript-^7.0.2-3178C6.svg?style=flat-square)](https://www.typescriptlang.org/) [![Bun](https://img.shields.io/badge/Bun-v1.4.3-blueviolet.svg?style=flat-square)](https://bun.sh/)
+
+</div>
+
+<div align="center">
+
+[![Install in Claude Desktop](https://img.shields.io/badge/Install_in-Claude_Desktop-D97757?style=for-the-badge&logo=anthropic&logoColor=white)](https://github.com/cyanheads/interpro-mcp-server/releases/latest/download/interpro-mcp-server.mcpb) [![Install in Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=interpro-mcp-server&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIkBjeWFuaGVhZHMvaW50ZXJwcm8tbWNwLXNlcnZlciJdfQ==) [![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_Server-0098FF?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://vscode.dev/redirect?url=vscode:mcp/install?%7B%22name%22%3A%22interpro-mcp-server%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40cyanheads%2Finterpro-mcp-server%22%5D%7D)
+
+[![Framework](https://img.shields.io/badge/Built%20on-@cyanheads/mcp--ts--core-67E8F9?style=flat-square)](https://www.npmjs.com/package/@cyanheads/mcp-ts-core)
+
+</div>
+
+---
+
+## Overview
+
+Protein families, domains, repeats, and functional sites from [InterPro](https://www.ebi.ac.uk/interpro/) and the member databases it integrates (Pfam, PROSITE, SMART, CDD, PANTHER, and others), read through the keyless EMBL-EBI InterPro API. Search entries, read their full metadata, map a UniProt protein's annotations to residue coordinates, walk Pfam, CDD, and PIRSF clans, and find proteins that carry a signature. Runs over STDIO or Streamable HTTP, with no credentials to configure.
+
+### Tools
+
+| Tool | Description |
+|:---|:---|
+| `interpro_search_entries` | Find InterPro entries or member signatures by text, entry type, GO annotation, or integrating InterPro accession |
+| `interpro_get_entry` | Read one entry's description, hierarchy, member signatures, GO terms, literature, cross-references, clan membership, and coverage counters |
+| `interpro_get_protein_domains` | Map a UniProt protein's domains, families, repeats, and functional sites to sequence coordinates, optionally at one residue |
+| `interpro_get_clan` | Read a Pfam, CDD, or PIRSF set and page through its members, optionally with its relationship graph |
+| `interpro_find_proteins_by_domain` | Find UniProt proteins carrying an entry, defaulting to reviewed human proteins |
+| `interpro_list_reference` | Decode database slugs, entry types, accession patterns, common taxon IDs, and the current InterPro release |
+
+## Capability reference
+
+### `interpro_search_entries` <sub>tool</sub>
+
+- `sourceDatabase` (default `interpro`) plus optional `query` (1-300 characters), `entryType`, `goTerm` (`GO:0003677` form), `goCategory` (`P`, `F`, `C`), and `integratedInto` (an `IPR` accession, member databases only); no filter is required, so omitting all of them browses the database
+- Cursor-paged, `limit` 1-100 (default 20); returns `entries`, `page` (`total`, `returned`, `hasMore`, `nextCursor`), and the applied `query`
+
+---
+
+### `interpro_get_entry` <sub>tool</sub>
+
+- `accession` required; `sourceDatabase` is inferred from standard accession prefixes when omitted. A set accession (`CL…`) fails as `entry_not_found` and points to `interpro_get_clan`
+- Wikipedia thumbnails are omitted unless `includeThumbnail: true`, and a notice reports what was left out
+- A withdrawn record fails as `entry_withdrawn` with its deletion date and short name
+
+---
+
+### `interpro_get_protein_domains` <sub>tool</sub>
+
+- Canonical six- or ten-character UniProt `accession` (no isoform suffix); optional `residuePosition` (1-based, inclusive) keeps every match with a fragment covering it, with all of that match's fragments intact; `includeExtraFeatures` adds predicted features such as disorder and transmembrane regions
+- Large maps arrive in segments of whole matches within a 100,000-byte response budget, following `coverage.nextCursor` until `hasMore` is `false`. The first segment carries the protein metadata, and an empty segment cannot establish that nothing is annotated
+- Discontinuous fragments, models, and upstream scores are kept as returned; `residue_out_of_range` and `protein_not_found` are typed failures
+
+---
+
+### `interpro_get_clan` <sub>tool</sub>
+
+- `accession` for a Pfam (`CL0016`), CDD (`cl21453`), or PIRSF (`PIRSF000047`) set, with `sourceDatabase` (`pfam`, `cdd`, `pirsf`) inferred from the prefix; members page by `cursor`, `limit` 1-100 (default 20)
+- `includeRelationships: true` adds the relationship graph in slices that fit the response budget; `relationshipsPage.nextOffset` goes back in as `relationshipOffset`, which needs `includeRelationships` set
+- `includeThumbnail` works as on `interpro_get_entry`; a missing set is `clan_not_found`
+
+---
+
+### `interpro_find_proteins_by_domain` <sub>tool</sub>
+
+- `accession` plus optional `sourceDatabase`; `taxonId` (NCBI, default `9606`) and `reviewedOnly` (default `true`; `false` covers reviewed and unreviewed proteins) are echoed in `query`
+- Cursor-paged, `limit` 1-50 (default 20); each result keeps the protein summary, matched entry locations, and taxon lineage
+- No hits is a success with a notice, since the API answers an unknown entry, an unknown taxon, and an empty intersection the same way
+
+---
+
+### `interpro_list_reference` <sub>tool</sub>
+
+- `topic` required: `databases`, `entry_types`, `accession_patterns`, `taxa`, or `release`. The first four are local and make no network call; `taxa` lists common examples, not every taxon
+- `release` reads the current InterPro version, date, and per-database entry counts, and fails as `release_changed` if the two upstream responses disagree on the version
+
+## Features
+
+Built on [`@cyanheads/mcp-ts-core`](https://github.com/cyanheads/mcp-ts-core): stdio and Streamable HTTP transports, pluggable auth (`none` / `jwt` / `oauth`), swappable storage (`in-memory`, `filesystem`, `Supabase`, `Cloudflare KV/R2/D1`), structured logging with optional OpenTelemetry tracing.
+
+InterPro-specific:
+
+- 15 database slugs (`interpro`, `pfam`, `prosite`, `profile`, `smart`, `cdd`, `panther`, `cathgene3d`, `ssf`, `ncbifam`, `hamap`, `prints`, `pirsf`, `sfld`, `antifam`) and 11 entry types, with the entry database inferred from standard accession prefixes and conflicting routes rejected locally
+- One process-wide request pacer at one upstream request per second, a 50-second budget per tool call covering pacing, retries, and every request, and a 4 MiB cap on upstream responses
+- Upstream HTTP/1.1 client that handles the API's bodyless 204 responses, which native `fetch` rejects on Node
+- Sparse upstream metadata passes through as `null` or omitted rather than filled in
+
+Agent-friendly output:
+
+- `content[]` carries the complete output as compact JSON plus an index of every URL as a link and every image as an image, so clients that read only one surface get the same data
+- Opaque cursors bound to their query, with a notice naming the exact next call whenever a result is partial
+- Typed failure reasons (`entry_not_found`, `invalid_cursor`, `upstream_rate_limited`, and others) each paired with a recovery hint
+- Coordinates describe sequence annotation, not pathogenicity or clinical significance
+
+## Getting started
+
+Add the following to your MCP client configuration file. No API key is needed.
+
+```json
+{
+  "mcpServers": {
+    "interpro-mcp-server": {
+      "type": "stdio",
+      "command": "bunx",
+      "args": ["@cyanheads/interpro-mcp-server@latest"],
+      "env": {
+        "MCP_TRANSPORT_TYPE": "stdio",
+        "MCP_LOG_LEVEL": "info"
+      }
+    }
+  }
+}
+```
+
+Or with npx (no Bun required):
+
+```json
+{
+  "mcpServers": {
+    "interpro-mcp-server": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@cyanheads/interpro-mcp-server@latest"],
+      "env": {
+        "MCP_TRANSPORT_TYPE": "stdio",
+        "MCP_LOG_LEVEL": "info"
+      }
+    }
+  }
+}
+```
+
+Or with Docker:
+
+```json
+{
+  "mcpServers": {
+    "interpro-mcp-server": {
+      "type": "stdio",
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "-e", "MCP_TRANSPORT_TYPE=stdio", "ghcr.io/cyanheads/interpro-mcp-server:latest"]
+    }
+  }
+}
+```
+
+For Streamable HTTP, set the transport and start the server:
+
+```sh
+MCP_TRANSPORT_TYPE=http MCP_HTTP_PORT=3010 bun run start:http
+# Server listens at http://localhost:3010/mcp
+```
+
+### Prerequisites
+
+- [Bun v1.4.0](https://bun.sh/) or higher (or Node.js v24+).
+
+### Installation
+
+1. **Clone the repository:**
+
+```sh
+git clone https://github.com/cyanheads/interpro-mcp-server.git
+```
+
+2. **Navigate into the directory:**
+
+```sh
+cd interpro-mcp-server
+```
+
+3. **Install dependencies:**
+
+```sh
+bun install
+```
+
+4. **Configure environment (optional):**
+
+```sh
+cp .env.example .env
+```
+
+## Configuration
+
+The server defines no variables of its own; the InterPro API is keyless. These framework variables are the ones most often set:
+
+| Variable | Description | Default |
+|:---|:---|:---|
+| `MCP_TRANSPORT_TYPE` | Transport: `stdio` or `http`. | `stdio` |
+| `MCP_HTTP_PORT` | HTTP server port. | `3010` |
+| `MCP_HTTP_HOST` | HTTP server host. | `127.0.0.1` |
+| `MCP_HTTP_ENDPOINT_PATH` | HTTP endpoint path. | `/mcp` |
+| `MCP_SESSION_MODE` | HTTP session mode: `stateless`, `stateful`, or `auto`. | `stateless` |
+| `MCP_AUTH_MODE` | Authentication: `none`, `jwt`, or `oauth`. With auth on, each tool requires its `tool:<tool_name>:read` scope. | `none` |
+| `MCP_LOG_LEVEL` | Log level (`debug`, `info`, `notice`, `warning`, `error`). | `info` |
+| `LOGS_DIR` | Directory for log files (Node.js only). | `<app-root>/logs` |
+| `STORAGE_PROVIDER_TYPE` | Storage backend: `in-memory`, `filesystem`, `supabase`, `cloudflare-kv/r2/d1`. | `in-memory` |
+| `OTEL_ENABLED` | Enable [OpenTelemetry](https://github.com/cyanheads/mcp-ts-core/tree/main/docs/telemetry). | `false` |
+
+See [`.env.example`](./.env.example) for the common framework overrides.
+
+## Running the server
+
+### Local development
+
+- **Build and run the production version**:
+
+  ```sh
+  # One-time build
+  bun run rebuild
+
+  # Run the built server
+  bun run start:http
+  # or
+  bun run start:stdio
+  ```
+
+- **Run checks and tests**:
+  ```sh
+  bun run devcheck  # Lints, formats, type-checks, and more
+  bun run test      # Runs the test suite
+  ```
+
+## Project structure
+
+| Directory | Purpose |
+|:---|:---|
+| `src/index.ts` | `createApp()` entry point: registers the tools and starts the InterPro service. |
+| `src/mcp-server/tools` | Tool definitions (`*.tool.ts`). Six tools. |
+| `src/services/interpro` | InterPro service: HTTP/1.1 adapter, pacer and deadlines, accession routing, cursors, schemas, and the shared result formatter. |
+| `tests/` | Unit and integration tests, mirroring the `src/` structure. |
+
+## Development guide
+
+See [`CLAUDE.md`](./CLAUDE.md) for development guidelines and architectural rules. The short version:
+
+- Handlers throw, framework catches, with no `try/catch` in tool logic
+- Use `ctx.log` for request-scoped logging
+- Register new tools in the `createApp()` array in `src/index.ts`
+- Wrap external API calls: validate raw, normalize to the domain type, return the output schema; never fabricate missing fields
+
+## Contributing
+
+Issues are welcome. Run checks and tests before submitting:
+
+```sh
+bun run devcheck
+bun run test
+```
+
+## License
+
+This project is licensed under the Apache 2.0 License. See the [LICENSE](./LICENSE) file for details.
+
+Data comes from InterPro and its member databases through the EMBL-EBI API. Licensing varies by member database, so attribute InterPro and the originating database; see [InterPro's license page](https://interpro-documentation.readthedocs.io/en/latest/license.html) and the [EMBL-EBI terms of use](https://www.ebi.ac.uk/about/terms-of-use/).

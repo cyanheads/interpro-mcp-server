@@ -1,7 +1,7 @@
 name: Feature Request
 description: Suggest a new feature or improvement for interpro-mcp-server
 labels: ["enhancement"]
-assignees: [cyanheads]
+assignees: ["cyanheads"]
 # The secondary labels listed below must exist in the repo — create each once: gh label create <name>
 body:
   - type: markdown

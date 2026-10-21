@@ -15,7 +15,7 @@
   "interface": {
     "displayName": "interpro-mcp-server",
     "shortDescription": "Search InterPro entries, map protein domains and functional sites, and find proteins by domain via MCP. STDIO or Streamable HTTP.",
-    "longDescription": "Explore protein families, domains, and functional sites through InterPro. Search entries, inspect their biological annotations, and find proteins that carry a domain to connect sequence features with function. Use the server through STDIO or Streamable HTTP.",
+    "longDescription": "Reads InterPro and the member databases it integrates (Pfam, PROSITE, SMART, CDD, PANTHER, and others) through the keyless EMBL-EBI API. Search entries by text, type, or GO annotation and read their full metadata, map a UniProt protein's domains, repeats, and functional sites to residue coordinates, walk Pfam, CDD, and PIRSF clans, and find the proteins that carry a signature, by default reviewed human proteins. Results are read-only and paged with cursors, and no credentials are needed.",
     "developerName": "cyanheads",
     "category": "research",
     "capabilities": ["Read"],

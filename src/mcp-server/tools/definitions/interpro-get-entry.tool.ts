@@ -4,7 +4,11 @@
  */
 import { tool, z } from '@cyanheads/mcp-ts-core';
 import { JsonRpcErrorCode } from '@cyanheads/mcp-ts-core/errors';
-import { formatInterpro, normalizeImages } from '@/services/interpro/format.js';
+import {
+  formatInterpro,
+  normalizeImages,
+  projectWikipediaThumbnails,
+} from '@/services/interpro/format.js';
 import { getInterproService } from '@/services/interpro/interpro-service.js';
 import { resolveEntry } from '@/services/interpro/routing.js';
 import {
@@ -14,6 +18,7 @@ import {
   optionalString,
   SourceDatabaseSchema,
 } from '@/services/interpro/schemas.js';
+import { UPSTREAM_ERRORS } from '@/services/interpro/upstream-errors.js';
 
 /** Retrieve one complete entry with deterministic accession routing. */
 export const interproGetEntry = tool('interpro_get_entry', {
@@ -23,20 +28,34 @@ export const interproGetEntry = tool('interpro_get_entry', {
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
   auth: ['tool:interpro_get_entry:read'],
   input: z.object({
-    accession: AccessionSchema,
+    accession: AccessionSchema.describe(
+      'InterPro or member-database entry accession, such as IPR011615 or PF00870; no URL syntax.',
+    ),
     sourceDatabase: optionalString(SourceDatabaseSchema).describe(
       'Database slug; inferred from standard accession prefixes when omitted.',
     ),
+    includeThumbnail: z
+      .boolean()
+      .default(false)
+      .describe(
+        'Include each Wikipedia thumbnail image, base64 data often hundreds of KB; defaults to false.',
+      ),
   }),
   output: z.object({
     accession: z.string().describe('Canonical requested accession.'),
     sourceDatabase: SourceDatabaseSchema,
     entry: EntryMetadataSchema.describe(
-      'Complete upstream metadata, preserving sparse annotations.',
+      'Complete upstream metadata, preserving sparse annotations; Wikipedia thumbnails are omitted unless includeThumbnail is true.',
     ),
     url: z.string().describe('Canonical InterPro website URL.'),
     sourceUrl: z.string().describe('Official API source URL.'),
   }),
+  enrichment: {
+    notice: z
+      .string()
+      .optional()
+      .describe('Omitted Wikipedia thumbnail size and how to include it.'),
+  },
   errors: [
     {
       reason: 'database_mismatch',
@@ -59,7 +78,7 @@ export const interproGetEntry = tool('interpro_get_entry', {
     {
       reason: 'entry_not_found',
       code: JsonRpcErrorCode.NotFound,
-      when: 'Entry detail returns 204 or 404.',
+      when: 'Entry detail returns 204 or 404, or the accession is a set accession.',
       retryable: false,
       recovery:
         'Call interpro_search_entries in the correct database, or interpro_list_reference with topic accession_patterns.',
@@ -83,51 +102,7 @@ export const interproGetEntry = tool('interpro_get_entry', {
         'Retry the same tool later; call interpro_list_reference with topic release to check upstream availability.',
       thrownBy: 'service',
     },
-    {
-      reason: 'upstream_response_too_large',
-      code: JsonRpcErrorCode.ServiceUnavailable,
-      when: 'An upstream response exceeds 4 MiB.',
-      retryable: false,
-      recovery:
-        'Retry list tools with a smaller limit, or retrieve individual members with interpro_get_entry instead of a large clan.',
-      thrownBy: 'service',
-    },
-    {
-      reason: 'upstream_rejected',
-      code: JsonRpcErrorCode.ServiceUnavailable,
-      when: 'InterPro returns an unhandled redirect or client rejection.',
-      retryable: false,
-      recovery:
-        'Retry the same tool later; call interpro_list_reference with topic release to check upstream availability.',
-      thrownBy: 'service',
-    },
-    {
-      reason: 'upstream_unavailable',
-      code: JsonRpcErrorCode.ServiceUnavailable,
-      when: 'InterPro has a network or server failure; HTTP 501 is not retryable.',
-      retryable: true,
-      recovery:
-        'Retry the same tool later; call interpro_list_reference with topic release to check upstream availability.',
-      thrownBy: 'service',
-    },
-    {
-      reason: 'upstream_timeout',
-      code: JsonRpcErrorCode.Timeout,
-      when: 'InterPro returns HTTP 408/504 or an attempt exceeds its deadline.',
-      retryable: true,
-      recovery:
-        'Retry with a smaller limit where available, then repeat the same tool after waiting.',
-      thrownBy: 'service',
-    },
-    {
-      reason: 'upstream_rate_limited',
-      code: JsonRpcErrorCode.RateLimited,
-      when: 'InterPro returns HTTP 429.',
-      retryable: true,
-      recovery:
-        'Wait for retryAfter when supplied, then repeat the same tool with fewer concurrent calls.',
-      thrownBy: 'service',
-    },
+    ...UPSTREAM_ERRORS,
   ],
   async handler(input, ctx) {
     const target = resolveEntry(input.accession, input.sourceDatabase);
@@ -137,13 +112,19 @@ export const interproGetEntry = tool('interpro_get_entry', {
       ['entry', target.sourceDatabase, target.accession],
       {},
       detailSchema(EntryMetadataSchema),
-      { missing: 'entry_not_found' },
+      { missing: { reason: 'entry_not_found', ...target } },
     );
     if (!response.data)
       throw ctx.fail('upstream_shape_invalid', 'Entry metadata response is missing.');
+    const { metadata, notice } = projectWikipediaThumbnails(
+      response.data.metadata,
+      input.includeThumbnail,
+      'interpro_get_entry',
+    );
+    if (notice) ctx.enrich.notice(notice);
     return {
       ...target,
-      entry: normalizeImages(response.data.metadata),
+      entry: normalizeImages(metadata),
       url: `https://www.ebi.ac.uk/interpro/entry/${target.sourceDatabase}/${encodeURIComponent(target.accession)}/`,
       sourceUrl: response.sourceUrl,
     };

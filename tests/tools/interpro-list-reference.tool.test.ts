@@ -45,6 +45,40 @@ describe('interpro_list_reference contract', () => {
     },
   );
 
+  it('lists every entry type the search filter accepts, including region', async () => {
+    const { definition } = await setup();
+    const { EntryTypeSchema } = await import('@/services/interpro/schemas.js');
+    const result = await runToolContract(definition, { topic: 'entry_types' });
+    const { items } = result.structuredContent as {
+      items: { id: string; label: string; description: string }[];
+    };
+    expect(items.map((item) => item.id)).toEqual(EntryTypeSchema.options);
+    expect(items.slice(-3)).toEqual([
+      {
+        id: 'region',
+        label: 'Region',
+        description:
+          'A sequence region; AntiFam signatures of spurious protein predictions use this type.',
+      },
+      {
+        id: 'coiled_coil',
+        label: 'Coiled coil',
+        description: 'A coiled-coil region, where alpha-helices wind around each other.',
+      },
+      {
+        id: 'disordered',
+        label: 'Disordered region',
+        description:
+          'An intrinsically disordered region without a fixed three-dimensional structure.',
+      },
+    ]);
+    const text = result.content
+      .filter((block) => block.type === 'text')
+      .map((block) => block.text)
+      .join('\n');
+    for (const item of items.slice(-3)) expect(text).toContain(item.description);
+  });
+
   it('returns nested live release counts through both consumption paths', async () => {
     const { definition, fetch } = await setup([
       Response.json({ '110.0': '2026-01-01' }),
