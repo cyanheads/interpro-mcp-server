@@ -16,4 +16,3 @@ Include a minimal reproduction where possible, with any API keys, tokens, or
 credentials redacted — a placeholder is enough to show the shape. You'll
 receive an acknowledgment, and credit in the release notes if the report leads
 to a fix (unless you prefer otherwise).
-
