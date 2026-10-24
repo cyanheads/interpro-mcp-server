@@ -6,7 +6,7 @@ import { z } from '@cyanheads/mcp-ts-core';
 import { runToolContract } from '@cyanheads/mcp-ts-core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RESPONSE_BYTE_BUDGET } from '@/services/interpro/budget.js';
-import { encodeCursor } from '@/services/interpro/cursors.js';
+import { encodeCursor, encodePositionCursor } from '@/services/interpro/cursors.js';
 import { failure as assertFailure, serverLines, settle, text, twin } from './contract-helpers.js';
 
 let map: typeof import('@/mcp-server/tools/definitions/interpro-get-protein-domains.tool.js')['interproGetProteinDomains'];
@@ -75,6 +75,487 @@ beforeEach(async () => {
   ({ initInterproService: init } = await import('@/services/interpro/interpro-service.js'));
 });
 afterEach(() => vi.useRealTimers());
+
+describe('residue-rule map stage', () => {
+  it('shares the fifty-second deadline through extras into residues', async () => {
+    const responses = [detail(), page([]), Response.json(extra)];
+    const starts: number[] = [];
+    const fetch = vi.fn((_url: string, options?: RequestInit) => {
+      starts.push(performance.now());
+      const response = responses.shift();
+      return new Promise<Response>((resolve, reject) => {
+        const timer = response ? setTimeout(() => resolve(response), 14_000) : undefined;
+        options?.signal?.addEventListener(
+          'abort',
+          () => {
+            clearTimeout(timer);
+            reject(options.signal?.reason);
+          },
+          { once: true },
+        );
+      });
+    });
+    init(fetch);
+    const pending = runToolContract(map, {
+      accession: 'P04637',
+      includeExtraFeatures: true,
+      includeResidueAnnotations: true,
+    });
+    await vi.advanceTimersByTimeAsync(50_000);
+    failure(await pending, 'retry_deadline_exceeded');
+    expect(starts).toEqual([0, 14_000, 28_000, 42_000]);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it('cancels an active residue request without returning partial annotations or retrying', async () => {
+    const controller = new AbortController();
+    const calls: string[] = [];
+    const fetch = vi.fn(async (url: string, options?: RequestInit) => {
+      calls.push(url);
+      if (new URL(url).searchParams.has('residues'))
+        return new Promise<Response>((_resolve, reject) => {
+          options?.signal?.addEventListener('abort', () => reject(options.signal?.reason), {
+            once: true,
+          });
+        });
+      return calls.length === 1 ? detail() : page([]);
+    });
+    init(fetch);
+    const pending = runToolContract(
+      map,
+      { accession: 'P04637', includeResidueAnnotations: true },
+      { context: { signal: controller.signal } },
+    );
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(calls).toHaveLength(3);
+    controller.abort(new Error('caller cancelled'));
+    const result = await pending;
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent).toMatchObject({ error: { code: -32011 } });
+    expect(result.structuredContent).not.toHaveProperty('residueAnnotations');
+    await vi.runAllTimersAsync();
+    expect(calls).toHaveLength(3);
+  });
+  const rules = {
+    'PIRSR000550-1': {
+      accession: 'PIRSR000550-1',
+      source_database: 'pirsr',
+      locations: [
+        {
+          description: 'ACT_SITE: Proton acceptor',
+          fragments: [{ residues: 'D', start: 837, end: 837 }],
+        },
+      ],
+    },
+    'PIRSR038165-51': {
+      accession: 'PIRSR038165-51',
+      source_database: 'pirsr',
+      locations: [
+        { description: 'BINDING: ATP.', fragments: [{ residues: 'K', start: 745, end: 745 }] },
+        {
+          description: 'NP_BIND: ATP.',
+          fragments: [{ residues: 'LGSGAFGTV', start: 718, end: 726 }],
+        },
+      ],
+    },
+  };
+  it.each([
+    [837, ['PIRSR000550-1']],
+    [745, ['PIRSR038165-51']],
+    [718, ['PIRSR038165-51']],
+    [726, ['PIRSR038165-51']],
+    [727, []],
+    [1, []],
+  ] as const)('selects captured whole rules at residue %i', async (residuePosition, keys) => {
+    const fetch = network([
+      Response.json({ metadata: { ...protein, accession: 'P00533', length: 1210 } }),
+      page([]),
+      Response.json(rules),
+    ]);
+    const result = await settle(
+      runToolContract(map, {
+        accession: 'P00533',
+        residuePosition,
+        includeResidueAnnotations: true,
+      }),
+    );
+    const output = twin(result);
+    expect(Object.keys(output.residueAnnotations)).toEqual(keys);
+    if (residuePosition === 745)
+      expect(output.residueAnnotations['PIRSR038165-51'].locations).toHaveLength(2);
+    expect(output.coverage).toMatchObject({
+      totalResidueAnnotations: keys.length,
+      returnedResidueAnnotations: keys.length,
+      hasMore: false,
+      complete: true,
+    });
+    expect(result.structuredContent).toMatchObject({
+      effectiveQuery: JSON.stringify({
+        accession: 'P00533',
+        residuePosition,
+        includeExtraFeatures: false,
+        includeResidueAnnotations: true,
+      }),
+    });
+    expect(text(result)).toContain('includeResidueAnnotations');
+    expect(fetch).toHaveBeenCalledTimes(3);
+  });
+  it.each([undefined, false])(
+    'keeps legacy cursor scopes with residue opt-in %s',
+    async (includeResidueAnnotations) => {
+      const cursor = encodePositionCursor(
+        'interpro_get_protein_domains',
+        { accession: 'P04637', includeExtraFeatures: true },
+        { features: 0, totalMatches: 7 },
+      );
+      const fetch = network([detail(), Response.json(extra)]);
+      const output = twin(
+        await settle(
+          runToolContract(map, {
+            accession: 'P04637',
+            includeExtraFeatures: true,
+            includeResidueAnnotations,
+            cursor,
+          }),
+        ),
+      );
+      expect(output.selection).toEqual({ includeExtraFeatures: true });
+      expect(output.coverage.totalMatches).toBe(7);
+      expect(output).not.toHaveProperty('residueAnnotations');
+      expect(fetch).toHaveBeenCalledTimes(2);
+    },
+  );
+  it.each([
+    null,
+    [],
+    {
+      bad: {
+        accession: 'bad',
+        source_database: 'x',
+        locations: [{ fragments: [{ start: 9, end: 2 }] }],
+      },
+    },
+  ])('fails malformed residue payload %j with recovery', async (body) => {
+    const fetch = network([detail(), page([]), Response.json(body)]);
+    failure(
+      await settle(runToolContract(map, { accession: 'P04637', includeResidueAnnotations: true })),
+      'upstream_shape_invalid',
+    );
+    expect(fetch).toHaveBeenCalledTimes(3);
+  });
+  it('propagates a failed residue request instead of empty coverage', async () => {
+    const fetch = network([
+      detail(),
+      page([]),
+      new Response(null, { status: 503 }),
+      new Response(null, { status: 503 }),
+    ]);
+    failure(
+      await settle(runToolContract(map, { accession: 'P04637', includeResidueAnnotations: true })),
+      'upstream_unavailable',
+    );
+    expect(fetch).toHaveBeenCalledTimes(4);
+  });
+  it('walks matches, extras, and sorted residue rules once across whole-record segments', async () => {
+    const largeMatch = { ...match(), padding: 'm'.repeat(65_000) };
+    const features = { feature: { ...extra.disorder, padding: 'e'.repeat(65_000) } };
+    const records = Object.fromEntries(
+      ['gamma', 'alpha', 'beta'].map((key) => [
+        key,
+        {
+          accession: key,
+          source_database: 'pirsr',
+          locations: [location],
+          padding: key.repeat(14_000),
+        },
+      ]),
+    );
+    const fetch = vi.fn(async (url: string) => {
+      const parsed = new URL(url);
+      if (parsed.searchParams.has('residues')) return Response.json(records);
+      if (parsed.searchParams.has('extra_features')) return Response.json(features);
+      if (parsed.pathname.startsWith('/interpro/api/entry/')) return page([largeMatch]);
+      return detail();
+    });
+    init(fetch);
+    const collected: string[] = [];
+    const outputs = [];
+    let cursor: string | undefined;
+    for (let index = 0; index < 8; index++) {
+      const result = await settle(
+        runToolContract(map, {
+          accession: 'P04637',
+          includeExtraFeatures: true,
+          includeResidueAnnotations: true,
+          cursor,
+        }),
+      );
+      const output = twin(result);
+      outputs.push(output);
+      collected.push(
+        ...output.matches.map(
+          (record: { metadata: { accession: string } }) => record.metadata.accession,
+        ),
+        ...Object.keys(output.extraFeatures ?? {}),
+        ...Object.keys(output.residueAnnotations ?? {}),
+      );
+      if (!output.coverage.hasMore) break;
+      expect(text(result)).toContain('includeResidueAnnotations');
+      expect(text(result)).toContain(output.coverage.nextCursor);
+      cursor = output.coverage.nextCursor;
+    }
+    expect(collected).toEqual(['PF00870', 'feature', 'alpha', 'beta', 'gamma']);
+    expect(outputs.length).toBeGreaterThan(2);
+    expect(outputs.every((output) => output.coverage.complete === false)).toBe(true);
+    expect(outputs[0]).not.toHaveProperty('residueAnnotations');
+    const residueOnly = outputs.find(
+      (output) => output.residueAnnotations && !output.matches.length && !output.extraFeatures,
+    );
+    expect(residueOnly).toBeDefined();
+    expect(outputs.at(-1).coverage).toMatchObject({ hasMore: false, totalResidueAnnotations: 3 });
+    const scope = {
+      accession: 'P04637',
+      includeExtraFeatures: true,
+      includeResidueAnnotations: true,
+    };
+    for (const position of [
+      { residues: 1, after: 'wrong', totalMatches: 1 },
+      { residues: 3, after: 'gamma', totalMatches: 1 },
+      { residues: 4, after: 'gamma', totalMatches: 1 },
+    ]) {
+      failure(
+        await settle(
+          runToolContract(map, {
+            ...scope,
+            cursor: encodePositionCursor('interpro_get_protein_domains', scope, position),
+          }),
+        ),
+        'invalid_cursor',
+      );
+    }
+    const before = fetch.mock.calls.length;
+    failure(
+      await settle(
+        runToolContract(map, { accession: 'P04637', includeExtraFeatures: true, cursor }),
+      ),
+      'invalid_cursor',
+    );
+    expect(fetch).toHaveBeenCalledTimes(before);
+    const last = twin(
+      await settle(
+        runToolContract(map, {
+          ...scope,
+          cursor: encodePositionCursor('interpro_get_protein_domains', scope, {
+            residues: 2,
+            after: 'beta',
+            totalMatches: 1,
+          }),
+        }),
+      ),
+    );
+    expect(Object.keys(last.residueAnnotations)).toEqual(['gamma']);
+    expect(last.coverage).toMatchObject({
+      hasMore: false,
+      complete: false,
+      returnedResidueAnnotations: 1,
+    });
+  });
+  it('returns one oversized whole residue rule and does not split nested locations', async () => {
+    const rule = {
+      accession: 'large',
+      source_database: 'pirsr',
+      locations: [location, location],
+      padding: 'r'.repeat(RESPONSE_BYTE_BUDGET + 1),
+    };
+    const tail = { accession: 'tail', source_database: 'other', locations: [location] };
+    network([
+      detail(),
+      page([]),
+      Response.json({ large: rule, tail }),
+      detail(),
+      Response.json({ large: rule, tail }),
+    ]);
+    const result = await settle(
+      runToolContract(map, { accession: 'P04637', includeResidueAnnotations: true }),
+    );
+    const output = twin(result);
+    expect(output.residueAnnotations).toEqual({ large: rule });
+    expect(output.coverage).toMatchObject({
+      hasMore: true,
+      complete: false,
+      returnedResidueAnnotations: 1,
+    });
+    expect(text(result)).toContain('Residue rule large cannot be split');
+    const last = twin(
+      await settle(
+        runToolContract(map, {
+          accession: 'P04637',
+          includeResidueAnnotations: true,
+          cursor: output.coverage.nextCursor,
+        }),
+      ),
+    );
+    expect(last.residueAnnotations).toEqual({ tail });
+    expect(last.coverage).toMatchObject({ hasMore: false, complete: false });
+  });
+});
+
+describe('architecture discovery mode', () => {
+  const architectureId = '726173b0dde7bbc50c5d845a39c992d18faf18f3';
+  it('retains supplied nested entry/taxon records and their original field types', async () => {
+    const row = {
+      metadata: protein,
+      entries: [
+        { accession: 'PF00069', entry_protein_locations: [location], count: 3, unknown: null },
+      ],
+      taxa: [{ accession: '3702', lineage: [{ accession: 1, children: [{ accession: '2' }] }] }],
+      extra_fields: { ida_id: architectureId },
+    };
+    network([page([row])]);
+    const output = twin(
+      await settle(runToolContract(discovery, { accession: 'PF00069', architectureId })),
+    );
+    expect(output.proteins).toEqual([
+      { ...row, detailAvailability: { entries: 'available', taxa: 'available' } },
+    ]);
+  });
+  it('discloses each unavailable collection separately', async () => {
+    network([
+      page([
+        { metadata: protein, entries: [] },
+        { metadata: protein, taxa: [] },
+      ]),
+    ]);
+    const output = twin(
+      await settle(runToolContract(discovery, { accession: 'PF00069', architectureId })),
+    );
+    expect(output.proteins).toEqual([
+      {
+        metadata: protein,
+        entries: [],
+        detailAvailability: { entries: 'available', taxa: 'unavailable' },
+      },
+      {
+        metadata: protein,
+        taxa: [],
+        detailAvailability: { entries: 'unavailable', taxa: 'available' },
+      },
+    ]);
+  });
+  it.each([
+    undefined,
+    null,
+    {},
+    { ida_id: null },
+    { ida_id: architectureId, is_fragment: null, unknown: [null, { value: false }] },
+  ])('preserves sparse extra fields %j and supplied arrays', async (fields) => {
+    const row = {
+      metadata: protein,
+      entries: [],
+      taxa: [],
+      ...(fields === undefined ? {} : { extra_fields: fields }),
+      unknown: null,
+    };
+    network([page([row])]);
+    const result = await settle(
+      runToolContract(discovery, { accession: 'PF00069', architectureId }),
+    );
+    expect(twin(result).proteins).toEqual([
+      { ...row, detailAvailability: { entries: 'available', taxa: 'available' } },
+    ]);
+    expect(text(result)).toContain(architectureId);
+    expect(result.structuredContent).toMatchObject({
+      effectiveQuery: expect.stringContaining(architectureId),
+    });
+  });
+  it('rejects mismatched supplied grouping with a typed upstream failure', async () => {
+    network([page([{ metadata: protein, extra_fields: { ida_id: '0'.repeat(40) } }])]);
+    failure(
+      await settle(runToolContract(discovery, { accession: 'PF00069', architectureId })),
+      'upstream_shape_invalid',
+      discovery,
+    );
+  });
+  it.each(['x'.repeat(40), 'a'.repeat(39), 'a'.repeat(41), 12])(
+    'rejects invalid architecture %s before requests',
+    async (value) => {
+      const fetch = network([]);
+      const result = await settle(
+        runToolContract(discovery, { accession: 'PF00069', architectureId: value }),
+      );
+      expect(result.isError).toBe(true);
+      expect(result.structuredContent).toMatchObject({
+        error: { data: { reason: 'invalid_arguments' } },
+      });
+      expect(fetch).not.toHaveBeenCalled();
+    },
+  );
+  it('keeps blank architecture ordinary and rejects unavailable ordinary arrays', async () => {
+    const fetch = network([
+      page([{ metadata: protein, entries: [], taxa: [] }]),
+      page([{ metadata: protein }]),
+    ]);
+    const output = twin(
+      await settle(runToolContract(discovery, { accession: 'PF00069', architectureId: '  ' })),
+    );
+    expect(output.query).not.toHaveProperty('architectureId');
+    expect(output.proteins[0]).not.toHaveProperty('detailAvailability');
+    expect(new URL(fetch.mock.calls[0]?.[0] ?? '').searchParams.has('ida')).toBe(false);
+    failure(
+      await settle(runToolContract(discovery, { accession: 'PF00069' })),
+      'upstream_shape_invalid',
+      discovery,
+    );
+  });
+  it.each([true, false])(
+    'retains review, taxon, entry and fragment selection %s over three pages',
+    async (isFragment) => {
+      const fetch = network([
+        page([{ metadata: protein }], '?cursor=second', 3),
+        page([{ metadata: protein }], '?cursor=third', 3),
+        page([], null, 3),
+      ]);
+      const input = {
+        accession: 'PF00069',
+        taxonId: '3702',
+        reviewedOnly: false,
+        isFragment,
+        architectureId,
+      };
+      const first = twin(await settle(runToolContract(discovery, { ...input, limit: 1 })));
+      for (const changed of [{ architectureId: 'f'.repeat(40) }, { architectureId: undefined }]) {
+        failure(
+          await settle(
+            runToolContract(discovery, { ...input, ...changed, cursor: first.page.nextCursor }),
+          ),
+          'invalid_cursor',
+          discovery,
+        );
+      }
+      expect(fetch).toHaveBeenCalledTimes(1);
+      const second = twin(
+        await settle(
+          runToolContract(discovery, { ...input, limit: 99, cursor: first.page.nextCursor }),
+        ),
+      );
+      const result = await settle(
+        runToolContract(discovery, { ...input, cursor: second.page.nextCursor }),
+      );
+      expect(twin(result).page).toEqual({ total: 3, returned: 0, limit: 20, hasMore: false });
+      expect(text(result)).toContain('No proteins matched');
+      for (const [url] of fetch.mock.calls) {
+        const parsed = new URL(url);
+        expect(parsed.pathname).toBe(
+          '/interpro/api/protein/uniprot/entry/pfam/PF00069/taxonomy/uniprot/3702/',
+        );
+        expect(parsed.searchParams.get('extra_fields')).toBe('is_fragment,ida_id');
+        expect(parsed.searchParams.get('ida')).toBe(architectureId);
+        expect(parsed.searchParams.get('is_fragment')).toBe(String(isFragment));
+      }
+      expect(second.page.limit).toBe(50);
+      expect(fetch).toHaveBeenCalledTimes(3);
+    },
+  );
+});
 
 describe('protein workflow shared failure contracts', () => {
   it.each([
@@ -1017,6 +1498,81 @@ describe('protein map segments within the response budget', () => {
 });
 
 describe('entry-scoped protein discovery', () => {
+  it('returns architecture metadata without inventing unavailable arrays', async () => {
+    const architectureId = '726173b0dde7bbc50c5d845a39c992d18faf18f3';
+    const metadata = {
+      accession: 'B5X4Z9',
+      name: 'Protein kinase STUNTED',
+      source_database: 'reviewed',
+      length: 617,
+      source_organism: {
+        taxId: '3702',
+        scientificName: 'Arabidopsis thaliana',
+        fullName: 'Arabidopsis thaliana (Mouse-ear cress)',
+      },
+      gene: 'STU',
+      in_alphafold: true,
+    };
+    const fetch = network([
+      page([{ metadata, extra_fields: { ida_id: architectureId, is_fragment: false } }]),
+    ]);
+    const result = await settle(
+      runToolContract(discovery, {
+        accession: 'PF00069',
+        taxonId: '3702',
+        architectureId: ` ${architectureId.toUpperCase()} `,
+      }),
+    );
+    const output = twin(result);
+    expect(output.query.architectureId).toBe(architectureId);
+    expect(output.proteins[0]).toEqual({
+      metadata,
+      extra_fields: { ida_id: architectureId, is_fragment: false },
+      detailAvailability: { entries: 'unavailable', taxa: 'unavailable' },
+    });
+    expect(new URL(fetch.mock.calls[0]?.[0] ?? '').searchParams.get('ida')).toBe(architectureId);
+  });
+  it('returns distinct whole residue rules selected through nested inclusive fragments', async () => {
+    const rules = {
+      alpha: {
+        accession: 'alpha',
+        source_database: 'pirsr',
+        locations: [
+          location,
+          { fragments: [{ start: 90, end: 90, residues: 'D' }], description: null },
+        ],
+        unknown: [null],
+      },
+      beta: { accession: 'beta', source_database: 'other', locations: [location] },
+    };
+    const fetch = network([detail(), page([]), Response.json(rules)]);
+    const output = twin(
+      await settle(
+        runToolContract(map, {
+          accession: 'P04637',
+          residuePosition: 20,
+          includeResidueAnnotations: true,
+        }),
+      ),
+    );
+    expect(output.residueAnnotations).toEqual(rules);
+    expect(output.coverage).toMatchObject({
+      totalResidueAnnotations: 2,
+      returnedResidueAnnotations: 2,
+      complete: true,
+    });
+    expect(new URL(fetch.mock.calls[2]?.[0] ?? '').searchParams.has('residues')).toBe(true);
+  });
+  it('characterizes the ordinary required-array output and default map selection', async () => {
+    network([page([{ metadata: protein, entries: [], taxa: [] }])]);
+    expect(
+      twin(await settle(runToolContract(discovery, { accession: 'PF00870' }))).proteins,
+    ).toEqual([{ metadata: protein, entries: [], taxa: [] }]);
+    network([detail(), page([])]);
+    const output = twin(await settle(runToolContract(map, { accession: 'P04637' })));
+    expect(output.selection).toEqual({ includeExtraFeatures: false });
+    expect(output).not.toHaveProperty('residueAnnotations');
+  });
   it.each([
     [undefined, 20],
     [1, 1],

@@ -47,7 +47,7 @@ Protein families, domains, repeats, and functional sites from [InterPro](https:/
 ### `interpro_search_entries` <sub>tool</sub>
 
 - `sourceDatabase` (default `interpro`) plus optional `query` (1-300 characters), `entryType`, `goTerm` (`GO:0003677` form), `goCategory` (`P`, `F`, `C`), and `integratedInto` (an `IPR` accession, member databases only); no filter is required, so omitting all of them browses the database
-- `goTerm` and `goCategory` require `sourceDatabase: "interpro"`. For member signatures, search InterPro with the GO filter, then read `member_databases` with `interpro_get_entry` or search the member database with `integratedInto` set to the matching InterPro accession
+- `goTerm` and `goCategory` require `sourceDatabase: "interpro"`; choose one GO filter per call. Combining them fails before network access because upstream ignores the category when a term is supplied. For member signatures, search InterPro with the GO filter, then read `member_databases` with `interpro_get_entry` or search the member database with `integratedInto` set to the matching InterPro accession
 - Cursor-paged, positive integer `limit` capped at 100 (default 20); larger requests are clamped with a notice. Returns `entries`, `page` (`total`, `returned`, `limit`, `hasMore`, `nextCursor`), and the applied `query`; `page.limit` is the effective page size
 
 ---
@@ -55,8 +55,10 @@ Protein families, domains, repeats, and functional sites from [InterPro](https:/
 ### `interpro_get_entry` <sub>tool</sub>
 
 - `accession` required; `sourceDatabase` is inferred from standard accession prefixes when omitted. A set accession (`CL…`) fails as `entry_not_found` and points to `interpro_get_clan`
+- Optional `sections` selects from `description`, `hierarchy`, `member_databases`, `go_terms`, `literature`, `cross_references`, `wikipedia`, `counters`, and `overlaps_with`. Core metadata and unknown upstream fields remain; omitted `sections` returns full detail
+- Optional positive integer `overlapLimit` pages complete `overlaps_with` records; `overlapOffset` requires it, starts at zero, and advances using `overlapsPage.nextOffset`. Paging requires overlaps to be retained. Selection and omissions are disclosed; absent or null overlap data stays distinct from an empty list
 - Wikipedia thumbnails are omitted unless `includeThumbnail: true`, and a notice reports what was left out
-- `entry.descriptionText` adds readable text with paragraph, list, and table boundaries alongside the unchanged source `entry.description`, including its HTML and annotation flags. It is omitted when no readable text is supplied
+- `entry.descriptionText` adds readable text with paragraph, list, and table boundaries alongside the unchanged source `entry.description`, including its HTML and annotation flags. It is omitted when description is excluded or no readable text is supplied
 - A withdrawn record fails as `entry_withdrawn` with its deletion date and short name
 
 ---
@@ -64,7 +66,8 @@ Protein families, domains, repeats, and functional sites from [InterPro](https:/
 ### `interpro_get_protein_domains` <sub>tool</sub>
 
 - Canonical six- or ten-character UniProt `accession` (no isoform suffix); optional `residuePosition` (1-based, inclusive) keeps every match with a fragment covering it, with all of that match's fragments intact; `includeExtraFeatures` adds predicted features such as disorder and transmembrane regions
-- Large maps arrive in segments of whole matches within a 100,000-byte response budget, following `coverage.nextCursor` until `hasMore` is `false`. The first segment carries the protein metadata, and an empty segment cannot establish that nothing is annotated
+- `includeResidueAnnotations: true` adds `residueAnnotations`, the provider's functional rule annotations. A residue filter keeps each whole rule with any fragment covering the position, preserving descriptions, residue letters, locations, and provenance
+- Large maps arrive in segments of whole records within a 100,000-byte response budget: matches, requested extra features, then requested residue rules. Follow `coverage.nextCursor` until `hasMore` is `false`. The first segment carries protein metadata; an empty segment cannot establish that nothing is annotated. Residue annotations are omitted until their stage is reached, while `{}` means that stage returned no selected rules
 - Discontinuous fragments, models, and upstream scores are kept as returned; `residue_out_of_range` and `protein_not_found` are typed failures
 
 ---
@@ -81,7 +84,8 @@ Protein families, domains, repeats, and functional sites from [InterPro](https:/
 
 - `accession` plus optional `sourceDatabase`; `taxonId` (NCBI, default `9606`) and `reviewedOnly` (default `true`; `false` covers reviewed and unreviewed proteins) are echoed in `query`
 - Optional `isFragment` selects proteins annotated as fragments (`true`) or not annotated as fragments (`false`); omit it to include both. False does not establish sequence completeness. Explicit selections appear in `query` and must stay unchanged when following cursors
-- Cursor-paged, positive integer `limit` capped at 50 (default 20); larger requests are clamped with a notice, and `page.limit` is the effective size. Each result keeps the protein summary, matched entry locations, taxon lineage, and native `extra_fields.is_fragment` annotation; missing or null status remains unknown
+- Optional `architectureId` accepts `protein.ida_accession` from `interpro_get_protein_domains`: a 40-character hexadecimal identifier, normalized lowercase. Equality means the provider's Pfam architecture grouping, not equivalent function. Keep it unchanged when following cursors
+- Cursor-paged, positive integer `limit` capped at 50 (default 20); larger requests are clamped with a notice, and `page.limit` is the effective size. Ordinary results keep the protein summary, matched entry locations, taxon lineage, and native `extra_fields.is_fragment` annotation; missing or null status remains unknown. Architecture-filtered rows retain native `extra_fields.ida_id` when supplied and use `detailAvailability` to distinguish unavailable entry/taxon details from actual empty arrays
 - No hits is a success with a notice, since the API answers an unknown entry, an unknown taxon, and an empty intersection the same way
 
 ---
@@ -113,18 +117,40 @@ Agent-friendly output:
 
 ### Public Hosted Instance
 
-A public instance is available at `https://interpro.caseyjhand.com/mcp` — no installation required. Point any MCP client at it via Streamable HTTP:
+A public instance is available at `https://interpro.caseyjhand.com/mcp` — no installation required. It serves Streamable HTTP; each client takes its own config shape.
+
+For Claude Code:
+
+```sh
+claude mcp add --transport http interpro-mcp-server https://interpro.caseyjhand.com/mcp
+```
+
+For Cline (`cline_mcp_settings.json`):
 
 ```json
 {
   "mcpServers": {
     "interpro-mcp-server": {
-      "type": "streamable-http",
+      "type": "streamableHttp",
       "url": "https://interpro.caseyjhand.com/mcp"
     }
   }
 }
 ```
+
+For Cursor (`mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "interpro-mcp-server": {
+      "url": "https://interpro.caseyjhand.com/mcp"
+    }
+  }
+}
+```
+
+Claude Desktop adds remote servers under Settings → Connectors.
 
 ### Self-Hosted / Local
 

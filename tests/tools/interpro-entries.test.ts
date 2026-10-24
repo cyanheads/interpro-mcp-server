@@ -60,6 +60,17 @@ beforeEach(async () => {
 afterEach(() => vi.useRealTimers());
 
 describe('entry search contracts', () => {
+  it.each(['F', 'C'])('rejects a GO term with category %s before requests', async (goCategory) => {
+    const fetch = network([]);
+    const result = await settle(
+      runToolContract(interproSearchEntries, { goTerm: 'GO:0003677', goCategory }),
+    );
+    expect(result.structuredContent).toMatchObject({
+      error: { data: { reason: 'incompatible_go_filters' } },
+    });
+    failure(result, 'incompatible_go_filters', interproSearchEntries);
+    expect(fetch).not.toHaveBeenCalled();
+  });
   it.each([
     'pfam',
     'prosite',
@@ -177,24 +188,33 @@ describe('entry search contracts', () => {
     expect(text(result)).toContain('page.nextCursor');
     expect(text(result)).not.toContain('limit may rise');
   });
-  it('characterizes supported InterPro GO search without adding integration scope', async () => {
-    const fetch = network([list([{ metadata: { ...summary, source_database: 'interpro' } }])]);
-    const output = twin(
-      await settle(
-        runToolContract(interproSearchEntries, { goTerm: 'GO:0003677', goCategory: 'F' }),
-      ),
-    );
-    expect(output.query).toEqual({
-      sourceDatabase: 'interpro',
-      goTerm: 'GO:0003677',
-      goCategory: 'F',
-    });
-    expect(Object.fromEntries(new URL(fetch.mock.calls[0]?.[0] ?? '').searchParams)).toEqual({
-      go_term: 'GO:0003677',
-      go_category: 'F',
-      page_size: '20',
-    });
-  });
+  it.each([{ goTerm: 'GO:0003677' }, { goCategory: 'F' }])(
+    'characterizes standalone GO text/type search %j',
+    async (filter) => {
+      const fetch = network([list([{ metadata: { ...summary, source_database: 'interpro' } }])]);
+      const output = twin(
+        await settle(
+          runToolContract(interproSearchEntries, {
+            ...filter,
+            query: 'kinase',
+            entryType: 'domain',
+          }),
+        ),
+      );
+      expect(output.query).toEqual({
+        sourceDatabase: 'interpro',
+        ...filter,
+        query: 'kinase',
+        entryType: 'domain',
+      });
+      expect(Object.fromEntries(new URL(fetch.mock.calls[0]?.[0] ?? '').searchParams)).toEqual({
+        ...(filter.goTerm ? { go_term: filter.goTerm } : { go_category: filter.goCategory }),
+        search: 'kinase',
+        type: 'domain',
+        page_size: '20',
+      });
+    },
+  );
   it('accepts member integration and type filters and emits their exact API names', async () => {
     const fetch = network([list([{ metadata: summary }])]);
     const result = await settle(
@@ -371,6 +391,217 @@ describe('entry search contracts', () => {
 });
 
 describe('entry metadata contracts', () => {
+  it('retains captured InterPro overlap record shapes with no paging and explicit paging', async () => {
+    const overlaps = [
+      { accession: 'IPR003439', name: 'ABC transporter-like, ATP-binding domain', type: 'domain' },
+      { accession: 'IPR054391', name: 'DNA repair helicase XPD, arch domain', type: 'domain' },
+    ];
+    network([
+      detail({ accession: 'IPR027417', source_database: 'interpro', overlaps_with: overlaps }),
+      detail({ accession: 'IPR027417', source_database: 'interpro', overlaps_with: overlaps }),
+    ]);
+    const full = twin(await settle(runToolContract(interproGetEntry, { accession: 'IPR027417' })));
+    expect(full.entry.overlaps_with).toEqual(overlaps);
+    expect(full).not.toHaveProperty('overlapsPage');
+    const paged = twin(
+      await settle(
+        runToolContract(interproGetEntry, {
+          accession: 'IPR027417',
+          overlapLimit: 1,
+          overlapOffset: 1,
+        }),
+      ),
+    );
+    expect(paged.entry.overlaps_with).toEqual([
+      { accession: 'IPR054391', name: 'DNA repair helicase XPD, arch domain', type: 'domain' },
+    ]);
+    expect(paged.overlapsPage).toEqual({
+      available: true,
+      total: 2,
+      offset: 1,
+      returned: 1,
+      hasMore: false,
+    });
+  });
+  it('preserves unknown overlap shapes by default but reports invalid explicit paging', async () => {
+    network([
+      detail({ ...summary, overlaps_with: { future: true } }),
+      detail({ ...summary, overlaps_with: { future: true } }),
+    ]);
+    expect(
+      twin(await settle(runToolContract(interproGetEntry, { accession: 'PF00870' }))).entry
+        .overlaps_with,
+    ).toEqual({ future: true });
+    failure(
+      await settle(runToolContract(interproGetEntry, { accession: 'PF00870', overlapLimit: 2 })),
+      'upstream_shape_invalid',
+      interproGetEntry,
+    );
+  });
+  it('walks whole nested overlap records with exact continuation arguments and composed notices', async () => {
+    const overlaps = Array.from({ length: 5 }, (_, index) => ({
+      accession: `IPR00000${index}`,
+      coordinates: [{ fragments: [{ start: index + 1, end: index + 9, extra: { flag: false } }] }],
+    }));
+    const fetch = network(
+      Array.from({ length: 4 }, () =>
+        detail({
+          ...summary,
+          description: 'hidden',
+          wikipedia: { thumbnail: png },
+          overlaps_with: overlaps,
+        }),
+      ),
+    );
+    const call = (overlapOffset?: number) =>
+      settle(
+        runToolContract(interproGetEntry, {
+          accession: 'PF00870',
+          sections: ['wikipedia', 'overlaps_with'],
+          overlapLimit: 2,
+          ...(overlapOffset === undefined ? {} : { overlapOffset }),
+        }),
+      );
+    const collected: unknown[] = [];
+    for (const [offset, returned, hasMore] of [
+      [0, 2, true],
+      [2, 2, true],
+      [4, 1, false],
+      [9, 0, false],
+    ] as const) {
+      const result = await call(offset === 0 ? undefined : offset);
+      const output = twin(result);
+      expect(output.entry.overlaps_with).toEqual(overlaps.slice(offset, offset + 2));
+      expect(output.entry).not.toHaveProperty('descriptionText');
+      expect(output.overlapsPage).toEqual({
+        available: true,
+        total: 5,
+        offset,
+        returned,
+        hasMore,
+        ...(hasMore ? { nextOffset: offset + returned } : {}),
+      });
+      expect(result.structuredContent).toHaveProperty('totalCount', 5);
+      expect(text(result)).toContain('**5 total**');
+      const notice = (result.structuredContent as { notice: string }).notice;
+      expect(notice).toContain('Selected sections:');
+      expect(notice).toContain('includeThumbnail: true');
+      expect(text(result)).toContain(notice);
+      if (hasMore) {
+        const continuation = JSON.parse(
+          notice.match(/Continue with interpro_get_entry (\{[^\n]*\})\./)?.[1] ?? '',
+        );
+        expect(continuation).toEqual({
+          accession: 'PF00870',
+          sourceDatabase: 'pfam',
+          includeThumbnail: false,
+          sections: ['wikipedia', 'overlaps_with'],
+          overlapLimit: 2,
+          overlapOffset: offset + returned,
+        });
+      } else expect(notice).not.toContain('Continue with');
+      if (offset < 5) collected.push(...output.entry.overlaps_with);
+    }
+    expect(collected).toEqual(overlaps);
+    expect(fetch).toHaveBeenCalledTimes(4);
+  });
+  it.each([{}, { overlaps_with: null }, { overlaps_with: [] }])(
+    'preserves overlap sparsity %j with explicit page availability',
+    async (fields) => {
+      network([detail({ ...summary, ...fields }), detail({ ...summary, ...fields })]);
+      const full = twin(await settle(runToolContract(interproGetEntry, { accession: 'PF00870' })));
+      expect(full.entry).toEqual({ ...summary, ...fields });
+      expect(full).not.toHaveProperty('overlapsPage');
+      const paged = await settle(
+        runToolContract(interproGetEntry, {
+          accession: 'PF00870',
+          overlapLimit: Number.MAX_SAFE_INTEGER,
+        }),
+      );
+      const output = twin(paged);
+      expect(output.entry).toEqual({ ...summary, ...fields });
+      expect(output.overlapsPage).toEqual(
+        Array.isArray(fields.overlaps_with)
+          ? { available: true, total: 0, offset: 0, returned: 0, hasMore: false }
+          : { available: false, offset: 0 },
+      );
+      if (Array.isArray(fields.overlaps_with)) {
+        expect(paged.structuredContent).toHaveProperty('totalCount', 0);
+        expect(text(paged)).toContain('**0 total**');
+      } else {
+        expect(paged.structuredContent).not.toHaveProperty('totalCount');
+        expect(text(paged)).not.toMatch(/\*\*\d+ total\*\*/);
+      }
+      expect(text(paged)).toContain((paged.structuredContent as { notice: string }).notice);
+    },
+  );
+  it.each([
+    [{ overlapOffset: 0 }, 'overlap_limit_required'],
+    [{ overlapOffset: 4 }, 'overlap_limit_required'],
+    [{ sections: [] as Array<'description'>, overlapLimit: 1 }, 'overlaps_not_selected'],
+  ] as const)('rejects ambiguous overlap paging %j without requests', async (input, reason) => {
+    const fetch = network([]);
+    const result = await settle(
+      runToolContract(interproGetEntry, { accession: 'PF00870', ...input }),
+    );
+    failure(result, reason, interproGetEntry);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+  it.each([
+    { overlapLimit: 0 },
+    { overlapLimit: -1 },
+    { overlapLimit: 1.5 },
+    { overlapLimit: Number.MAX_SAFE_INTEGER + 1 },
+    { overlapLimit: 1, overlapOffset: -1 },
+    { overlapLimit: 1, overlapOffset: 0.5 },
+    { overlapLimit: 1, overlapOffset: Number.MAX_SAFE_INTEGER + 1 },
+    { sections: ['unknown'] as unknown as z.input<typeof interproGetEntry.input>['sections'] },
+  ])('rejects invalid entry retrieval input %j', async (input) => {
+    const fetch = network([]);
+    const result = await settle(
+      runToolContract(interproGetEntry, { accession: 'PF00870', ...input }),
+    );
+    expect(result.structuredContent).toMatchObject({
+      error: { code: -32602, data: { reason: 'invalid_arguments' } },
+    });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+  it('selects no named sections without manufacturing omissions or description text', async () => {
+    network([detail({ ...summary, description: null, go_terms: null })]);
+    const result = await settle(
+      runToolContract(interproGetEntry, { accession: 'PF00870', sections: [] }),
+    );
+    const output = twin(result);
+    expect(output.entry).toEqual(summary);
+    expect(output.sections).toEqual([]);
+    expect(output.omittedSections).toEqual(['description', 'go_terms']);
+  });
+  it('selects named sections while retaining unknown metadata and raw descriptions', async () => {
+    network([
+      detail({
+        ...summary,
+        description: [{ text: '<p>Kinase</p>', checked: false }],
+        hierarchy: { children: [{ children: [{ accession: 'IPR000001' }] }] },
+        overlaps_with: [{ accession: 'IPR000002' }],
+        wikipedia: { thumbnail: png },
+      }),
+    ]);
+    const result = await settle(
+      runToolContract(interproGetEntry, {
+        accession: 'PF00870',
+        sections: ['description', 'description'],
+      }),
+    );
+    const output = twin(result);
+    expect(output.sections).toEqual(['description']);
+    expect(output.omittedSections).toEqual(['hierarchy', 'wikipedia', 'overlaps_with']);
+    expect(output.entry).toEqual({
+      ...summary,
+      description: [{ text: '<p>Kinase</p>', checked: false }],
+      descriptionText: 'Kinase',
+    });
+    expect(text(result)).toContain((result.structuredContent as { notice: string }).notice);
+  });
   it.each([
     {},
     { description: null },
@@ -859,7 +1090,7 @@ describe('clan contracts', () => {
         expect(text(result)).toContain('Relationships are omitted');
       }
       expect(text(result)).toContain('![Image 1](<data:image/png;base64,iVBORw0KGgoAAA>)');
-      expect(text(result)).toContain('](<https://example.test/wiki?a=1&amp;b=2>)');
+      expect(text(result)).toContain('](<https://example.test/wiki?a=1&b=2>)');
       expect(fetch).toHaveBeenCalledTimes(2);
     },
   );

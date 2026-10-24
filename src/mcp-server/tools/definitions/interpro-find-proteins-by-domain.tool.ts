@@ -38,6 +38,10 @@ const QuerySchema = z.object({
     .boolean()
     .optional()
     .describe('Applied fragment annotation filter; omitted includes both groups.'),
+  architectureId: z
+    .string()
+    .optional()
+    .describe('Applied lowercase Pfam architecture grouping identifier.'),
 });
 const ProteinResultSchema = z
   .object({
@@ -83,12 +87,28 @@ const ProteinResultSchema = z
   })
   .catchall(JsonValueSchema)
   .describe('Complete protein discovery record.');
+const ArchitectureResultSchema = ProteinResultSchema.extend({
+  entries: ProteinResultSchema.shape.entries.optional(),
+  taxa: ProteinResultSchema.shape.taxa.optional(),
+});
+const ArchitectureOutputSchema = ArchitectureResultSchema.extend({
+  detailAvailability: z
+    .object({
+      entries: z
+        .enum(['available', 'unavailable'])
+        .describe('Whether upstream supplied entry records.'),
+      taxa: z
+        .enum(['available', 'unavailable'])
+        .describe('Whether upstream supplied taxon records.'),
+    })
+    .describe('Absent details are unavailable, rather than biologically empty.'),
+}).describe('Complete architecture-filtered protein record with explicit detail availability.');
 
 /** Discover proteins without fetching per-protein metadata. */
 export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_domain', {
   title: 'Find proteins by domain',
   description:
-    'Find UniProt proteins carrying an InterPro or member signature. Defaults to reviewed human proteins; reviewedOnly=false includes reviewed and unreviewed proteins in the chosen taxon. Optional isFragment filters fragment annotations; false does not prove a complete canonical sequence.',
+    'Find UniProt proteins carrying an InterPro or member signature. Defaults to reviewed human proteins; reviewedOnly=false includes all review statuses in the chosen taxon. Optional isFragment filters fragment annotations; false does not prove sequence completeness. architectureId intersects the provider Pfam grouping with these selections, without implying functional equivalence; metadata-only hits disclose unavailable entry and taxon details without per-protein requests.',
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
   auth: ['tool:interpro_find_proteins_by_domain:read'],
   input: z.object({
@@ -116,6 +136,15 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
       .describe(
         'Select fragment annotations: true for fragments, false for proteins not annotated as fragments; omit to include both. False does not establish sequence completeness.',
       ),
+    architectureId: optionalString(
+      z
+        .string()
+        .trim()
+        .regex(/^[a-fA-F0-9]{40}$/)
+        .toLowerCase(),
+    ).describe(
+      'Optional 40-character hexadecimal Pfam architecture grouping ID from protein.ida_accession; grouping does not establish functional equivalence.',
+    ),
     limit: z
       .number()
       .int()
@@ -125,12 +154,22 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
         'Positive integer page size; values above 50 are clamped to 50 with a notice; defaults to 20.',
       ),
     cursor: optionalString(z.string().trim().max(4096)).describe(
-      'Opaque nextCursor with unchanged target, taxonId, reviewedOnly, and isFragment selection; limit may change.',
+      'Opaque nextCursor with unchanged target, taxonId, reviewedOnly, isFragment, and architectureId selection; limit may change.',
     ),
   }),
   output: z.object({
     query: QuerySchema.describe('Applied canonical target and selection, including defaults.'),
-    proteins: z.array(ProteinResultSchema).describe('Complete upstream protein result records.'),
+    proteins: z
+      .array(
+        z
+          .union([ProteinResultSchema, ArchitectureOutputSchema])
+          .describe(
+            'Ordinary protein details or an architecture-filtered record with detail availability.',
+          ),
+      )
+      .describe(
+        'Complete upstream protein records; architecture mode discloses unavailable details.',
+      ),
     page: PageSchema.describe('Page coverage and continuation.'),
     sourceUrl: z.string().describe('Official API source URL.'),
   }),
@@ -208,9 +247,32 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
       taxonId: input.taxonId,
       reviewedOnly: input.reviewedOnly,
       ...(input.isFragment !== undefined ? { isFragment: input.isFragment } : {}),
+      ...(input.architectureId !== undefined ? { architectureId: input.architectureId } : {}),
     };
     const cursor = decodeCursor(input.cursor, 'interpro_find_proteins_by_domain', query);
     const service = getInterproService();
+    const rowSchema = input.architectureId
+      ? ArchitectureResultSchema.refine((row) => {
+          const fields = row.extra_fields;
+          return (
+            !fields ||
+            typeof fields !== 'object' ||
+            Array.isArray(fields) ||
+            fields.ida_id === undefined ||
+            fields.ida_id === null ||
+            fields.ida_id === input.architectureId
+          );
+        }, 'A supplied architecture identifier must match the requested grouping.').transform(
+          (row) =>
+            Object.assign({}, row, {
+              detailAvailability: {
+                entries:
+                  row.entries === undefined ? ('unavailable' as const) : ('available' as const),
+                taxa: row.taxa === undefined ? ('unavailable' as const) : ('available' as const),
+              },
+            }),
+        )
+      : ProteinResultSchema;
     const response = await service.request(
       service.begin(ctx),
       [
@@ -223,8 +285,14 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
         'uniprot',
         query.taxonId,
       ],
-      { page_size: limit, cursor, extra_fields: 'is_fragment', is_fragment: query.isFragment },
-      listSchema(ProteinResultSchema),
+      {
+        page_size: limit,
+        cursor,
+        extra_fields: input.architectureId ? 'is_fragment,ida_id' : 'is_fragment',
+        is_fragment: query.isFragment,
+        ida: input.architectureId,
+      },
+      listSchema(rowSchema),
       {
         continuation: cursor !== undefined,
         missing: {

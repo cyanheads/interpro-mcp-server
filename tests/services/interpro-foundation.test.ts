@@ -199,7 +199,7 @@ describe('lossless formatting', () => {
     const text = formatInterpro(value)[0]?.text ?? '';
     const json = text.match(/`+json\n([\s\S]*?)\n`+/)?.[1];
     expect(JSON.parse(json ?? '')).toEqual(value);
-    expect(text).toContain('[Link 1](<https://example.test/a_(b)?a=1&amp;b=2>)');
+    expect(text).toContain('[Link 1](<https://example.test/a_(b)?a=1&b=2>)');
     expect(text).toContain('![Image 1](<data:image/png;base64,iVBORw0KGgoAAA>)');
   });
   it('converts PNG, JPEG and GIF thumbnails by signature and leaves other strings untouched', () => {

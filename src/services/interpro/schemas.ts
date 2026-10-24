@@ -212,6 +212,17 @@ export const ExtraFeaturesSchema = z.record(
     })
     .catchall(JsonValueSchema),
 );
+/** Separate residue-rule annotations retain complete provenance and location records. */
+export const ResidueAnnotationsSchema = z.record(
+  z.string(),
+  z
+    .object({
+      accession: z.string().describe('Residue rule accession.'),
+      source_database: z.string().describe('Rule source database.'),
+      locations: z.array(LocationSchema).describe('Complete rule locations and residue fragments.'),
+    })
+    .catchall(JsonValueSchema),
+);
 /** Standard list envelope; callers select the operation-specific row schema. */
 export const listSchema = <T extends z.ZodType>(row: T) =>
   z

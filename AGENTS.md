@@ -2,7 +2,7 @@
 
 **Server:** @cyanheads/interpro-mcp-server
 **Version:** 0.1.2
-**Framework:** [@cyanheads/mcp-ts-core](https://www.npmjs.com/package/@cyanheads/mcp-ts-core) `^0.13.15`
+**Framework:** [@cyanheads/mcp-ts-core](https://www.npmjs.com/package/@cyanheads/mcp-ts-core) `^0.13.16`
 **Engines:** Bun ≥1.4.0, Node ≥24.0.0
 **MCP SDK:** `@modelcontextprotocol/server` ^2.3.1
 **Zod:** ^4.6.7
@@ -96,7 +96,7 @@ export const interproGetEntry = tool('interpro_get_entry', {
 });
 ```
 
-There are no resources or prompts and no server-specific environment variables: the InterPro API is keyless. Search/member pages clamp positive integer limits to 100, discovery to 50, with default 20 and composed notices. GO filters require the InterPro source; member recovery follows `member_databases` or `integratedInto`. Discovery requests native `extra_fields.is_fragment` on every page, binds only explicit `isFragment` selections to cursor scope, and preserves unknown status. Entry detail alone adds readable `descriptionText` through the `htmlparser2` streaming tokenizer while preserving raw descriptions and annotation flags.
+There are no resources or prompts and no server-specific environment variables: the InterPro API is keyless. Search/member pages clamp positive integer limits to 100, discovery to 50, with default 20 and composed notices. GO filters require the InterPro source and accept either `goTerm` or `goCategory`, never both; member recovery follows `member_databases` or `integratedInto`. Entry `sections` selects named metadata while retaining core and unknown fields; explicit `overlapLimit` enables whole-record paging. Retained descriptions gain readable `descriptionText` through `htmlparser2`, alongside unchanged raw descriptions and annotation flags. Protein maps append requested residue rules after matches and extra features, preserving complete records and old cursor scopes when the new flag is absent/false. Discovery requests native fragment status on every page; optional `architectureId` adds native IDA grouping and explicit entry/taxon detail availability without inventing missing arrays. Bind only explicit selections to cursor scope and preserve unknown upstream values.
 
 ### Server identity and instructions
 
@@ -295,7 +295,7 @@ When you complete a skill's checklist, check the boxes and add a completion time
 | `bun run changelog:check` | Verify `CHANGELOG.md` is in sync (used by devcheck) |
 | `bun run bundle` | Build, pack, and clean a `.mcpb` for one-click Claude Desktop install |
 
-**Waived `devcheck` warnings.** `bun run devcheck` emits six `format-parity-depth-limit` warnings, for the `…fragments[].start`, `…fragments[].end`, and `…fragments[].dc-status` output fields of `interpro_find_proteins_by_domain` and `interpro_get_protein_domains`. The schema is finite but deeper than the framework's depth-8 parity walker, and tests prove both surfaces render those fields. The owner waived exactly these six, pending [cyanheads/mcp-ts-core#531](https://github.com/cyanheads/mcp-ts-core/issues/531). Don't flatten or weaken the schema, and don't add suppressions to clear them. Any other warning, or a seventh of this kind, still blocks shipping.
+**Waived `devcheck` warnings.** The owner waived `format-parity-depth-limit` for the `…fragments[].start`, `…fragments[].end`, and `…fragments[].dc-status` output fields of `interpro_find_proteins_by_domain` and `interpro_get_protein_domains`, plus discovery's containing path `proteins[].entries[].entry_protein_locations[].fragments[]`. The architecture union moves discovery's three diagnostics to that array, so the current schema emits four warnings. These finite nested records exceed the framework's depth-8 parity walker; tests prove both surfaces retain them, pending [cyanheads/mcp-ts-core#531](https://github.com/cyanheads/mcp-ts-core/issues/531). Don't flatten or weaken the schema or add suppressions. Any warning outside these exact paths still blocks shipping.
 
 **CI is one file.** `.github/workflows/codeql.yml` (scaffolded) is the only GitHub Actions workflow: CodeQL is GitHub-owned end to end, and the file runs only while the repo's CodeQL *default setup* is turned off. Verification — `devcheck`, tests, the release gates — runs locally; don't add a workflow that re-runs it.
 

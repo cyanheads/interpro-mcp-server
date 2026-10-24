@@ -58,9 +58,11 @@ export const interproSearchEntries = tool('interpro_search_entries', {
         .string()
         .trim()
         .regex(/^GO:\d{7}$/),
-    ).describe('GO annotation identifier such as GO:0003677; requires sourceDatabase interpro.'),
+    ).describe(
+      'GO annotation identifier such as GO:0003677; requires sourceDatabase interpro and cannot combine with goCategory.',
+    ),
     goCategory: optionalString(z.enum(['P', 'F', 'C'])).describe(
-      'GO category: P biological process, F molecular function, C cellular component; requires sourceDatabase interpro.',
+      'GO category: P biological process, F molecular function, C cellular component; requires sourceDatabase interpro and cannot combine with goTerm.',
     ),
     integratedInto: optionalString(
       z
@@ -97,6 +99,14 @@ export const interproSearchEntries = tool('interpro_search_entries', {
     effectiveQuery: z.string().optional().describe('Applied filters as JSON.'),
   },
   errors: [
+    {
+      reason: 'incompatible_go_filters',
+      code: JsonRpcErrorCode.ValidationError,
+      when: 'Both goTerm and goCategory are supplied.',
+      retryable: false,
+      recovery:
+        'Search with goTerm alone or goCategory alone; either supports query and entryType filters.',
+    },
     {
       reason: 'go_filters_require_interpro',
       code: JsonRpcErrorCode.ValidationError,
@@ -148,6 +158,8 @@ export const interproSearchEntries = tool('interpro_search_entries', {
         'go_filters_require_interpro',
         'GO filters select InterPro annotations and require sourceDatabase interpro.',
       );
+    if (input.goTerm && input.goCategory)
+      throw ctx.fail('incompatible_go_filters', 'goTerm and goCategory cannot be combined.');
     const limit = Math.min(input.limit, MAX_LIMIT);
     const notices =
       input.limit > limit ? [`Requested limit ${input.limit} was clamped to ${limit}.`] : [];

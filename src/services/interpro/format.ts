@@ -2,7 +2,7 @@
  * @fileoverview Reversible JSON output with usable source URL and image indexes.
  * @module services/interpro/format
  */
-import { markdown } from '@cyanheads/mcp-ts-core/utils';
+import { markdown, markdownImage, markdownLink } from '@cyanheads/mcp-ts-core/utils';
 
 /** Base64 prefixes of the image formats Wikipedia thumbnails arrive in, with their media types. */
 const THUMBNAIL_SIGNATURES = [
@@ -102,31 +102,20 @@ export function formatInterpro(value: unknown): { type: 'text'; text: string }[]
     .replace(/\u2028/g, '\\u2028')
     .replace(/\u2029/g, '\\u2029');
   const output = markdown().codeBlock(json, 'json');
-  /**
-   * CommonMark angle destinations retain parentheses, and entities decode to the original URL.
-   * Whitespace and control characters, which no indexed URL holds, are percent-encoded as a
-   * backstop so no destination can span a line.
-   */
-  const destination = (url: string) =>
-    url
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\\/g, '&#92;')
-      .replace(/[\s\p{Cc}]/gu, encodeURIComponent);
   if (urls.size)
     output
       .raw('\n\nSources and links:\n')
-      .raw(
-        [...urls].map((url, index) => `[Link ${index + 1}](<${destination(url)}>)`).join('\n\n'),
-      );
+      .raw([...urls].map((url, index) => markdownLink(`Link ${index + 1}`, url)).join('\n\n'));
   if (images.size)
-    output
-      .raw('\n\nImages:\n')
-      .raw(
-        [...images]
-          .map((url, index) => `![Image ${index + 1}](<${destination(url)}>)`)
-          .join('\n\n'),
-      );
+    output.raw('\n\nImages:\n').raw(
+      [...images]
+        .map((url, index) =>
+          /** Validated base64 thumbnails intentionally render as images; the framework accepts only HTTP(S). */
+          DATA_IMAGE.test(url)
+            ? `![Image ${index + 1}](<${url}>)`
+            : markdownImage(`Image ${index + 1}`, url),
+        )
+        .join('\n\n'),
+    );
   return [{ type: 'text', text: output.build() }];
 }

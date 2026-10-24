@@ -29,6 +29,7 @@ import {
   optionalString,
   ProteinAccessionSchema,
   ProteinMetadataSchema,
+  ResidueAnnotationsSchema,
 } from '@/services/interpro/schemas.js';
 import { UPSTREAM_ERRORS } from '@/services/interpro/upstream-errors.js';
 
@@ -44,6 +45,10 @@ const SelectionSchema = z.object({
     .optional()
     .describe('Selected 1-based inclusive residue position.'),
   includeExtraFeatures: z.boolean().describe('Whether extra predicted features were requested.'),
+  includeResidueAnnotations: z
+    .literal(true)
+    .optional()
+    .describe('Present only when residue rules were requested.'),
 });
 const CoverageSchema = z.object({
   totalMatches: z
@@ -51,7 +56,7 @@ const CoverageSchema = z.object({
     .int()
     .nonnegative()
     .describe(
-      'Upstream unfiltered total match count; a segment holding only extra features repeats the count the match list reported.',
+      'Upstream unfiltered total match count; extra-feature-only and residue-rule-only segments repeat the count reported by the match list.',
     ),
   scannedMatches: z
     .number()
@@ -77,26 +82,40 @@ const CoverageSchema = z.object({
     .nonnegative()
     .optional()
     .describe('Extra features in this segment; present with extraFeatures.'),
+  totalResidueAnnotations: z
+    .number()
+    .int()
+    .nonnegative()
+    .optional()
+    .describe('Selected residue rules; present only when the residue stage is reached.'),
+  returnedResidueAnnotations: z
+    .number()
+    .int()
+    .nonnegative()
+    .optional()
+    .describe('Whole residue rules returned in this segment.'),
   complete: z
     .boolean()
     .describe(
-      'True only when this call starts without a cursor and returns the whole map: every match and every requested extra feature.',
+      'True only when this call starts without a cursor and returns every match, requested extra feature, and requested residue rule.',
     ),
   hasMore: z
     .boolean()
-    .describe('Whether another segment remains, holding more matches or requested extra features.'),
+    .describe(
+      'Whether another segment remains, holding matches, requested extras, or requested residue rules.',
+    ),
   nextCursor: z
     .string()
     .optional()
     .describe(
-      'Opaque cursor resuming at the next whole match or extra feature, for the same protein and selection.',
+      'Opaque cursor resuming at the next whole match, extra feature, or residue rule for the same protein and selection.',
     ),
 });
 /**
  * Where a continuation resumes: `skip` records into an upstream match page (`page` is that
  * page's upstream cursor, absent for the first page), or `features` selected extra features into
- * the feature list that follows the last match. `after` names the last record an earlier segment
- * covered, so a page or feature list that changed since the cursor was minted is rejected.
+ * the feature list that follows the last match, or `residues` selected rules after the extras.
+ * `after` names the last record an earlier segment covered, so changed lists are rejected.
  */
 const PositionSchema = z.union([
   z
@@ -119,15 +138,25 @@ const PositionSchema = z.union([
     })
     .strict()
     .refine((point) => point.features > 0 === (point.after !== undefined)),
+  z
+    .object({
+      residues: z.number().int().nonnegative(),
+      after: z.string().min(1).optional(),
+      totalMatches: z.number().int().nonnegative(),
+    })
+    .strict()
+    .refine((point) => point.residues > 0 === (point.after !== undefined)),
 ]);
 type Position = z.infer<typeof PositionSchema>;
 type Match = z.infer<typeof MatchSchema>;
 type ExtraFeatures = z.infer<typeof ExtraFeaturesSchema>;
+type ResidueAnnotations = z.infer<typeof ResidueAnnotationsSchema>;
 type Location = z.infer<typeof LocationSchema>;
 /** One whole item of the walk, with the position a continuation resumes at to return it. */
 type Item = { at: Position; scannedBefore: number } & (
   | { kind: 'match'; match: Match }
   | { kind: 'feature'; key: string; feature: ExtraFeatures[string] }
+  | { kind: 'residue'; key: string; rule: ResidueAnnotations[string] }
 );
 
 function contains(locations: readonly Location[], position: number): boolean {
@@ -157,7 +186,7 @@ function byCoordinate(left: Match, right: Match): number {
 export const interproGetProteinDomains = tool('interpro_get_protein_domains', {
   title: 'Map protein domains',
   description:
-    'Retrieve InterPro and member-signature matches on a canonical UniProt protein, preserving every location and discontinuous fragment. Optionally retain matches covering a residue and include extra predicted features. Large maps arrive in segments of whole matches that fit the response budget: the first segment carries the protein metadata, requested extra features follow the last match, and coverage.nextCursor continues until hasMore is false.',
+    'Retrieve InterPro and member-signature matches on a canonical UniProt protein, preserving every location and discontinuous fragment. Optionally select records covering a residue, include extra predicted features, and include functional residue rules with provenance. Budgeted segments hold whole records in order: matches, requested extras, then requested residue rules sorted by key. The first segment carries protein metadata; continue coverage.nextCursor until hasMore is false.',
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
   auth: ['tool:interpro_get_protein_domains:read'],
   input: z.object({
@@ -174,8 +203,14 @@ export const interproGetProteinDomains = tool('interpro_get_protein_domains', {
       .describe(
         'Include complete extra predicted features, returned after the last match; defaults to false.',
       ),
+    includeResidueAnnotations: z
+      .boolean()
+      .default(false)
+      .describe(
+        'Include complete functional residue rules after matches and requested extras; defaults to false.',
+      ),
     cursor: optionalString(z.string().trim().max(4096)).describe(
-      'Opaque coverage.nextCursor with unchanged accession, residuePosition, and includeExtraFeatures.',
+      'Opaque coverage.nextCursor with unchanged accession, residuePosition, includeExtraFeatures, and includeResidueAnnotations.',
     ),
   }),
   output: z.object({
@@ -191,9 +226,14 @@ export const interproGetProteinDomains = tool('interpro_get_protein_domains', {
     extraFeatures: ExtraFeaturesSchema.optional().describe(
       'Whole selected extra features in this segment, in feature-key order; {} when none are selected. Omitted when not requested or when this segment ends before the features that follow the last match.',
     ),
-    selection: SelectionSchema.describe('Applied residue and extra-feature selection.'),
+    residueAnnotations: ResidueAnnotationsSchema.optional().describe(
+      'Whole selected residue rules sorted by key; {} means the stage was reached with no selected rules. Omitted when unrequested or unreached.',
+    ),
+    selection: SelectionSchema.describe(
+      'Applied residue, extra-feature, and residue-rule selection.',
+    ),
     coverage: CoverageSchema.describe(
-      'Where this segment sits in the protein map: every match, then requested extra features.',
+      'Where this segment sits in the protein map: matches, requested extra features, then requested residue rules.',
     ),
     url: z.string().describe('Canonical protein website URL.'),
     sourceUrl: z.string().describe('Official protein API source URL.'),
@@ -216,10 +256,10 @@ export const interproGetProteinDomains = tool('interpro_get_protein_domains', {
     {
       reason: 'retry_deadline_exceeded',
       code: JsonRpcErrorCode.Timeout,
-      when: 'The shared fifty-second budget expires across protein metadata, match pages, and extra features.',
+      when: 'The shared fifty-second budget expires across metadata, match pages, extra features, and residue rules.',
       retryable: true,
       recovery:
-        'Retry interpro_get_protein_domains after waiting; omit extra features when they are not needed.',
+        'Retry interpro_get_protein_domains after waiting; omit optional annotations when they are not needed.',
       thrownBy: 'service',
     },
     {
@@ -274,6 +314,7 @@ export const interproGetProteinDomains = tool('interpro_get_protein_domains', {
     const selection = {
       ...(residue !== undefined ? { residuePosition: residue } : {}),
       includeExtraFeatures: input.includeExtraFeatures,
+      ...(input.includeResidueAnnotations ? { includeResidueAnnotations: true as const } : {}),
     };
     const scope = { accession, ...selection };
     const start = decodePositionCursor(input.cursor, OPERATION, scope, PositionSchema);
@@ -283,6 +324,7 @@ export const interproGetProteinDomains = tool('interpro_get_protein_domains', {
         'Cursor no longer matches the InterPro records it resumes inside.',
       );
     if (start && 'features' in start && !input.includeExtraFeatures) throw stale();
+    if (start && 'residues' in start && !input.includeResidueAnnotations) throw stale();
     const resumed = start !== undefined;
     const covers = (locations: readonly Location[]) =>
       residue === undefined || contains(locations, residue);
@@ -305,11 +347,12 @@ export const interproGetProteinDomains = tool('interpro_get_protein_domains', {
         { accession, proteinLength: protein.length, residuePosition: residue },
       );
 
-    /** Whole candidate items in walk order: every match, then every selected extra feature. */
+    /** Whole candidate items: matches, selected extra features, then selected residue rules. */
     const items: Item[] = [];
     let scanned = 0;
-    let totalMatches = start && 'features' in start ? start.totalMatches : 0;
+    let totalMatches = start && !('skip' in start) ? start.totalMatches : 0;
     let totalFeatures: number | undefined;
+    let totalResidueAnnotations: number | undefined;
     /** Where the walk resumes after the last gathered item; undefined once the walk ends. */
     let end: Position | undefined;
     const segment = (count: number) => {
@@ -317,17 +360,23 @@ export const interproGetProteinDomains = tool('interpro_get_protein_domains', {
       const resume = stop ? stop.at : end;
       const matches: Match[] = [];
       const features: [string, ExtraFeatures[string]][] = [];
+      const residues: [string, ResidueAnnotations[string]][] = [];
       for (const item of items.slice(0, count))
         if (item.kind === 'match') matches.push(item.match);
-        else features.push([item.key, item.feature]);
+        else if (item.kind === 'feature') features.push([item.key, item.feature]);
+        else residues.push([item.key, item.rule]);
       const featureTotal = totalFeatures;
       const reachedFeatures =
-        featureTotal !== undefined && (features.length > 0 || resume === undefined);
+        featureTotal !== undefined &&
+        (features.length > 0 || resume === undefined || 'residues' in resume);
+      const reachedResidues =
+        totalResidueAnnotations !== undefined && (residues.length > 0 || resume === undefined);
       return {
         accession,
         ...(resumed ? {} : { protein }),
         matches: matches.toSorted(byCoordinate),
         ...(reachedFeatures ? { extraFeatures: Object.fromEntries(features) } : {}),
+        ...(reachedResidues ? { residueAnnotations: Object.fromEntries(residues) } : {}),
         selection,
         coverage: {
           totalMatches,
@@ -335,6 +384,9 @@ export const interproGetProteinDomains = tool('interpro_get_protein_domains', {
           returnedMatches: matches.length,
           ...(reachedFeatures
             ? { totalFeatures: featureTotal, returnedFeatures: features.length }
+            : {}),
+          ...(reachedResidues
+            ? { totalResidueAnnotations, returnedResidueAnnotations: residues.length }
             : {}),
           complete: !resumed && resume === undefined,
           hasMore: resume !== undefined,
@@ -390,7 +442,7 @@ export const interproGetProteinDomains = tool('interpro_get_protein_domains', {
         if (read === MAX_PAGES || overflows()) break;
       }
     }
-    if (input.includeExtraFeatures && end === undefined) {
+    if (input.includeExtraFeatures && !(start && 'residues' in start) && end === undefined) {
       // Read extras only when the matches fit beside the cursor that would resume at them.
       end = { features: 0, totalMatches };
       if (!overflows()) {
@@ -427,6 +479,42 @@ export const interproGetProteinDomains = tool('interpro_get_protein_domains', {
         }
       }
     }
+    if (input.includeResidueAnnotations && end === undefined) {
+      end = { residues: 0, totalMatches };
+      if (!overflows()) {
+        end = undefined;
+        const response = await service.request(
+          call,
+          ['protein', 'uniprot', accession],
+          { residues: '' },
+          ResidueAnnotationsSchema,
+        );
+        if (!response.data)
+          throw ctx.fail('upstream_shape_invalid', 'Residue annotation response is missing.');
+        const selected = Object.entries(normalizeImages(response.data))
+          .filter(([, rule]) => covers(rule.locations))
+          .toSorted(([a], [b]) => compareText(a, b));
+        const resumeAt = start && 'residues' in start ? start : undefined;
+        const skip = resumeAt?.residues ?? 0;
+        if (skip > 0 && (skip >= selected.length || selected[skip - 1]?.[0] !== resumeAt?.after))
+          throw stale();
+        totalResidueAnnotations = selected.length;
+        for (let index = skip; index < selected.length; index++) {
+          const [key, rule] = selected[index] as [string, ResidueAnnotations[string]];
+          items.push({
+            kind: 'residue',
+            key,
+            rule,
+            scannedBefore: scanned,
+            at: {
+              residues: index,
+              ...(index ? { after: (selected[index - 1] as [string, unknown])[0] } : {}),
+              totalMatches,
+            },
+          });
+        }
+      }
+    }
 
     const { count, output, oversized } = fitWithinBudget(items.length, segment);
     const { coverage } = output;
@@ -435,8 +523,10 @@ export const interproGetProteinDomains = tool('interpro_get_protein_domains', {
     if (oversized) {
       const only = items[0] as Item;
       const [named, unnamed, id] =
-        only.kind === 'feature'
-          ? ['Extra feature', 'This extra feature', only.key]
+        only.kind !== 'match'
+          ? only.kind === 'feature'
+            ? ['Extra feature', 'This extra feature', only.key]
+            : ['Residue rule', 'This residue rule', only.key]
           : ['Match', 'This match', only.match.metadata.accession];
       notices.push(
         `${isAccession(id) ? `${named} ${id}` : unnamed} cannot be split, so this segment holds it alone and exceeds the ${BUDGET_LABEL}.`,
@@ -444,7 +534,7 @@ export const interproGetProteinDomains = tool('interpro_get_protein_domains', {
     }
     if (coverage.nextCursor) {
       const reason = stop
-        ? ` and stopped at the ${BUDGET_LABEL} before the next whole ${stop.kind === 'match' ? 'match' : 'extra feature'}`
+        ? ` and stopped at the ${BUDGET_LABEL} before the next whole ${stop.kind === 'match' ? 'match' : stop.kind === 'feature' ? 'extra feature' : 'residue rule'}`
         : oversized
           ? ''
           : ` and reached the ${MAX_PAGES}-page read limit after ${coverage.scannedMatches} match records`;
@@ -452,6 +542,7 @@ export const interproGetProteinDomains = tool('interpro_get_protein_domains', {
         accession,
         ...(residue !== undefined ? { residuePosition: residue } : {}),
         ...(input.includeExtraFeatures ? { includeExtraFeatures: true } : {}),
+        ...(input.includeResidueAnnotations ? { includeResidueAnnotations: true } : {}),
         cursor: coverage.nextCursor,
       };
       notices.push(
@@ -460,7 +551,7 @@ export const interproGetProteinDomains = tool('interpro_get_protein_domains', {
     } else if (resumed)
       notices.push(
         'This is the final resumed segment. Only the combined segments cover the traversal; upstream pagination is not a snapshot.' +
-          (coverage.returnedMatches || 'features' in start
+          (coverage.returnedMatches || !('skip' in start)
             ? ''
             : ' No match was selected in this segment.'),
       );
