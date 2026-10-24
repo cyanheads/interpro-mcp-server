@@ -1017,6 +1017,220 @@ describe('protein map segments within the response budget', () => {
 });
 
 describe('entry-scoped protein discovery', () => {
+  it.each([
+    [undefined, 20],
+    [1, 1],
+    [49, 49],
+    [50, 50],
+    [51, 50],
+    [1000000, 50],
+  ])('uses the effective discovery limit for %s', async (requested, expected) => {
+    const fetch = network([page([])]);
+    const result = await settle(
+      runToolContract(discovery, {
+        accession: 'PF00870',
+        ...(requested === undefined ? {} : { limit: requested }),
+      }),
+    );
+    expect(twin(result).page).toEqual({ total: 0, returned: 0, limit: expected, hasMore: false });
+    expect(new URL(fetch.mock.calls[0]?.[0] ?? '').searchParams.get('page_size')).toBe(
+      String(expected),
+    );
+    expect(text(result).includes('was clamped')).toBe(requested !== undefined && requested > 50);
+    expect(text(result)).toContain('No proteins matched');
+    expect(text(result)).not.toContain('omit isFragment');
+  });
+  it.each([undefined, false, true])(
+    'walks three fragment pages with selection %s and binds only explicit filters',
+    async (isFragment) => {
+      const rows = [false, true, null].map((status) => ({
+        metadata: protein,
+        entries: [],
+        taxa: [],
+        extra_fields: { is_fragment: status, unknown: { nested: [null, false] } },
+      }));
+      const fetch = network([
+        page([rows[0]], '?cursor=second', 3),
+        page([rows[1]], '?cursor=third', 3),
+        page([rows[2]], null, 3),
+      ]);
+      const selection = isFragment === undefined ? {} : { isFragment };
+      const first = twin(
+        await settle(runToolContract(discovery, { accession: 'PF00870', ...selection, limit: 1 })),
+      );
+      for (const changed of [undefined, false, true].filter((value) => value !== isFragment)) {
+        const invalid = await settle(
+          runToolContract(discovery, {
+            accession: 'PF00870',
+            ...(changed === undefined ? {} : { isFragment: changed }),
+            cursor: first.page.nextCursor,
+          }),
+        );
+        failure(invalid, 'invalid_cursor', discovery);
+      }
+      expect(fetch).toHaveBeenCalledTimes(1);
+      const second = twin(
+        await settle(
+          runToolContract(discovery, {
+            accession: 'PF00870',
+            ...selection,
+            cursor: first.page.nextCursor,
+            limit: 500,
+          }),
+        ),
+      );
+      const third = twin(
+        await settle(
+          runToolContract(discovery, {
+            accession: 'PF00870',
+            ...selection,
+            cursor: second.page.nextCursor,
+            limit: 50,
+          }),
+        ),
+      );
+      expect([...first.proteins, ...second.proteins, ...third.proteins]).toEqual(rows);
+      expect(third.page).toEqual({ total: 3, returned: 1, limit: 50, hasMore: false });
+      const urls = fetch.mock.calls.map(([url]) => new URL(url));
+      expect(urls.map((url) => url.searchParams.get('cursor'))).toEqual([null, 'second', 'third']);
+      expect(urls.map((url) => url.searchParams.get('extra_fields'))).toEqual([
+        'is_fragment',
+        'is_fragment',
+        'is_fragment',
+      ]);
+      expect(urls.map((url) => url.searchParams.get('is_fragment'))).toEqual(
+        Array(3).fill(isFragment === undefined ? null : String(isFragment)),
+      );
+    },
+  );
+  it.each([
+    undefined,
+    null,
+    {},
+    { other: [false] },
+    { is_fragment: null },
+    { is_fragment: false },
+    { is_fragment: true },
+  ])('preserves sparse native extra fields %j', async (extraFields) => {
+    const row = {
+      metadata: protein,
+      entries: [],
+      taxa: [],
+      ...(extraFields === undefined ? {} : { extra_fields: extraFields }),
+    };
+    network([page([row])]);
+    const output = twin(await settle(runToolContract(discovery, { accession: 'PF00870' })));
+    expect(output.proteins).toEqual([row]);
+  });
+  it.each(['false', 0, [], {}])(
+    'rejects a nonboolean native fragment annotation %j with upstream recovery',
+    async (status) => {
+      const fetch = network([
+        page([{ metadata: protein, entries: [], taxa: [], extra_fields: { is_fragment: status } }]),
+      ]);
+      const result = await settle(runToolContract(discovery, { accession: 'PF00870' }));
+      failure(result, 'upstream_shape_invalid', discovery);
+      expect(fetch).toHaveBeenCalledTimes(1);
+    },
+  );
+  it.each([false, true])(
+    'composes fragment empty selection %s with clamping and continuation',
+    async (isFragment) => {
+      network([page([], '?cursor=next', 3)]);
+      const result = await settle(
+        runToolContract(discovery, { accession: 'PF00870', isFragment, limit: 99 }),
+      );
+      expect(twin(result).query.isFragment).toBe(isFragment);
+      expect(result.structuredContent).toMatchObject({ cap: 50, truncated: true });
+      for (const clause of [
+        'Requested limit 99 was clamped to 50.',
+        'omit isFragment',
+        'page.nextCursor',
+      ])
+        expect(text(result)).toContain(clause);
+      expect(text(result)).not.toContain('limit may rise');
+    },
+  );
+  it.each([0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY, 'many', {}])(
+    'rejects malformed discovery limit %s before requests',
+    async (limit) => {
+      const fetch = network([]);
+      const result = await settle(
+        runToolContract(discovery, { accession: 'PF00870', limit: limit as number }),
+      );
+      expect(result.structuredContent).toMatchObject({
+        error: { code: -32602, data: { reason: 'invalid_arguments' } },
+      });
+      expect(fetch).not.toHaveBeenCalled();
+    },
+  );
+  it.each(['maybe', {}, 0])(
+    'rejects malformed fragment selection %s before requests',
+    async (isFragment) => {
+      const fetch = network([]);
+      const result = await settle(
+        runToolContract(discovery, { accession: 'PF00870', isFragment: isFragment as boolean }),
+      );
+      expect(result.structuredContent).toMatchObject({
+        error: { code: -32602, data: { reason: 'invalid_arguments' } },
+      });
+      expect(text(result)).toContain('isFragment');
+      expect(fetch).not.toHaveBeenCalled();
+    },
+  );
+  it.each([undefined, false, true])(
+    'sends fragment selection %s and requests native fragment status',
+    async (isFragment) => {
+      const row = {
+        metadata: protein,
+        entries: [],
+        taxa: [],
+        extra_fields: { is_fragment: isFragment ?? null, other: [false] },
+      };
+      const fetch = network([page([row], '?cursor=next', 4)]);
+      const result = await settle(
+        runToolContract(discovery, { accession: 'PF00870', isFragment, limit: 51 }),
+      );
+      const output = twin(result);
+      expect(output.proteins).toEqual([row]);
+      expect(output.page).toMatchObject({ total: 4, limit: 50, hasMore: true });
+      if (isFragment === undefined) expect(output.query).not.toHaveProperty('isFragment');
+      else expect(output.query.isFragment).toBe(isFragment);
+      const url = new URL(fetch.mock.calls[0]?.[0] ?? '');
+      expect(url.searchParams.get('extra_fields')).toBe('is_fragment');
+      expect(url.searchParams.get('is_fragment')).toBe(
+        isFragment === undefined ? null : String(isFragment),
+      );
+      expect(result.structuredContent).toMatchObject({
+        cap: 50,
+        notice: expect.stringContaining('Requested limit 51 was clamped to 50.'),
+      });
+      expect(text(result)).toContain('page.nextCursor');
+    },
+  );
+  it('characterizes legacy cursor scope and preserves native unknown fragment fields', async () => {
+    const cursor = encodeCursor(
+      'interpro_find_proteins_by_domain',
+      { accession: 'PF00870', sourceDatabase: 'pfam', taxonId: '9606', reviewedOnly: true },
+      'legacy',
+    );
+    const row = {
+      metadata: protein,
+      entries: [],
+      taxa: [],
+      extra_fields: { is_fragment: null, other: [false] },
+    };
+    const fetch = network([page([row])]);
+    const output = twin(await settle(runToolContract(discovery, { accession: 'PF00870', cursor })));
+    expect(output.query).toEqual({
+      accession: 'PF00870',
+      sourceDatabase: 'pfam',
+      taxonId: '9606',
+      reviewedOnly: true,
+    });
+    expect(output.proteins).toEqual([row]);
+    expect(new URL(fetch.mock.calls[0]?.[0] ?? '').searchParams.get('cursor')).toBe('legacy');
+  });
   const row = {
     metadata: protein,
     entries: [
@@ -1141,7 +1355,7 @@ describe('entry-scoped protein discovery', () => {
     for (const input of [
       { taxonId: 'human' },
       { taxonId: '0' },
-      { limit: 51 },
+      { limit: -1 },
       { limit: 0 },
       { limit: 1.5 },
     ])

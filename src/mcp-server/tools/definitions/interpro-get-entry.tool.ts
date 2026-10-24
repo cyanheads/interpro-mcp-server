@@ -4,6 +4,7 @@
  */
 import { tool, z } from '@cyanheads/mcp-ts-core';
 import { JsonRpcErrorCode } from '@cyanheads/mcp-ts-core/errors';
+import { descriptionText } from '@/services/interpro/description-text.js';
 import {
   formatInterpro,
   normalizeImages,
@@ -14,6 +15,7 @@ import { resolveEntry } from '@/services/interpro/routing.js';
 import {
   AccessionSchema,
   detailSchema,
+  EntryDetailMetadataSchema,
   EntryMetadataSchema,
   optionalString,
   SourceDatabaseSchema,
@@ -44,8 +46,8 @@ export const interproGetEntry = tool('interpro_get_entry', {
   output: z.object({
     accession: z.string().describe('Canonical requested accession.'),
     sourceDatabase: SourceDatabaseSchema,
-    entry: EntryMetadataSchema.describe(
-      'Complete upstream metadata, preserving sparse annotations; Wikipedia thumbnails are omitted unless includeThumbnail is true.',
+    entry: EntryDetailMetadataSchema.describe(
+      'Complete upstream metadata with readable descriptionText, preserving raw description shapes and sparse annotations; Wikipedia thumbnails are omitted unless includeThumbnail is true.',
     ),
     url: z.string().describe('Canonical InterPro website URL.'),
     sourceUrl: z.string().describe('Official API source URL.'),
@@ -122,9 +124,12 @@ export const interproGetEntry = tool('interpro_get_entry', {
       'interpro_get_entry',
     );
     if (notice) ctx.enrich.notice(notice);
+    const readable = descriptionText(metadata.description);
+    const entry = normalizeImages(metadata);
+    if (readable) entry.descriptionText = readable;
     return {
       ...target,
-      entry: normalizeImages(metadata),
+      entry,
       url: `https://www.ebi.ac.uk/interpro/entry/${target.sourceDatabase}/${encodeURIComponent(target.accession)}/`,
       sourceUrl: response.sourceUrl,
     };

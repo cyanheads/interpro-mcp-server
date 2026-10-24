@@ -34,10 +34,28 @@ const QuerySchema = z.object({
   reviewedOnly: z
     .boolean()
     .describe('True restricts to reviewed proteins; false includes all review statuses.'),
+  isFragment: z
+    .boolean()
+    .optional()
+    .describe('Applied fragment annotation filter; omitted includes both groups.'),
 });
 const ProteinResultSchema = z
   .object({
     metadata: ProteinMetadataSchema.describe('Complete sparse protein summary.'),
+    extra_fields: JsonValueSchema.refine((value) => {
+      if (
+        !value ||
+        typeof value !== 'object' ||
+        Array.isArray(value) ||
+        !Object.hasOwn(value, 'is_fragment')
+      )
+        return true;
+      return value.is_fragment === null || typeof value.is_fragment === 'boolean';
+    }, 'A supplied is_fragment annotation must be boolean or null.')
+      .optional()
+      .describe(
+        'Native extra fields preserved verbatim. is_fragment is boolean when supplied, null or absent means unknown, and false means not annotated as a fragment rather than proof of a complete canonical sequence.',
+      ),
     entries: z
       .array(
         z
@@ -70,7 +88,7 @@ const ProteinResultSchema = z
 export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_domain', {
   title: 'Find proteins by domain',
   description:
-    'Find UniProt proteins carrying an InterPro or member signature. Defaults to reviewed human proteins; reviewedOnly=false includes reviewed and unreviewed proteins in the chosen taxon.',
+    'Find UniProt proteins carrying an InterPro or member signature. Defaults to reviewed human proteins; reviewedOnly=false includes reviewed and unreviewed proteins in the chosen taxon. Optional isFragment filters fragment annotations; false does not prove a complete canonical sequence.',
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
   auth: ['tool:interpro_find_proteins_by_domain:read'],
   input: z.object({
@@ -92,15 +110,22 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
       .boolean()
       .default(true)
       .describe('Defaults to reviewed proteins; false includes reviewed and unreviewed proteins.'),
+    isFragment: z
+      .boolean()
+      .optional()
+      .describe(
+        'Select fragment annotations: true for fragments, false for proteins not annotated as fragments; omit to include both. False does not establish sequence completeness.',
+      ),
     limit: z
       .number()
       .int()
       .min(1)
-      .max(MAX_LIMIT)
       .default(20)
-      .describe('Page size from 1 to 50; defaults to 20.'),
+      .describe(
+        'Positive integer page size; values above 50 are clamped to 50 with a notice; defaults to 20.',
+      ),
     cursor: optionalString(z.string().trim().max(4096)).describe(
-      'Opaque nextCursor with unchanged target, taxonId, and reviewedOnly; limit may change.',
+      'Opaque nextCursor with unchanged target, taxonId, reviewedOnly, and isFragment selection; limit may change.',
     ),
   }),
   output: z.object({
@@ -114,7 +139,7 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
     totalCount: z.number().optional().describe('Upstream total matching records.'),
     truncated: z.boolean().optional().describe('More records remain.'),
     shown: z.number().int().optional().describe('Selected records returned.'),
-    cap: z.number().int().optional().describe('Maximum records scanned.'),
+    cap: z.number().int().optional().describe('Effective page size after clamping.'),
     effectiveQuery: z.string().optional().describe('Applied selection as JSON.'),
   },
   errors: [
@@ -175,10 +200,14 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
     },
   ],
   async handler(input, ctx) {
+    const limit = Math.min(input.limit, MAX_LIMIT);
+    const notices =
+      input.limit > limit ? [`Requested limit ${input.limit} was clamped to ${limit}.`] : [];
     const query = {
       ...resolveEntry(input.accession, input.sourceDatabase),
       taxonId: input.taxonId,
       reviewedOnly: input.reviewedOnly,
+      ...(input.isFragment !== undefined ? { isFragment: input.isFragment } : {}),
     };
     const cursor = decodeCursor(input.cursor, 'interpro_find_proteins_by_domain', query);
     const service = getInterproService();
@@ -194,7 +223,7 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
         'uniprot',
         query.taxonId,
       ],
-      { page_size: input.limit, cursor },
+      { page_size: limit, cursor, extra_fields: 'is_fragment', is_fragment: query.isFragment },
       listSchema(ProteinResultSchema),
       {
         continuation: cursor !== undefined,
@@ -211,7 +240,7 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
     const page = {
       total: response.data?.count ?? 0,
       returned: proteins.length,
-      limit: input.limit,
+      limit,
       hasMore: next !== undefined,
       ...(next
         ? { nextCursor: encodeCursor('interpro_find_proteins_by_domain', query, next) }
@@ -219,21 +248,14 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
     };
     ctx.enrich.total(page.total);
     ctx.enrich.echo(JSON.stringify(query));
-    if (next)
-      ctx.enrich.truncated({
-        shown: proteins.length,
-        cap: input.limit,
-        guidance: pageGuidance(
-          'interpro_find_proteins_by_domain',
-          'proteins',
-          input.limit,
-          MAX_LIMIT,
-        ),
-      });
     if (!proteins.length)
-      ctx.enrich.notice(
-        'No proteins matched the applied entry and taxon. Retry interpro_find_proteins_by_domain with reviewedOnly=false or another taxonId; use interpro_get_entry to verify the accession.',
+      notices.push(
+        `No proteins matched the applied entry and selection. Retry interpro_find_proteins_by_domain with reviewedOnly=false or another taxonId${input.isFragment !== undefined ? ', or omit isFragment to include both fragment annotation groups' : ''}; use interpro_get_entry to verify the accession.`,
       );
+    if (next) {
+      notices.push(pageGuidance('interpro_find_proteins_by_domain', 'proteins', limit, MAX_LIMIT));
+      ctx.enrich.truncated({ shown: proteins.length, cap: limit, guidance: notices.join(' ') });
+    } else if (notices.length) ctx.enrich.notice(notices.join(' '));
     return { query, proteins, page, sourceUrl: response.sourceUrl };
   },
   format: formatInterpro,

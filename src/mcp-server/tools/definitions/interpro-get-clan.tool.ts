@@ -107,9 +107,10 @@ export const interproGetClan = tool('interpro_get_clan', {
       .number()
       .int()
       .min(1)
-      .max(MAX_LIMIT)
       .default(20)
-      .describe('Member page size from 1 to 100; defaults to 20.'),
+      .describe(
+        'Positive integer member page size; values above 100 are clamped to 100 with a notice; defaults to 20.',
+      ),
     cursor: optionalString(z.string().trim().max(4096)).describe(
       'Opaque nextCursor with unchanged accession, sourceDatabase, and includeRelationships; limit, relationshipOffset, and includeThumbnail may change.',
     ),
@@ -141,7 +142,7 @@ export const interproGetClan = tool('interpro_get_clan', {
     totalCount: z.number().optional().describe('Total matching members.'),
     truncated: z.boolean().optional().describe('More members remain.'),
     shown: z.number().int().optional().describe('Members returned in this page.'),
-    cap: z.number().int().optional().describe('Requested member page size.'),
+    cap: z.number().int().optional().describe('Effective member page size after clamping.'),
     effectiveQuery: z
       .string()
       .optional()
@@ -213,6 +214,7 @@ export const interproGetClan = tool('interpro_get_clan', {
     ...UPSTREAM_ERRORS,
   ],
   async handler(input, ctx) {
+    const limit = Math.min(input.limit, MAX_LIMIT);
     if (input.relationshipOffset > 0 && !input.includeRelationships)
       throw ctx.fail(
         'relationships_not_requested',
@@ -236,7 +238,7 @@ export const interproGetClan = tool('interpro_get_clan', {
     const response = await service.request(
       call,
       ['entry', target.sourceDatabase, 'set', target.sourceDatabase, target.accession],
-      { page_size: input.limit, cursor },
+      { page_size: limit, cursor },
       listSchema(MemberSchema),
       { continuation: cursor !== undefined },
     );
@@ -251,7 +253,7 @@ export const interproGetClan = tool('interpro_get_clan', {
     const page = {
       total: response.data?.count ?? 0,
       returned: members.length,
-      limit: input.limit,
+      limit,
       hasMore: next !== undefined,
       ...(next ? { nextCursor: encodeCursor('interpro_get_clan', scope, next) } : {}),
     };
@@ -270,7 +272,8 @@ export const interproGetClan = tool('interpro_get_clan', {
       url: `https://www.ebi.ac.uk/interpro/set/${target.sourceDatabase}/${encodeURIComponent(target.accession)}/`,
       sourceUrl: detail.sourceUrl,
     });
-    const notices = [];
+    const notices =
+      input.limit > limit ? [`Requested limit ${input.limit} was clamped to ${limit}.`] : [];
     let output = result(clan);
     if (!input.includeRelationships)
       notices.push(
@@ -298,7 +301,7 @@ export const interproGetClan = tool('interpro_get_clan', {
       if (fit.oversized) {
         const roomier = [
           ...(input.includeThumbnail ? ['includeThumbnail: false'] : []),
-          ...(input.limit > 1 ? ['a smaller limit'] : []),
+          ...(limit > 1 ? ['a smaller limit'] : []),
         ];
         notices.push(
           `The clan metadata and member page leave no room in the ${BUDGET_LABEL}, so this slice holds one item and exceeds it${roomier.length ? `; repeat with ${roomier.join(' or ')} for larger slices` : ''}.`,
@@ -310,12 +313,12 @@ export const interproGetClan = tool('interpro_get_clan', {
           sourceDatabase: target.sourceDatabase,
           includeRelationships: true,
           relationshipOffset: nextOffset,
-          limit: input.limit,
+          limit,
           ...(input.includeThumbnail ? { includeThumbnail: true } : {}),
           ...(input.cursor ? { cursor: input.cursor } : {}),
         };
         notices.push(
-          `This relationship slice holds items ${offset} to ${nextOffset - 1} of ${total}, nodes first, then links (${returnedNodes} of ${totalNodes} nodes, ${returnedLinks} of ${totalLinks} links). Continue with interpro_get_clan ${JSON.stringify(nextCall)}${input.limit > 1 ? '; a smaller limit leaves more of the response budget to each slice' : ''}.`,
+          `This relationship slice holds items ${offset} to ${nextOffset - 1} of ${total}, nodes first, then links (${returnedNodes} of ${totalNodes} nodes, ${returnedLinks} of ${totalLinks} links). Continue with interpro_get_clan ${JSON.stringify(nextCall)}${limit > 1 ? '; a smaller limit leaves more of the response budget to each slice' : ''}.`,
         );
       }
     }
@@ -323,10 +326,10 @@ export const interproGetClan = tool('interpro_get_clan', {
     if (!members.length)
       notices.push('This member page is empty; the clan metadata remains available.');
     if (next) {
-      notices.push(pageGuidance('interpro_get_clan', 'members', input.limit, MAX_LIMIT));
+      notices.push(pageGuidance('interpro_get_clan', 'members', limit, MAX_LIMIT));
       ctx.enrich.truncated({
         shown: members.length,
-        cap: input.limit,
+        cap: limit,
         guidance: notices.join(' '),
       });
     } else if (notices.length) ctx.enrich.notice(notices.join(' '));

@@ -60,14 +60,147 @@ beforeEach(async () => {
 afterEach(() => vi.useRealTimers());
 
 describe('entry search contracts', () => {
-  it('accepts documented GO and integration filters and emits their exact API names', async () => {
+  it.each([
+    'pfam',
+    'prosite',
+    'profile',
+    'smart',
+    'cdd',
+    'panther',
+    'cathgene3d',
+    'ssf',
+    'ncbifam',
+    'hamap',
+    'prints',
+    'pirsf',
+    'sfld',
+    'antifam',
+  ])(
+    'rejects both GO fields in every combination on member database %s',
+    async (sourceDatabase) => {
+      const fetch = network([]);
+      for (const filter of [
+        { goTerm: 'GO:0000976' },
+        { goCategory: 'F' },
+        { goTerm: 'GO:0000976', goCategory: 'F' },
+      ]) {
+        for (const selection of [
+          {},
+          { query: 'kinase' },
+          { entryType: 'domain' },
+          { query: 'kinase', entryType: 'domain', integratedInto: 'IPR011615' },
+        ]) {
+          const result = await settle(
+            runToolContract(interproSearchEntries, { sourceDatabase, ...filter, ...selection }),
+          );
+          failure(result, 'go_filters_require_interpro', interproSearchEntries);
+        }
+      }
+      expect(fetch).not.toHaveBeenCalled();
+    },
+  );
+  it('recovers a GO search through InterPro members and integratedInto without traversal', async () => {
+    const entry = {
+      accession: 'IPR011615',
+      source_database: 'interpro',
+      member_databases: { pfam: { PF00870: 'p53' } },
+    };
+    const fetch = network([
+      list([{ metadata: entry }], '?cursor=go-page2', 2),
+      detail(entry),
+      list([{ metadata: summary }]),
+      list([]),
+    ]);
+    const found = twin(
+      await settle(runToolContract(interproSearchEntries, { goTerm: 'GO:0000976', limit: 1 })),
+    );
+    expect(found.entries).toEqual([entry]);
+    const read = twin(
+      await settle(runToolContract(interproGetEntry, { accession: found.entries[0].accession })),
+    );
+    expect(read.entry.member_databases.pfam).toEqual({ PF00870: 'p53' });
+    const members = twin(
+      await settle(
+        runToolContract(interproSearchEntries, {
+          sourceDatabase: 'pfam',
+          integratedInto: read.accession,
+        }),
+      ),
+    );
+    expect(members.entries).toEqual([summary]);
+    expect(new URL(fetch.mock.calls[2]?.[0] ?? '').searchParams.get('integrated')).toBe(
+      'IPR011615',
+    );
+    const resumed = twin(
+      await settle(
+        runToolContract(interproSearchEntries, {
+          goTerm: 'GO:0000976',
+          cursor: found.page.nextCursor,
+          limit: 1000,
+        }),
+      ),
+    );
+    expect(resumed.page).toEqual({ total: 0, returned: 0, limit: 100, hasMore: false });
+    expect(new URL(fetch.mock.calls[3]?.[0] ?? '').searchParams.get('cursor')).toBe('go-page2');
+    expect(fetch).toHaveBeenCalledTimes(4);
+  });
+  it.each([
+    [undefined, 20],
+    [1, 1],
+    [99, 99],
+    [100, 100],
+    [101, 100],
+    [1000000, 100],
+  ])('uses the effective entry limit for %s', async (requested, expected) => {
+    const fetch = network([list([{ metadata: summary }])]);
+    const result = await settle(
+      runToolContract(interproSearchEntries, requested === undefined ? {} : { limit: requested }),
+    );
+    expect(twin(result).page).toEqual({ total: 1, returned: 1, limit: expected, hasMore: false });
+    expect(new URL(fetch.mock.calls[0]?.[0] ?? '').searchParams.get('page_size')).toBe(
+      String(expected),
+    );
+    if (requested !== undefined && requested > 100)
+      expect(text(result)).toContain(`Requested limit ${requested} was clamped to 100.`);
+    else expect(result.structuredContent).not.toHaveProperty('notice');
+  });
+  it('clamps an oversized entry limit and composes empty continuation guidance', async () => {
+    const fetch = network([list([], '?cursor=next', 5)]);
+    const result = await settle(runToolContract(interproSearchEntries, { limit: 101 }));
+    expect(twin(result).page).toMatchObject({ limit: 100, hasMore: true });
+    expect(new URL(fetch.mock.calls[0]?.[0] ?? '').searchParams.get('page_size')).toBe('100');
+    expect(result.structuredContent).toMatchObject({
+      cap: 100,
+      notice: expect.stringContaining('Requested limit 101 was clamped to 100.'),
+    });
+    expect(text(result)).toContain('No entries matched');
+    expect(text(result)).toContain('page.nextCursor');
+    expect(text(result)).not.toContain('limit may rise');
+  });
+  it('characterizes supported InterPro GO search without adding integration scope', async () => {
+    const fetch = network([list([{ metadata: { ...summary, source_database: 'interpro' } }])]);
+    const output = twin(
+      await settle(
+        runToolContract(interproSearchEntries, { goTerm: 'GO:0003677', goCategory: 'F' }),
+      ),
+    );
+    expect(output.query).toEqual({
+      sourceDatabase: 'interpro',
+      goTerm: 'GO:0003677',
+      goCategory: 'F',
+    });
+    expect(Object.fromEntries(new URL(fetch.mock.calls[0]?.[0] ?? '').searchParams)).toEqual({
+      go_term: 'GO:0003677',
+      go_category: 'F',
+      page_size: '20',
+    });
+  });
+  it('accepts member integration and type filters and emits their exact API names', async () => {
     const fetch = network([list([{ metadata: summary }])]);
     const result = await settle(
       runToolContract(interproSearchEntries, {
         sourceDatabase: 'pfam',
-        goTerm: 'GO:0003677',
         integratedInto: 'IPR011615',
-        goCategory: 'F',
         entryType: 'domain',
       }),
     );
@@ -75,9 +208,7 @@ describe('entry search contracts', () => {
     expect(fetch).toHaveBeenCalledTimes(1);
     const url = new URL(fetch.mock.calls[0]?.[0] ?? '');
     expect(Object.fromEntries(url.searchParams)).toMatchObject({
-      go_term: 'GO:0003677',
       integrated: 'IPR011615',
-      go_category: 'F',
       type: 'domain',
     });
   });
@@ -240,6 +371,59 @@ describe('entry search contracts', () => {
 });
 
 describe('entry metadata contracts', () => {
+  it.each([
+    {},
+    { description: null },
+    { description: [] },
+    { description: '' },
+    { description: [{ text: null, checked: false }, { llm: true }] },
+    { description: '<script>ignored</script><style>ignored</style>' },
+  ])('preserves sparse descriptions %j without inventing text', async (fields) => {
+    network([detail({ ...summary, ...fields })]);
+    const output = twin(await settle(runToolContract(interproGetEntry, { accession: 'PF00870' })));
+    expect(output.entry).toEqual({ ...summary, ...fields });
+    expect(output.entry).not.toHaveProperty('descriptionText');
+  });
+  it.each([true, false])(
+    'projects a raw string description with thumbnail selection %s',
+    async (includeThumbnail) => {
+      const description =
+        '<p>Protein kinase &alpha; &beta; &#x2212; &#176;C</p><p>[[cite:PUB0001]] <a href="https://example.test/IPR000719">IPR000719</a></p>';
+      network([detail({ ...summary, description, wikipedia: { thumbnail: png } })]);
+      const result = await settle(
+        runToolContract(interproGetEntry, { accession: 'PF00870', includeThumbnail }),
+      );
+      const output = twin(result);
+      expect(output.entry.description).toBe(description);
+      expect(output.entry.descriptionText).toBe(
+        'Protein kinase α β − °C\n\n[[cite:PUB0001]] IPR000719',
+      );
+      if (includeThumbnail)
+        expect(output.entry.wikipedia.thumbnail).toBe(`data:image/png;base64,${png}`);
+      else expect(text(result)).toContain('includeThumbnail: true');
+      expect(
+        serverLines(text(result)).some(
+          (line) => line === '[Link 1](<https://example.test/IPR000719>)',
+        ),
+      ).toBe(true);
+    },
+  );
+  it('adds readable fragment text while preserving raw descriptions and annotation flags', async () => {
+    const description = [
+      {
+        text: '<p>α &amp; β [[cite:PUB1]] IPR000719</p><p>Next</p><ul><li>one<ul><li>nested</li></ul></li><li>two</li></ul><table><tr><td>A</td><td>B</td></tr><tr><td>C</td></tr></table><script>secret()</script><style>hidden</style><p onclick="bad()">End',
+        llm: true,
+        checked: false,
+        updated: true,
+      },
+    ];
+    network([detail({ ...summary, description })]);
+    const output = twin(await settle(runToolContract(interproGetEntry, { accession: 'PF00870' })));
+    expect(output.entry.description).toEqual(description);
+    expect(output.entry.descriptionText).toBe(
+      'α & β [[cite:PUB1]] IPR000719\n\nNext\n\n- one\n- nested\n- two\n\nA\tB\nC\n\nEnd',
+    );
+  });
   it('retains complete deep metadata and renders every URL and normalized image', async () => {
     const entry = {
       ...summary,
@@ -563,6 +747,44 @@ describe('withdrawal messages built from upstream 410 text', () => {
 
 describe('clan contracts', () => {
   it.each([
+    [undefined, 20],
+    [1, 1],
+    [99, 99],
+    [100, 100],
+    [101, 100],
+    [1000000, 100],
+  ])('uses the effective member limit for %s', async (requested, expected) => {
+    const fetch = network([detail(clan), list([{ metadata: summary, sets: [] }])]);
+    const result = await settle(
+      runToolContract(interproGetClan, {
+        accession: 'CL0016',
+        ...(requested === undefined ? {} : { limit: requested }),
+      }),
+    );
+    expect(twin(result).page).toEqual({ total: 1, returned: 1, limit: expected, hasMore: false });
+    expect(new URL(fetch.mock.calls[1]?.[0] ?? '').searchParams.get('page_size')).toBe(
+      String(expected),
+    );
+    expect(text(result).includes('was clamped')).toBe(requested !== undefined && requested > 100);
+  });
+  it('clamps an oversized member page and composes omission and empty notices', async () => {
+    const fetch = network([detail(clan), list([], '?cursor=next', 3)]);
+    const result = await settle(
+      runToolContract(interproGetClan, { accession: 'CL0016', limit: 101 }),
+    );
+    expect(twin(result).page).toMatchObject({ limit: 100, hasMore: true });
+    expect(new URL(fetch.mock.calls[1]?.[0] ?? '').searchParams.get('page_size')).toBe('100');
+    for (const clause of [
+      'Requested limit 101 was clamped to 100.',
+      'Relationships are omitted',
+      'Omitted the Wikipedia thumbnail',
+      'member page is empty',
+      'page.nextCursor',
+    ])
+      expect(text(result)).toContain(clause);
+    expect(result.structuredContent).toMatchObject({ cap: 100 });
+  });
+  it.each([
     ['Cl0016', undefined, 'accession_source_unknown', 'pfam', 'CL0016'],
     ['Cl0016', undefined, 'accession_source_unknown', 'cdd', 'cl0016'],
     ['CL0016', 'pirsf', 'database_mismatch', 'pfam', 'CL0016'],
@@ -815,6 +1037,76 @@ describe('clan contracts', () => {
 });
 
 describe('clan relationship slices', () => {
+  it('keeps clamped member limits within the graph budget across resumed and past-end slices', async () => {
+    const nodes = Array.from({ length: 1200 }, (_, index) => ({
+      accession: `PF${String(index).padStart(5, '0')}`,
+      name: 'Domain α '.repeat(12),
+    }));
+    const relationships = { nodes, links: [] };
+    const fetch = network(
+      Array.from({ length: 3 }, (_, index) => [
+        detail({ ...clan, relationships }),
+        list([], `?cursor=members-${index + 1}`, 10),
+      ]).flat(),
+    );
+    const first = await settle(
+      runToolContract(interproGetClan, {
+        accession: 'CL0016',
+        includeRelationships: true,
+        limit: 1000,
+      }),
+    );
+    const output = twin(first);
+    expect(Buffer.byteLength(JSON.stringify(output))).toBeLessThanOrEqual(100000);
+    expect(output.page.limit).toBe(100);
+    expect(output.relationshipsPage.hasMore).toBe(true);
+    expect(output.clan.relationships.nodes).toEqual(
+      nodes.slice(0, output.relationshipsPage.nextOffset),
+    );
+    const notice = (first.structuredContent as { notice: string }).notice;
+    for (const clause of [
+      'Requested limit 1000 was clamped to 100.',
+      'relationshipOffset',
+      '"limit":100',
+      'page.nextCursor',
+      'Omitted the Wikipedia thumbnail',
+    ])
+      expect(notice).toContain(clause);
+    const second = twin(
+      await settle(
+        runToolContract(interproGetClan, {
+          accession: 'CL0016',
+          includeRelationships: true,
+          limit: 999,
+          cursor: output.page.nextCursor,
+          relationshipOffset: output.relationshipsPage.nextOffset,
+        }),
+      ),
+    );
+    expect(Buffer.byteLength(JSON.stringify(second))).toBeLessThanOrEqual(100000);
+    expect(second.clan.relationships.nodes[0]).toEqual(nodes[output.relationshipsPage.nextOffset]);
+    const past = await settle(
+      runToolContract(interproGetClan, {
+        accession: 'CL0016',
+        includeRelationships: true,
+        limit: 101,
+        relationshipOffset: 2000,
+      }),
+    );
+    expect(twin(past).clan.relationships).toEqual({ nodes: [], links: [] });
+    for (const clause of [
+      'Requested limit 101 was clamped to 100.',
+      'relationshipOffset 2000 is past the end',
+      'member page is empty',
+      'page.nextCursor',
+    ])
+      expect(text(past)).toContain(clause);
+    expect(
+      fetch.mock.calls
+        .filter(([url]) => new URL(url).pathname.startsWith('/interpro/api/entry/'))
+        .map(([url]) => new URL(url).searchParams.get('page_size')),
+    ).toEqual(['100', '100', '100']);
+  });
   const BUDGET = 100_000;
   const bytes = (value: unknown) => Buffer.byteLength(JSON.stringify(value), 'utf8');
   type GraphNode = { accession: string } & Record<string, unknown>;
@@ -1252,6 +1544,25 @@ describe('clan relationship slices', () => {
 });
 
 describe('local routing and schema failures', () => {
+  it.each([0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY, 'many', {}])(
+    'rejects malformed limit %s on every paged entry tool before requests',
+    async (limit) => {
+      const fetch = network([]);
+      for (const [definition, input] of [
+        [interproSearchEntries, {}],
+        [interproGetClan, { accession: 'CL0016' }],
+      ] as const) {
+        const result = await settle(
+          runToolContract(definition, { ...input, limit: limit as number }),
+        );
+        expect(result.structuredContent).toMatchObject({
+          error: { code: -32602, data: { reason: 'invalid_arguments' } },
+        });
+        expect(text(result)).toContain('limit');
+      }
+      expect(fetch).not.toHaveBeenCalled();
+    },
+  );
   it.each([
     [400, 'upstream_rejected', 1],
     [501, 'upstream_unavailable', 1],

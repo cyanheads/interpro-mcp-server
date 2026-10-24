@@ -1,6 +1,6 @@
 # interpro-mcp-server - Directory Structure
 
-Generated on: 2026-10-21 07:41:17
+Generated on: 2026-10-24 07:49:29
 
 ```text
 interpro-mcp-server/
@@ -151,6 +151,7 @@ interpro-mcp-server/
 │   │   └── interpro/
 │   │       ├── budget.ts
 │   │       ├── cursors.ts
+│   │       ├── description-text.ts
 │   │       ├── format.ts
 │   │       ├── http-adapter.ts
 │   │       ├── interpro-service.ts
@@ -167,6 +168,7 @@ interpro-mcp-server/
 │   ├── resources/
 │   ├── services/
 │   │   ├── interpro-budget.test.ts
+│   │   ├── interpro-description-text.test.ts
 │   │   ├── interpro-foundation.test.ts
 │   │   └── interpro-http-adapter.test.ts
 │   ├── smoke/

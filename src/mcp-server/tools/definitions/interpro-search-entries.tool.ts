@@ -42,7 +42,7 @@ const RowSchema = z
 export const interproSearchEntries = tool('interpro_search_entries', {
   title: 'Search InterPro entries',
   description:
-    'Search InterPro entries or member signatures by text, entry type, GO annotation, or integrated InterPro accession. Results are cursor-paged; use interpro_get_entry for full metadata.',
+    'Search InterPro entries or member signatures by text or entry type. GO filters require sourceDatabase interpro; integratedInto selects member signatures for an InterPro accession. Results are cursor-paged; use interpro_get_entry for full metadata.',
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
   auth: ['tool:interpro_search_entries:read'],
   input: z.object({
@@ -58,9 +58,9 @@ export const interproSearchEntries = tool('interpro_search_entries', {
         .string()
         .trim()
         .regex(/^GO:\d{7}$/),
-    ).describe('GO annotation identifier such as GO:0003677.'),
+    ).describe('GO annotation identifier such as GO:0003677; requires sourceDatabase interpro.'),
     goCategory: optionalString(z.enum(['P', 'F', 'C'])).describe(
-      'GO category: P biological process, F molecular function, C cellular component.',
+      'GO category: P biological process, F molecular function, C cellular component; requires sourceDatabase interpro.',
     ),
     integratedInto: optionalString(
       z
@@ -72,9 +72,10 @@ export const interproSearchEntries = tool('interpro_search_entries', {
       .number()
       .int()
       .min(1)
-      .max(MAX_LIMIT)
       .default(20)
-      .describe('Page size, from 1 to 100; defaults to 20.'),
+      .describe(
+        'Positive integer page size; values above 100 are clamped to 100 with a notice; defaults to 20.',
+      ),
     cursor: optionalString(z.string().trim().max(4096)).describe(
       'Opaque nextCursor from this tool with unchanged filters; limit may change.',
     ),
@@ -92,10 +93,18 @@ export const interproSearchEntries = tool('interpro_search_entries', {
     totalCount: z.number().optional().describe('Upstream total matching records.'),
     truncated: z.boolean().optional().describe('More records remain.'),
     shown: z.number().int().optional().describe('Records returned in this page.'),
-    cap: z.number().int().optional().describe('Requested page size.'),
+    cap: z.number().int().optional().describe('Effective page size after clamping.'),
     effectiveQuery: z.string().optional().describe('Applied filters as JSON.'),
   },
   errors: [
+    {
+      reason: 'go_filters_require_interpro',
+      code: JsonRpcErrorCode.ValidationError,
+      when: 'goTerm or goCategory is supplied for a member sourceDatabase.',
+      retryable: false,
+      recovery:
+        "Search interpro_search_entries with sourceDatabase interpro and the GO filter, then read each result's member_databases with interpro_get_entry or search the member database with integratedInto set to that InterPro accession.",
+    },
     {
       reason: 'database_mismatch',
       code: JsonRpcErrorCode.ValidationError,
@@ -134,6 +143,14 @@ export const interproSearchEntries = tool('interpro_search_entries', {
     ...UPSTREAM_ERRORS,
   ],
   async handler(input, ctx) {
+    if (input.sourceDatabase !== 'interpro' && (input.goTerm || input.goCategory))
+      throw ctx.fail(
+        'go_filters_require_interpro',
+        'GO filters select InterPro annotations and require sourceDatabase interpro.',
+      );
+    const limit = Math.min(input.limit, MAX_LIMIT);
+    const notices =
+      input.limit > limit ? [`Requested limit ${input.limit} was clamped to ${limit}.`] : [];
     if (input.integratedInto && input.sourceDatabase === 'interpro')
       throw ctx.fail('database_mismatch', 'integratedInto requires a member sourceDatabase.');
     const query = {
@@ -155,7 +172,7 @@ export const interproSearchEntries = tool('interpro_search_entries', {
         go_term: query.goTerm,
         go_category: query.goCategory,
         integrated: query.integratedInto,
-        page_size: input.limit,
+        page_size: limit,
         cursor,
       },
       listSchema(RowSchema),
@@ -166,18 +183,12 @@ export const interproSearchEntries = tool('interpro_search_entries', {
     const page = {
       total: response.data?.count ?? 0,
       returned: entries.length,
-      limit: input.limit,
+      limit,
       hasMore: next !== undefined,
       ...(next ? { nextCursor: encodeCursor('interpro_search_entries', query, next) } : {}),
     };
     ctx.enrich.total(page.total);
     ctx.enrich.echo(JSON.stringify(query));
-    if (next)
-      ctx.enrich.truncated({
-        shown: entries.length,
-        cap: input.limit,
-        guidance: pageGuidance('interpro_search_entries', 'entries', input.limit, MAX_LIMIT),
-      });
     if (!entries.length) {
       const memberText =
         input.sourceDatabase === 'interpro' &&
@@ -185,13 +196,17 @@ export const interproSearchEntries = tool('interpro_search_entries', {
         ENTRY_ROUTES.some(
           (route) => route.source !== 'interpro' && route.pattern.test(input.query ?? ''),
         );
-      ctx.enrich.notice(
+      notices.push(
         'No entries matched the applied filters. Remove query, entryType, goTerm, goCategory, or integratedInto filters that are present; call interpro_list_reference with topic databases to check sourceDatabase.' +
           (memberText
             ? ' Use interpro_get_entry with the accession to infer its member database.'
             : ''),
       );
     }
+    if (next) {
+      notices.push(pageGuidance('interpro_search_entries', 'entries', limit, MAX_LIMIT));
+      ctx.enrich.truncated({ shown: entries.length, cap: limit, guidance: notices.join(' ') });
+    } else if (notices.length) ctx.enrich.notice(notices.join(' '));
     return { query, entries, page, sourceUrl: response.sourceUrl };
   },
   format: formatInterpro,

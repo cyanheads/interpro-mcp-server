@@ -124,6 +124,15 @@ export const EntryMetadataSchema = z
       .describe('Detail name object.'),
   })
   .catchall(JsonValueSchema);
+/** Detail-only output adds readable text without changing upstream description fields. */
+export const EntryDetailMetadataSchema = EntryMetadataSchema.extend({
+  descriptionText: z
+    .string()
+    .optional()
+    .describe(
+      'Readable description text decoded from source HTML fragments; absent without textual content.',
+    ),
+});
 /** Complete location fragments retain discontinuity and arbitrary annotations. */
 export const LocationSchema = z
   .object({
@@ -220,7 +229,11 @@ export const detailSchema = <T extends z.ZodType>(metadata: T) =>
 export const PageSchema = z.object({
   total: z.number().int().nonnegative().describe('Upstream total records.'),
   returned: z.number().int().nonnegative().describe('Records returned in this page.'),
-  limit: z.number().int().positive().describe('Requested page size.'),
+  limit: z
+    .number()
+    .int()
+    .positive()
+    .describe('Effective page size after clamping to the tool maximum.'),
   hasMore: z.boolean().describe('Whether upstream advertises continuation.'),
   nextCursor: z
     .string()

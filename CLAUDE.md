@@ -96,7 +96,7 @@ export const interproGetEntry = tool('interpro_get_entry', {
 });
 ```
 
-There are no resources or prompts and no server-specific environment variables: the InterPro API is keyless and every limit is fixed in `src/services/interpro/`.
+There are no resources or prompts and no server-specific environment variables: the InterPro API is keyless. Search/member pages clamp positive integer limits to 100, discovery to 50, with default 20 and composed notices. GO filters require the InterPro source; member recovery follows `member_databases` or `integratedInto`. Discovery requests native `extra_fields.is_fragment` on every page, binds only explicit `isFragment` selections to cursor scope, and preserves unknown status. Entry detail alone adds readable `descriptionText` through the `htmlparser2` streaming tokenizer while preserving raw descriptions and annotation flags.
 
 ### Server identity and instructions
 
@@ -193,6 +193,7 @@ src/
       relationships.ts                  # Clan relationship-graph slicing
       reference.ts                      # Static vocabulary for interpro_list_reference
       format.ts                         # Shared content[] formatter
+      description-text.ts               # Readable HTML fragment projection for entry detail
       upstream-errors.ts                # Shared upstream error contract rows
   mcp-server/
     tools/definitions/

@@ -7,7 +7,7 @@
 
 <div align="center">
 
-[![Version](https://img.shields.io/badge/Version-0.1.1-blue.svg?style=flat-square)](./CHANGELOG.md) [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg?style=flat-square)](./LICENSE) [![Docker](https://img.shields.io/badge/Docker-ghcr.io-2496ED?style=flat-square&logo=docker&logoColor=white)](https://github.com/users/cyanheads/packages/container/package/interpro-mcp-server) [![MCP SDK](https://img.shields.io/badge/MCP%20SDK-^2.3.1-green.svg?style=flat-square)](https://modelcontextprotocol.io/) [![npm](https://img.shields.io/npm/v/@cyanheads/interpro-mcp-server?style=flat-square&logo=npm&logoColor=white)](https://www.npmjs.com/package/@cyanheads/interpro-mcp-server) [![TypeScript](https://img.shields.io/badge/TypeScript-^7.0.2-3178C6.svg?style=flat-square)](https://www.typescriptlang.org/) [![Bun](https://img.shields.io/badge/Bun-v1.4.3-blueviolet.svg?style=flat-square)](https://bun.sh/)
+[![Version](https://img.shields.io/badge/Version-0.1.1-blue.svg?style=flat-square)](./CHANGELOG.md) [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg?style=flat-square)](./LICENSE) [![Docker](https://img.shields.io/badge/Docker-ghcr.io-2496ED?style=flat-square&logo=docker&logoColor=white)](https://github.com/users/cyanheads/packages/container/package/interpro-mcp-server) [![MCP SDK](https://img.shields.io/badge/MCP%20SDK-^2.3.1-green.svg?style=flat-square)](https://modelcontextprotocol.io/) [![npm](https://img.shields.io/npm/v/@cyanheads/interpro-mcp-server?style=flat-square&logo=npm&logoColor=white)](https://www.npmjs.com/package/@cyanheads/interpro-mcp-server) [![TypeScript](https://img.shields.io/badge/TypeScript-^7.0.2-3178C6.svg?style=flat-square)](https://www.typescriptlang.org/) [![Bun](https://img.shields.io/badge/Bun-v1.4.4-blueviolet.svg?style=flat-square)](https://bun.sh/)
 
 </div>
 
@@ -19,17 +19,23 @@
 
 </div>
 
+<div align="center">
+
+**Public Hosted Server:** [https://interpro.caseyjhand.com/mcp](https://interpro.caseyjhand.com/mcp)
+
+</div>
+
 ---
 
 ## Overview
 
-Protein families, domains, repeats, and functional sites from [InterPro](https://www.ebi.ac.uk/interpro/) and the member databases it integrates (Pfam, PROSITE, SMART, CDD, PANTHER, and others), read through the keyless EMBL-EBI InterPro API. Search entries, read their full metadata, map a UniProt protein's annotations to residue coordinates, walk Pfam, CDD, and PIRSF clans, and find proteins that carry a signature. Runs over STDIO or Streamable HTTP, with no credentials to configure.
+Protein families, domains, repeats, and functional sites from [InterPro](https://www.ebi.ac.uk/interpro/) and the member databases it integrates (Pfam, PROSITE, SMART, CDD, PANTHER, and others), read through the keyless EMBL-EBI InterPro API. Search entries, read their full metadata, map a UniProt protein's annotations to residue coordinates, walk Pfam, CDD, and PIRSF clans, and find proteins that carry a signature. Runs over STDIO, Streamable HTTP, or the public hosted endpoint above, with no credentials to configure.
 
 ### Tools
 
 | Tool | Description |
 |:---|:---|
-| `interpro_search_entries` | Find InterPro entries or member signatures by text, entry type, GO annotation, or integrating InterPro accession |
+| `interpro_search_entries` | Find InterPro entries by GO annotation, or InterPro entries and member signatures by text, entry type, or integrating accession |
 | `interpro_get_entry` | Read one entry's description, hierarchy, member signatures, GO terms, literature, cross-references, clan membership, and coverage counters |
 | `interpro_get_protein_domains` | Map a UniProt protein's domains, families, repeats, and functional sites to sequence coordinates, optionally at one residue |
 | `interpro_get_clan` | Read a Pfam, CDD, or PIRSF set and page through its members, optionally with its relationship graph |
@@ -41,7 +47,8 @@ Protein families, domains, repeats, and functional sites from [InterPro](https:/
 ### `interpro_search_entries` <sub>tool</sub>
 
 - `sourceDatabase` (default `interpro`) plus optional `query` (1-300 characters), `entryType`, `goTerm` (`GO:0003677` form), `goCategory` (`P`, `F`, `C`), and `integratedInto` (an `IPR` accession, member databases only); no filter is required, so omitting all of them browses the database
-- Cursor-paged, `limit` 1-100 (default 20); returns `entries`, `page` (`total`, `returned`, `hasMore`, `nextCursor`), and the applied `query`
+- `goTerm` and `goCategory` require `sourceDatabase: "interpro"`. For member signatures, search InterPro with the GO filter, then read `member_databases` with `interpro_get_entry` or search the member database with `integratedInto` set to the matching InterPro accession
+- Cursor-paged, positive integer `limit` capped at 100 (default 20); larger requests are clamped with a notice. Returns `entries`, `page` (`total`, `returned`, `limit`, `hasMore`, `nextCursor`), and the applied `query`; `page.limit` is the effective page size
 
 ---
 
@@ -49,6 +56,7 @@ Protein families, domains, repeats, and functional sites from [InterPro](https:/
 
 - `accession` required; `sourceDatabase` is inferred from standard accession prefixes when omitted. A set accession (`CL…`) fails as `entry_not_found` and points to `interpro_get_clan`
 - Wikipedia thumbnails are omitted unless `includeThumbnail: true`, and a notice reports what was left out
+- `entry.descriptionText` adds readable text with paragraph, list, and table boundaries alongside the unchanged source `entry.description`, including its HTML and annotation flags. It is omitted when no readable text is supplied
 - A withdrawn record fails as `entry_withdrawn` with its deletion date and short name
 
 ---
@@ -63,7 +71,7 @@ Protein families, domains, repeats, and functional sites from [InterPro](https:/
 
 ### `interpro_get_clan` <sub>tool</sub>
 
-- `accession` for a Pfam (`CL0016`), CDD (`cl21453`), or PIRSF (`PIRSF000047`) set, with `sourceDatabase` (`pfam`, `cdd`, `pirsf`) inferred from the prefix; members page by `cursor`, `limit` 1-100 (default 20)
+- `accession` for a Pfam (`CL0016`), CDD (`cl21453`), or PIRSF (`PIRSF000047`) set, with `sourceDatabase` (`pfam`, `cdd`, `pirsf`) inferred from the prefix; members page by `cursor`, with positive integer `limit` capped at 100 (default 20). Larger requests are clamped with a notice; `page.limit` reports the effective size
 - `includeRelationships: true` adds the relationship graph in slices that fit the response budget; `relationshipsPage.nextOffset` goes back in as `relationshipOffset`, which needs `includeRelationships` set
 - `includeThumbnail` works as on `interpro_get_entry`; a missing set is `clan_not_found`
 
@@ -72,7 +80,8 @@ Protein families, domains, repeats, and functional sites from [InterPro](https:/
 ### `interpro_find_proteins_by_domain` <sub>tool</sub>
 
 - `accession` plus optional `sourceDatabase`; `taxonId` (NCBI, default `9606`) and `reviewedOnly` (default `true`; `false` covers reviewed and unreviewed proteins) are echoed in `query`
-- Cursor-paged, `limit` 1-50 (default 20); each result keeps the protein summary, matched entry locations, and taxon lineage
+- Optional `isFragment` selects proteins annotated as fragments (`true`) or not annotated as fragments (`false`); omit it to include both. False does not establish sequence completeness. Explicit selections appear in `query` and must stay unchanged when following cursors
+- Cursor-paged, positive integer `limit` capped at 50 (default 20); larger requests are clamped with a notice, and `page.limit` is the effective size. Each result keeps the protein summary, matched entry locations, taxon lineage, and native `extra_fields.is_fragment` annotation; missing or null status remains unknown
 - No hits is a success with a notice, since the API answers an unknown entry, an unknown taxon, and an empty intersection the same way
 
 ---
@@ -101,6 +110,23 @@ Agent-friendly output:
 - Coordinates describe sequence annotation, not pathogenicity or clinical significance
 
 ## Getting started
+
+### Public Hosted Instance
+
+A public instance is available at `https://interpro.caseyjhand.com/mcp` — no installation required. Point any MCP client at it via Streamable HTTP:
+
+```json
+{
+  "mcpServers": {
+    "interpro-mcp-server": {
+      "type": "streamable-http",
+      "url": "https://interpro.caseyjhand.com/mcp"
+    }
+  }
+}
+```
+
+### Self-Hosted / Local
 
 Add the following to your MCP client configuration file. No API key is needed.
 
