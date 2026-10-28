@@ -178,6 +178,13 @@ export const ProteinMetadataSchema = z
       .catchall(JsonValueSchema)
       .optional()
       .describe('Source organism.'),
+    proteome: z
+      .string()
+      .nullable()
+      .optional()
+      .describe(
+        'UniProt proteome accession, such as UP000000625; pass it as interpro_find_proteins_by_domain proteomeId with taxonId set to source_organism.taxId or an ancestor. Null when the protein belongs to no proteome.',
+      ),
   })
   .catchall(JsonValueSchema);
 /** Protein match rows retain complete nested source records. */

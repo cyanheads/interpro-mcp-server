@@ -42,7 +42,18 @@ const QuerySchema = z.object({
     .string()
     .optional()
     .describe('Applied lowercase Pfam architecture grouping identifier.'),
+  proteomeId: z.string().optional().describe('Applied uppercase UniProt proteome accession.'),
 });
+const ProteomesSchema = z
+  .array(
+    z
+      .object({
+        accession: z.string().describe('Proteome accession as upstream writes it, lowercase.'),
+      })
+      .catchall(JsonValueSchema)
+      .describe('Complete proteome record.'),
+  )
+  .describe('Complete records of the selected proteome, preserved verbatim.');
 const ProteinResultSchema = z
   .object({
     metadata: ProteinMetadataSchema.describe('Complete sparse protein summary.'),
@@ -87,19 +98,25 @@ const ProteinResultSchema = z
   })
   .catchall(JsonValueSchema)
   .describe('Complete protein discovery record.');
+const ProteomeResultSchema = ProteinResultSchema.extend({ proteomes: ProteomesSchema }).describe(
+  'Complete proteome-filtered protein discovery record.',
+);
 const ArchitectureResultSchema = ProteinResultSchema.extend({
   entries: ProteinResultSchema.shape.entries.optional(),
   taxa: ProteinResultSchema.shape.taxa.optional(),
+  proteomes: ProteomesSchema.optional(),
 });
+const Availability = z.enum(['available', 'unavailable']);
+const availability = (details: unknown[] | undefined): z.infer<typeof Availability> =>
+  details === undefined ? 'unavailable' : 'available';
 const ArchitectureOutputSchema = ArchitectureResultSchema.extend({
   detailAvailability: z
     .object({
-      entries: z
-        .enum(['available', 'unavailable'])
-        .describe('Whether upstream supplied entry records.'),
-      taxa: z
-        .enum(['available', 'unavailable'])
-        .describe('Whether upstream supplied taxon records.'),
+      entries: Availability.describe('Whether upstream supplied entry records.'),
+      taxa: Availability.describe('Whether upstream supplied taxon records.'),
+      proteomes: Availability.optional().describe(
+        'Whether upstream supplied proteome records; present only when proteomeId is set.',
+      ),
     })
     .describe('Absent details are unavailable, rather than biologically empty.'),
 }).describe('Complete architecture-filtered protein record with explicit detail availability.');
@@ -108,7 +125,7 @@ const ArchitectureOutputSchema = ArchitectureResultSchema.extend({
 export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_domain', {
   title: 'Find proteins by domain',
   description:
-    'Find UniProt proteins carrying an InterPro or member signature. Defaults to reviewed human proteins; reviewedOnly=false includes all review statuses in the chosen taxon. Optional isFragment filters fragment annotations; false does not prove sequence completeness. architectureId intersects the provider Pfam grouping with these selections, without implying functional equivalence; metadata-only hits disclose unavailable entry and taxon details without per-protein requests.',
+    'Find UniProt proteins carrying an InterPro or member signature. Defaults to reviewed human proteins; reviewedOnly=false includes all review statuses in the chosen taxon. Optional isFragment filters fragment annotations; false does not prove sequence completeness. architectureId intersects the provider Pfam grouping with these selections, without implying functional equivalence; metadata-only hits disclose unavailable entry and taxon details without per-protein requests. proteomeId intersects one UniProt proteome, such as protein.proteome from interpro_get_protein_domains, with every selection including taxonId.',
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
   auth: ['tool:interpro_find_proteins_by_domain:read'],
   input: z.object({
@@ -145,6 +162,16 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
     ).describe(
       'Optional 40-character hexadecimal Pfam architecture grouping ID from protein.ida_accession; grouping does not establish functional equivalence.',
     ),
+    proteomeId: optionalString(
+      z
+        .string()
+        .trim()
+        .max(11)
+        .regex(/^[Uu][Pp][0-9]{9}$/)
+        .toUpperCase(),
+    ).describe(
+      'Optional UniProt proteome accession, UP followed by 9 digits, such as protein.proteome from interpro_get_protein_domains. taxonId still applies, including its 9606 default: set taxonId to the mapped protein.source_organism.taxId or an ancestor, or no proteins match.',
+    ),
     limit: z
       .number()
       .int()
@@ -154,7 +181,7 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
         'Positive integer page size; values above 50 are clamped to 50 with a notice; defaults to 20.',
       ),
     cursor: optionalString(z.string().trim().max(4096)).describe(
-      'Opaque nextCursor with unchanged target, taxonId, reviewedOnly, isFragment, and architectureId selection; limit may change.',
+      'Opaque nextCursor with unchanged target, taxonId, reviewedOnly, isFragment, architectureId, and proteomeId selection; limit may change.',
     ),
   }),
   output: z.object({
@@ -162,9 +189,9 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
     proteins: z
       .array(
         z
-          .union([ProteinResultSchema, ArchitectureOutputSchema])
+          .union([ProteinResultSchema, ProteomeResultSchema, ArchitectureOutputSchema])
           .describe(
-            'Ordinary protein details or an architecture-filtered record with detail availability.',
+            'Ordinary protein details, with proteome records when proteomeId is set, or an architecture-filtered record with detail availability.',
           ),
       )
       .describe(
@@ -248,6 +275,7 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
       reviewedOnly: input.reviewedOnly,
       ...(input.isFragment !== undefined ? { isFragment: input.isFragment } : {}),
       ...(input.architectureId !== undefined ? { architectureId: input.architectureId } : {}),
+      ...(input.proteomeId !== undefined ? { proteomeId: input.proteomeId } : {}),
     };
     const cursor = decodeCursor(input.cursor, 'interpro_find_proteins_by_domain', query);
     const service = getInterproService();
@@ -266,13 +294,17 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
           (row) =>
             Object.assign({}, row, {
               detailAvailability: {
-                entries:
-                  row.entries === undefined ? ('unavailable' as const) : ('available' as const),
-                taxa: row.taxa === undefined ? ('unavailable' as const) : ('available' as const),
+                entries: availability(row.entries),
+                taxa: availability(row.taxa),
+                ...(input.proteomeId !== undefined
+                  ? { proteomes: availability(row.proteomes) }
+                  : {}),
               },
             }),
         )
-      : ProteinResultSchema;
+      : input.proteomeId
+        ? ProteomeResultSchema
+        : ProteinResultSchema;
     const response = await service.request(
       service.begin(ctx),
       [
@@ -284,6 +316,7 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
         'taxonomy',
         'uniprot',
         query.taxonId,
+        ...(query.proteomeId ? ['proteome', 'uniprot', query.proteomeId] : []),
       ],
       {
         page_size: limit,
@@ -318,7 +351,7 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
     ctx.enrich.echo(JSON.stringify(query));
     if (!proteins.length)
       notices.push(
-        `No proteins matched the applied entry and selection. Retry interpro_find_proteins_by_domain with reviewedOnly=false or another taxonId${input.isFragment !== undefined ? ', or omit isFragment to include both fragment annotation groups' : ''}; use interpro_get_entry to verify the accession.`,
+        `No proteins matched the applied entry and selection. Retry interpro_find_proteins_by_domain with reviewedOnly=false or another taxonId${input.isFragment !== undefined ? ', or omit isFragment to include both fragment annotation groups' : ''}; use interpro_get_entry to verify the accession.${query.proteomeId ? ` taxonId ${query.taxonId} still applies with proteomeId ${query.proteomeId}: set taxonId to protein.source_organism.taxId from interpro_get_protein_domains for a protein in that proteome, or an ancestor taxon, and confirm proteomeId against its protein.proteome.` : ''}`,
       );
     if (next) {
       notices.push(pageGuidance('interpro_find_proteins_by_domain', 'proteins', limit, MAX_LIMIT));

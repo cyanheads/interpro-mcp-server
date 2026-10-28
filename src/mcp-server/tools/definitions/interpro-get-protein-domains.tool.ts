@@ -63,7 +63,7 @@ const CoverageSchema = z.object({
     .int()
     .nonnegative()
     .describe(
-      'Match records this segment covered, before residue filtering; across a complete walk the segments sum to totalMatches.',
+      "Match records this segment covered, before residue filtering; totalMatches is upstream's reported count, and a complete walk can cover a different number.",
     ),
   returnedMatches: z
     .number()

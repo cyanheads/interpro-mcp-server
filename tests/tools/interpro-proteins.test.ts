@@ -2046,3 +2046,350 @@ describe('entry-scoped protein discovery', () => {
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('proteome discovery selection', () => {
+  const decoded = (token: string) => JSON.parse(Buffer.from(token, 'base64url').toString('utf8'));
+  const ordinary = { metadata: protein, entries: [], taxa: [] };
+  it('characterizes a taxon and fragment call: query echo, token scope, and continuation path', async () => {
+    const fetch = network([page([ordinary], '?cursor=second', 2), page([ordinary], null, 2)]);
+    const input = { accession: 'pf00005', taxonId: '562', isFragment: false, limit: 1 };
+    const first = await settle(runToolContract(discovery, input));
+    const output = twin(first);
+    expect(output.query).toEqual({
+      accession: 'PF00005',
+      sourceDatabase: 'pfam',
+      taxonId: '562',
+      reviewedOnly: true,
+      isFragment: false,
+    });
+    expect(first.structuredContent).toMatchObject({
+      effectiveQuery:
+        '{"accession":"PF00005","sourceDatabase":"pfam","taxonId":"562","reviewedOnly":true,"isFragment":false}',
+    });
+    expect(decoded(output.page.nextCursor)).toEqual({
+      v: 1,
+      operation: 'interpro_find_proteins_by_domain',
+      scope:
+        '{"accession":"PF00005","isFragment":false,"reviewedOnly":true,"sourceDatabase":"pfam","taxonId":"562"}',
+      upstreamCursor: 'second',
+    });
+    const last = twin(
+      await settle(runToolContract(discovery, { ...input, cursor: output.page.nextCursor })),
+    );
+    expect(last.query).toEqual(output.query);
+    expect(last.page).toEqual({ total: 2, returned: 1, limit: 1, hasMore: false });
+    const urls = fetch.mock.calls.map(([url]) => new URL(url));
+    expect(urls.map((url) => url.pathname)).toEqual(
+      Array(2).fill('/interpro/api/protein/reviewed/entry/pfam/PF00005/taxonomy/uniprot/562/'),
+    );
+    expect(urls.map((url) => url.searchParams.get('cursor'))).toEqual([null, 'second']);
+  });
+  const proteomes = [
+    {
+      taxonomy: '83333',
+      accession: 'up000000625',
+      lineage: ['1', '131567', '2', '562', '83333'],
+      source_database: 'uniprot',
+      unknown: null,
+    },
+  ];
+  const proteomeRow = { ...ordinary, proteomes, extra_fields: { is_fragment: false } };
+  const k12Path =
+    '/interpro/api/protein/reviewed/entry/pfam/PF00005/taxonomy/uniprot/562/proteome/uniprot/UP000000625/';
+  it.each(['UP000000625', 'up000000625', ' UP000000625 ', 'uP000000625'])(
+    'canonicalizes %j, appends the proteome after the taxon, and keeps proteome records verbatim',
+    async (proteomeId) => {
+      const fetch = network([page([proteomeRow], null, 78)]);
+      const result = await settle(
+        runToolContract(discovery, { accession: 'PF00005', taxonId: '562', proteomeId }),
+      );
+      const output = twin(result);
+      expect(output.query).toEqual({
+        accession: 'PF00005',
+        sourceDatabase: 'pfam',
+        taxonId: '562',
+        reviewedOnly: true,
+        proteomeId: 'UP000000625',
+      });
+      expect(result.structuredContent).toMatchObject({
+        effectiveQuery: JSON.stringify(output.query),
+        totalCount: 78,
+      });
+      expect(output.proteins).toEqual([proteomeRow]);
+      expect(output.proteins[0].proteomes[0].accession).toBe('up000000625');
+      expect(text(result)).toContain('"accession":"up000000625"');
+      expect(text(result)).not.toContain('No proteins matched');
+      expect(new URL(fetch.mock.calls[0]?.[0] ?? '').pathname).toBe(k12Path);
+      expect(fetch).toHaveBeenCalledTimes(1);
+    },
+  );
+  it.each([
+    'UQ000000625',
+    'UP',
+    'UP12345',
+    'UP0000006250',
+    'UP00000062a',
+    'UP 000000625',
+    'UP000000625/',
+    'U'.repeat(200),
+    625,
+  ])('rejects proteomeId %j as an argument failure before any request', async (proteomeId) => {
+    const fetch = network([]);
+    const result = await settle(
+      runToolContract(discovery, {
+        accession: 'PF00005',
+        taxonId: '562',
+        proteomeId: proteomeId as string,
+      }),
+    );
+    expect(result.structuredContent).toMatchObject({
+      error: { code: -32602, data: { reason: 'invalid_arguments' } },
+    });
+    expect(text(result)).toContain('proteomeId');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+  it.each(['', '   '])('treats a blank proteomeId %j as omitted', async (proteomeId) => {
+    const fetch = network([page([ordinary]), page([])]);
+    const output = twin(
+      await settle(
+        runToolContract(discovery, { accession: 'PF00005', taxonId: '562', proteomeId }),
+      ),
+    );
+    expect(output.query).not.toHaveProperty('proteomeId');
+    expect(output.proteins).toEqual([ordinary]);
+    const empty = await settle(
+      runToolContract(discovery, { accession: 'PF00005', taxonId: '562', proteomeId }),
+    );
+    expect(text(empty)).toContain('No proteins matched');
+    expect(text(empty)).not.toContain('source_organism');
+    expect(fetch.mock.calls.map(([url]) => new URL(url).pathname)).toEqual(
+      Array(2).fill('/interpro/api/protein/reviewed/entry/pfam/PF00005/taxonomy/uniprot/562/'),
+    );
+  });
+  it.each([
+    ['omits proteome records', { ...ordinary }],
+    ['supplies a non-array proteome value', { ...ordinary, proteomes: 'up000000625' }],
+    ['supplies a proteome record without accession', { ...ordinary, proteomes: [{}] }],
+  ])('rejects an ordinary proteome-mode row that %s', async (_label, row) => {
+    const fetch = network([page([row])]);
+    failure(
+      await settle(
+        runToolContract(discovery, {
+          accession: 'PF00005',
+          taxonId: '562',
+          proteomeId: 'UP000000625',
+        }),
+      ),
+      'upstream_shape_invalid',
+      discovery,
+    );
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+  it.each([
+    [{ reviewedOnly: false }, 'uniprot', null],
+    [{ isFragment: true }, 'reviewed', 'true'],
+    [{ isFragment: false }, 'reviewed', 'false'],
+  ] as const)('intersects proteome UP000000558 with %j', async (selection, review, fragment) => {
+    const fetch = network([page([proteomeRow], null, 86)]);
+    const output = twin(
+      await settle(
+        runToolContract(discovery, {
+          accession: 'PF00005',
+          taxonId: '562',
+          proteomeId: 'UP000000558',
+          ...selection,
+        }),
+      ),
+    );
+    expect(output.query).toMatchObject({ proteomeId: 'UP000000558', ...selection });
+    const url = new URL(fetch.mock.calls[0]?.[0] ?? '');
+    expect(url.pathname).toBe(
+      `/interpro/api/protein/${review}/entry/pfam/PF00005/taxonomy/uniprot/562/proteome/uniprot/UP000000558/`,
+    );
+    expect(url.searchParams.get('is_fragment')).toBe(fragment);
+    expect(url.searchParams.get('extra_fields')).toBe('is_fragment');
+  });
+  it('names taxonId and the mapped source organism when the default taxon empties a proteome', async () => {
+    const fetch = network([new Response(null, { status: 204 })]);
+    const result = await settle(
+      runToolContract(discovery, { accession: 'PF00005', proteomeId: 'UP000000625' }),
+    );
+    const output = twin(result);
+    expect(output.query).toMatchObject({ taxonId: '9606', proteomeId: 'UP000000625' });
+    expect(output.page).toEqual({ total: 0, returned: 0, limit: 20, hasMore: false });
+    const { notice } = result.structuredContent as { notice: string };
+    for (const clause of [
+      'No proteins matched',
+      'taxonId 9606 still applies with proteomeId UP000000625',
+      'protein.source_organism.taxId',
+      'protein.proteome',
+    ])
+      expect(notice).toContain(clause);
+    expect(notice.indexOf('No proteins matched')).toBeLessThan(notice.indexOf('taxonId 9606'));
+    expect(text(result)).toContain(notice);
+    expect(new URL(fetch.mock.calls[0]?.[0] ?? '').pathname).toBe(
+      '/interpro/api/protein/reviewed/entry/pfam/PF00005/taxonomy/uniprot/9606/proteome/uniprot/UP000000625/',
+    );
+  });
+  it('composes the proteome notice with fragment guidance, clamping, and continuation', async () => {
+    network([page([], '?cursor=next', 3)]);
+    const result = await settle(
+      runToolContract(discovery, {
+        accession: 'PF00005',
+        taxonId: '562',
+        proteomeId: 'UP000000625',
+        isFragment: true,
+        limit: 99,
+      }),
+    );
+    expect(result.structuredContent).toMatchObject({ cap: 50, truncated: true });
+    for (const clause of [
+      'Requested limit 99 was clamped to 50.',
+      'omit isFragment',
+      'taxonId 562 still applies with proteomeId UP000000625',
+      'page.nextCursor',
+    ])
+      expect(text(result)).toContain(clause);
+  });
+  it('discloses unavailable proteome records only in architecture mode with proteomeId', async () => {
+    const architectureId = '4f614fc9ce15593437544b3b1aa3f57cb28b3cf8';
+    const metadataOnly = {
+      metadata: protein,
+      extra_fields: { is_fragment: false, ida_id: architectureId },
+    };
+    const supplied = { ...metadataOnly, proteomes };
+    const fetch = network([
+      page([metadataOnly, supplied], null, 10),
+      page([metadataOnly], null, 33),
+    ]);
+    const input = { accession: 'PF00005', taxonId: '562', architectureId };
+    const scoped = twin(
+      await settle(runToolContract(discovery, { ...input, proteomeId: 'UP000000625' })),
+    );
+    expect(scoped.query).toMatchObject({ architectureId, proteomeId: 'UP000000625' });
+    expect(scoped.proteins).toEqual([
+      {
+        ...metadataOnly,
+        detailAvailability: {
+          entries: 'unavailable',
+          taxa: 'unavailable',
+          proteomes: 'unavailable',
+        },
+      },
+      {
+        ...supplied,
+        detailAvailability: { entries: 'unavailable', taxa: 'unavailable', proteomes: 'available' },
+      },
+    ]);
+    const unscoped = twin(await settle(runToolContract(discovery, input)));
+    expect(unscoped.proteins).toEqual([
+      { ...metadataOnly, detailAvailability: { entries: 'unavailable', taxa: 'unavailable' } },
+    ]);
+    const urls = fetch.mock.calls.map(([url]) => new URL(url));
+    expect(urls.map((url) => url.pathname)).toEqual([
+      k12Path,
+      '/interpro/api/protein/reviewed/entry/pfam/PF00005/taxonomy/uniprot/562/',
+    ]);
+    for (const url of urls) {
+      expect(url.searchParams.get('ida')).toBe(architectureId);
+      expect(url.searchParams.get('extra_fields')).toBe('is_fragment,ida_id');
+    }
+  });
+  it('binds proteomeId to cursor scope over three pages and rejects every changed selection', async () => {
+    const fetch = network([
+      page([proteomeRow], '?cursor=second', 3),
+      page([proteomeRow], '?cursor=third', 3),
+      page([], null, 3),
+    ]);
+    const input = { accession: 'PF00005', taxonId: '562', proteomeId: 'UP000000625' };
+    const first = twin(await settle(runToolContract(discovery, { ...input, limit: 1 })));
+    expect(decoded(first.page.nextCursor).scope).toBe(
+      '{"accession":"PF00005","proteomeId":"UP000000625","reviewedOnly":true,"sourceDatabase":"pfam","taxonId":"562"}',
+    );
+    for (const changed of [{ proteomeId: 'UP000000558' }, { proteomeId: undefined }])
+      failure(
+        await settle(
+          runToolContract(discovery, { ...input, ...changed, cursor: first.page.nextCursor }),
+        ),
+        'invalid_cursor',
+        discovery,
+      );
+    expect(fetch).toHaveBeenCalledTimes(1);
+    const second = twin(
+      await settle(
+        runToolContract(discovery, {
+          ...input,
+          proteomeId: ' up000000625 ',
+          limit: 500,
+          cursor: first.page.nextCursor,
+        }),
+      ),
+    );
+    expect(second.page).toMatchObject({ limit: 50, hasMore: true });
+    const last = await settle(
+      runToolContract(discovery, { ...input, cursor: second.page.nextCursor }),
+    );
+    expect(twin(last).page).toEqual({ total: 3, returned: 0, limit: 20, hasMore: false });
+    expect(text(last)).toContain('still applies with proteomeId UP000000625');
+    const urls = fetch.mock.calls.map(([url]) => new URL(url));
+    expect(urls.map((url) => url.pathname)).toEqual(Array(3).fill(k12Path));
+    expect(urls.map((url) => url.searchParams.get('cursor'))).toEqual([null, 'second', 'third']);
+    expect([...first.proteins, ...second.proteins]).toEqual([proteomeRow, proteomeRow]);
+  });
+  it('keeps a cursor issued without proteomeId valid only while proteomeId stays omitted', async () => {
+    const cursor = encodeCursor(
+      'interpro_find_proteins_by_domain',
+      { accession: 'PF00005', sourceDatabase: 'pfam', taxonId: '562', reviewedOnly: true },
+      'legacy',
+    );
+    const fetch = network([page([ordinary])]);
+    for (const proteomeId of ['UP000000625', 'up000000625'])
+      failure(
+        await settle(
+          runToolContract(discovery, { accession: 'PF00005', taxonId: '562', proteomeId, cursor }),
+        ),
+        'invalid_cursor',
+        discovery,
+      );
+    expect(fetch).not.toHaveBeenCalled();
+    const output = twin(
+      await settle(
+        runToolContract(discovery, {
+          accession: 'PF00005',
+          taxonId: '562',
+          proteomeId: '',
+          cursor,
+        }),
+      ),
+    );
+    expect(output.query).not.toHaveProperty('proteomeId');
+    expect(output.proteins).toEqual([ordinary]);
+    const url = new URL(fetch.mock.calls[0]?.[0] ?? '');
+    expect(url.pathname).toBe(
+      '/interpro/api/protein/reviewed/entry/pfam/PF00005/taxonomy/uniprot/562/',
+    );
+    expect(url.searchParams.get('cursor')).toBe('legacy');
+  });
+  it('advertises the bounded proteome grammar without changing required inputs', () => {
+    expect(z.toJSONSchema(discovery.input, { io: 'input' })).toMatchObject({
+      properties: { proteomeId: { pattern: '^[Uu][Pp][0-9]{9}$', maxLength: 11 } },
+      required: ['accession'],
+    });
+    expect(discovery.input.shape.proteomeId.description).toContain('9606');
+  });
+  it.each(['UP000000625', null])(
+    'maps protein.proteome %j as supplied and names it as the proteomeId source',
+    async (proteome) => {
+      network([Response.json({ metadata: { ...protein, proteome } }), page([])]);
+      const output = twin(await settle(runToolContract(map, { accession: 'P04983' })));
+      expect(output.protein).toEqual({ ...protein, proteome });
+      expect(z.toJSONSchema(map.output, { io: 'output' })).toMatchObject({
+        properties: {
+          protein: {
+            properties: { proteome: { description: expect.stringContaining('proteomeId') } },
+          },
+        },
+      });
+    },
+  );
+});
