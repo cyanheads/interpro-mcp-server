@@ -5,20 +5,19 @@
 import type { Context } from '@cyanheads/mcp-ts-core';
 import { z } from '@cyanheads/mcp-ts-core';
 import {
-  JsonRpcErrorCode,
   McpError,
   notFound,
   serviceUnavailable,
   timeout,
   validationError,
 } from '@cyanheads/mcp-ts-core/errors';
+import { createPacer, defaultIsTransient, withRetry } from '@cyanheads/mcp-ts-core/utils';
 import {
-  createPacer,
-  defaultIsTransient,
-  httpErrorFromResponse,
-  withRetry,
-} from '@cyanheads/mcp-ts-core/utils';
-import { type InterproFetch, interproHttpFetch, MAX_RESPONSE_BYTES } from './http-adapter.js';
+  type InterproFetch,
+  interproHttpFetch,
+  MAX_RESPONSE_BYTES,
+  upstreamStatusError,
+} from './http-adapter.js';
 import { apiUrl } from './routing.js';
 import { isAccession, JsonObjectSchema, JsonValueSchema } from './schemas.js';
 
@@ -38,7 +37,11 @@ export interface MissingRecord {
   readonly accession: string;
   /** A list scoped to the record: 204 is a valid empty page, so only 404 reports it missing. */
   readonly list?: boolean;
-  readonly reason: 'entry_not_found' | 'protein_not_found' | 'clan_not_found';
+  readonly reason:
+    | 'entry_not_found'
+    | 'protein_not_found'
+    | 'clan_not_found'
+    | 'structure_not_found';
   readonly sourceDatabase: string;
 }
 /** Upstream fields of a 410 body that are echoed in the withdrawal error. */
@@ -59,6 +62,7 @@ const RECORD_NOUNS = {
   entry_not_found: 'entry',
   clan_not_found: 'set',
   protein_not_found: 'protein',
+  structure_not_found: 'structure',
 } as const;
 /** Name a record in a caller-facing message, e.g. `entry PF00870 in pfam`. */
 const describeRecord = ({ reason, accession, sourceDatabase }: MissingRecord) =>
@@ -182,30 +186,7 @@ export class InterproService {
                   ...(missing ? { accession: missing.accession } : {}),
                 });
               }
-              if (!response.ok) {
-                const status = response.status;
-                const reason =
-                  status === 408 || status === 504
-                    ? 'upstream_timeout'
-                    : status === 429
-                      ? 'upstream_rate_limited'
-                      : status >= 500
-                        ? 'upstream_unavailable'
-                        : 'upstream_rejected';
-                throw await httpErrorFromResponse(response, {
-                  service: 'InterPro',
-                  captureBody: false,
-                  codeOverride: (value) =>
-                    value < 500 && value !== 408 && value !== 429
-                      ? JsonRpcErrorCode.ServiceUnavailable
-                      : undefined,
-                  data: {
-                    reason,
-                    retryable:
-                      (status >= 500 && status !== 501) || status === 408 || status === 429,
-                  },
-                });
-              }
+              if (!response.ok) throw await upstreamStatusError(response, 'InterPro');
               const encoding = response.headers.get('content-encoding');
               if (encoding && encoding.toLowerCase() !== 'identity')
                 throw serviceUnavailable('InterPro returned an unexpected content encoding.', {

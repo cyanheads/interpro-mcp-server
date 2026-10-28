@@ -5,6 +5,7 @@
 import { z } from '@cyanheads/mcp-ts-core';
 import { DOCUMENTATION_URL, ENTRY_ROUTES } from './routing.js';
 import type { SourceDatabase } from './schemas.js';
+import { CHAIN_PATTERN, PDB_ID_PATTERN } from './structure-schemas.js';
 
 /** Available reference topics; only release performs network operations. */
 export const ReferenceTopicSchema = z
@@ -17,7 +18,12 @@ export const ReferenceItemSchema = z
     label: z.string().describe('Human-readable label.'),
     description: z.string().optional().describe('Meaning and coverage.'),
     sourceDatabase: z.string().optional().describe('Entry API database slug.'),
-    accessionPattern: z.string().optional().describe('Case-insensitive accession routing pattern.'),
+    accessionPattern: z
+      .string()
+      .optional()
+      .describe(
+        'Accession routing pattern, case-insensitive except where the item description says otherwise.',
+      ),
     example: z
       .string()
       .optional()
@@ -84,6 +90,25 @@ const taxa = [
   ['3702', 'Arabidopsis'],
   ['562', 'Escherichia coli'],
 ] as const;
+/** Structure identifiers, listed after the entry routes under accession_patterns. */
+const structureIdentifiers: ReferenceItem[] = [
+  {
+    id: 'pdb',
+    label: 'PDB entry',
+    accessionPattern: PDB_ID_PATTERN.source,
+    example: '1tsr',
+    description:
+      'Four-character structure ID for interpro_get_structure_domains, matched case-insensitively; extended pdb_0000… IDs are not supported.',
+  },
+  {
+    id: 'pdb_chain',
+    label: 'PDB chain',
+    accessionPattern: CHAIN_PATTERN.source,
+    example: 'A',
+    description:
+      'Case-sensitive chain ID within one PDB entry, one of its structure.chains; a and A are different chains.',
+  },
+];
 /** Return bounded local reference data without making upstream requests. */
 export function staticReference(topic: Exclude<z.infer<typeof ReferenceTopicSchema>, 'release'>): {
   items: ReferenceItem[];
@@ -105,25 +130,27 @@ export function staticReference(topic: Exclude<z.infer<typeof ReferenceTopicSche
       sourceUrls: [DOCUMENTATION_URL, 'https://www.ncbi.nlm.nih.gov/taxonomy'],
     };
   return {
-    items: ENTRY_ROUTES.map(({ source, pattern, example }) => ({
-      id: source,
-      label: databaseLabels[source],
-      sourceDatabase: source,
-      accessionPattern: pattern.source,
-      example,
-      description:
-        topic === 'accession_patterns'
-          ? 'Routing syntax does not guarantee that an accession is assigned.'
-          : source === 'interpro'
-            ? 'Integrating database combining member signatures.'
-            : source === 'antifam'
-              ? 'Additional API source for spurious protein predictions.'
-              : source === 'prosite'
-                ? 'PROSITE pattern signatures; profiles use the profile route.'
-                : source === 'profile'
-                  ? 'PROSITE profile signatures; patterns use the prosite route.'
-                  : 'Member-database signatures exposed through the InterPro entry API.',
-    })),
+    items: ENTRY_ROUTES.map(
+      ({ source, pattern, example }): ReferenceItem => ({
+        id: source,
+        label: databaseLabels[source],
+        sourceDatabase: source,
+        accessionPattern: pattern.source,
+        example,
+        description:
+          topic === 'accession_patterns'
+            ? 'Routing syntax does not guarantee that an accession is assigned.'
+            : source === 'interpro'
+              ? 'Integrating database combining member signatures.'
+              : source === 'antifam'
+                ? 'Additional API source for spurious protein predictions.'
+                : source === 'prosite'
+                  ? 'PROSITE pattern signatures; profiles use the profile route.'
+                  : source === 'profile'
+                    ? 'PROSITE profile signatures; patterns use the prosite route.'
+                    : 'Member-database signatures exposed through the InterPro entry API.',
+      }),
+    ).concat(topic === 'accession_patterns' ? structureIdentifiers : []),
     sourceUrls: [DOCUMENTATION_URL],
   };
 }

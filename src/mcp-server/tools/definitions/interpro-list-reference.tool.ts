@@ -17,7 +17,7 @@ import { JsonObjectSchema } from '@/services/interpro/schemas.js';
 export const interproListReference = tool('interpro_list_reference', {
   title: 'InterPro reference vocabulary',
   description:
-    'List supported InterPro database slugs, entry types, accession routing patterns, common taxon IDs, or current release information.',
+    'List supported InterPro database slugs, entry types, accession and PDB identifier patterns, common taxon IDs, or current release information.',
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
   auth: ['tool:interpro_list_reference:read'],
   input: z.object({ topic: ReferenceTopicSchema }),

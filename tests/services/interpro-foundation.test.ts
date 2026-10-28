@@ -297,6 +297,33 @@ describe('InterproService at the HTTP seam', () => {
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
+  it('names a missing structure detail and a structure list 404, keeping a structure list 204 empty', async () => {
+    const missing = {
+      reason: 'structure_not_found',
+      accession: '9yyy',
+      sourceDatabase: 'pdb',
+    } as const;
+    const { service, call, fetch } = await serviceFor([
+      new Response(null, { status: 204 }),
+      new Response(null, { status: 204 }),
+      new Response('{"Error":"not a valid all level"}', { status: 404 }),
+    ]);
+    await expect(
+      settle(service.request(call, ['structure', 'pdb', '9yyy'], {}, z.object({}), { missing })),
+    ).rejects.toMatchObject({
+      code: -32001,
+      message: 'InterPro could not find structure 9yyy in pdb.',
+      data: { reason: 'structure_not_found', retryable: false, status: 204, accession: '9yyy' },
+    });
+    const list = ['entry', 'all', 'structure', 'pdb', '9yyy'];
+    const options = { missing: { ...missing, list: true } };
+    expect((await settle(service.request(call, list, {}, z.object({}), options))).data).toBeNull();
+    await expect(
+      settle(service.request(call, list, {}, z.object({}), options)),
+    ).rejects.toMatchObject({ data: { reason: 'structure_not_found', status: 404 } });
+    expect(fetch).toHaveBeenCalledTimes(3);
+  });
+
   it.each([
     [400, 'upstream_rejected', false],
     [401, 'upstream_rejected', false],
