@@ -29,6 +29,11 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 # Copy the rest of the source code
 COPY . .
 
+# The skills a server publishes (`createApp({ skills: 'skills' })`) are read at
+# runtime from the application root. Created when the project has none, so the
+# production stage's copy below holds with or without one.
+RUN mkdir -p skills
+
 # Build the application
 RUN bun run build
 
@@ -124,7 +129,7 @@ ENV NODE_ENV=production
 # OCI image metadata (https://github.com/opencontainers/image-spec/blob/main/annotations.md)
 ARG APP_VERSION
 LABEL org.opencontainers.image.title="interpro-mcp-server"
-LABEL org.opencontainers.image.description="Search InterPro entries, map protein domains and functional sites, and find proteins by domain via MCP. STDIO or Streamable HTTP."
+LABEL org.opencontainers.image.description="Search InterPro entries, map domains and functional sites onto UniProt proteins and PDB structures, find proteins by domain, and scan raw protein sequences via MCP. STDIO or Streamable HTTP."
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 LABEL org.opencontainers.image.version="${APP_VERSION}"
 LABEL org.opencontainers.image.source="https://github.com/cyanheads/interpro-mcp-server"
@@ -136,6 +141,7 @@ COPY --from=deps /usr/src/app/node_modules ./node_modules
 
 # Copy the compiled application code from the build stage
 COPY --from=build /usr/src/app/dist ./dist
+COPY --from=build /usr/src/app/skills ./skills
 
 # Mirror CLI (MirrorService adopters only — Tier 3, opt-in):
 # Copy your mirror lifecycle scripts and emit a runtime tsconfig so Bun resolves
@@ -175,6 +181,8 @@ ENV MCP_TRANSPORT_TYPE="http"
 ENV MCP_SESSION_MODE="stateless"
 ENV MCP_LOG_LEVEL="info"
 ENV LOGS_DIR="/var/log/interpro-mcp-server"
+# Optional, no default: set INTERPRO_SCAN_EMAIL at run time (docker run -e) to let
+# interpro_scan_sequence submit InterProScan jobs; unset, it serves precalculated matches only.
 
 # Expose the port the server listens on
 EXPOSE ${MCP_HTTP_PORT}
