@@ -1,6 +1,6 @@
 # interpro-mcp-server - Directory Structure
 
-Generated on: 2026-10-24 07:49:29
+Generated on: 2026-10-28 15:39:38
 
 ```text
 interpro-mcp-server/
@@ -25,6 +25,7 @@ interpro-mcp-server/
 │   └── settings.json
 ├── changelog/
 │   ├── 0.1.x/
+│   ├── 0.2.x/
 │   └── template.md
 ├── docs/
 │   └── design.md
@@ -36,6 +37,8 @@ interpro-mcp-server/
 │   ├── add-resource/
 │   │   └── SKILL.md
 │   ├── add-service/
+│   │   └── SKILL.md
+│   ├── add-skill/
 │   │   └── SKILL.md
 │   ├── add-test/
 │   │   └── SKILL.md
@@ -133,7 +136,12 @@ interpro-mcp-server/
 │   ├── prune-musl-packages.ts
 │   ├── release-github.ts
 │   └── tree.ts
+├── skills/
+│   └── interpro-guide/
+│       └── SKILL.md
 ├── src/
+│   ├── config/
+│   │   └── server-config.ts
 │   ├── mcp-server/
 │   │   ├── prompts/
 │   │   │   └── definitions/
@@ -145,21 +153,30 @@ interpro-mcp-server/
 │   │           ├── interpro-get-clan.tool.ts
 │   │           ├── interpro-get-entry.tool.ts
 │   │           ├── interpro-get-protein-domains.tool.ts
+│   │           ├── interpro-get-scan-result.tool.ts
+│   │           ├── interpro-get-structure-domains.tool.ts
 │   │           ├── interpro-list-reference.tool.ts
+│   │           ├── interpro-scan-sequence.tool.ts
 │   │           └── interpro-search-entries.tool.ts
 │   ├── services/
-│   │   └── interpro/
-│   │       ├── budget.ts
-│   │       ├── cursors.ts
-│   │       ├── description-text.ts
-│   │       ├── format.ts
-│   │       ├── http-adapter.ts
-│   │       ├── interpro-service.ts
-│   │       ├── reference.ts
-│   │       ├── relationships.ts
-│   │       ├── routing.ts
-│   │       ├── schemas.ts
-│   │       └── upstream-errors.ts
+│   │   ├── interpro/
+│   │   │   ├── budget.ts
+│   │   │   ├── cursors.ts
+│   │   │   ├── description-text.ts
+│   │   │   ├── format.ts
+│   │   │   ├── http-adapter.ts
+│   │   │   ├── interpro-service.ts
+│   │   │   ├── reference.ts
+│   │   │   ├── relationships.ts
+│   │   │   ├── routing.ts
+│   │   │   ├── schemas.ts
+│   │   │   ├── structure-schemas.ts
+│   │   │   └── upstream-errors.ts
+│   │   └── sequence-scan/
+│   │       ├── scan-output.ts
+│   │       ├── scan-schemas.ts
+│   │       ├── sequence-scan-service.ts
+│   │       └── sequence.ts
 │   └── index.ts
 ├── tests/
 │   ├── fuzz/
@@ -167,16 +184,28 @@ interpro-mcp-server/
 │   ├── prompts/
 │   ├── resources/
 │   ├── services/
+│   │   ├── fixtures/
+│   │   │   └── sequence-scan/
+│   │   │       ├── iprscan6-akt1-variant.json
+│   │   │       ├── iprscan6-calmodulin-variant.json
+│   │   │       ├── matches-batch.json
+│   │   │       └── sequences.json
 │   │   ├── interpro-budget.test.ts
 │   │   ├── interpro-description-text.test.ts
 │   │   ├── interpro-foundation.test.ts
-│   │   └── interpro-http-adapter.test.ts
+│   │   ├── interpro-http-adapter.test.ts
+│   │   ├── sequence-scan-sequence.test.ts
+│   │   └── sequence-scan-service.test.ts
 │   ├── smoke/
 │   └── tools/
+│       ├── fixtures/
+│       │   └── interpro-structures.json
 │       ├── contract-helpers.ts
 │       ├── interpro-entries.test.ts
 │       ├── interpro-list-reference.tool.test.ts
-│       └── interpro-proteins.test.ts
+│       ├── interpro-proteins.test.ts
+│       ├── interpro-sequence-scan.test.ts
+│       └── interpro-structures.test.ts
 ├── .dockerignore
 ├── .env.example
 ├── .gitattributes
@@ -192,7 +221,9 @@ interpro-mcp-server/
 ├── Dockerfile
 ├── LICENSE
 ├── manifest.json
+├── mcp.json
 ├── package.json
+├── plugin.json
 ├── README.md
 ├── server.json
 ├── tsconfig.build.json
