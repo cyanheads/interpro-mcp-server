@@ -29,11 +29,11 @@ export function text(result: ToolResult): string {
 
 /**
  * Every line the server writes after the JSON fence: the link and image index, each line one
- * angle-bracket destination, then the enrichment trailer's total, query echo, truncation
- * fields, and notice quote.
+ * angle-bracket destination, then the enrichment trailer's total, query echo (a code span),
+ * truncation fields, and notice quote.
  */
 const SERVER_LINE =
-  /^(?:Sources and links:|Images:|\[Link \d+\]\(<[^<>]*>\)|!\[Image \d+\]\(<[^<>]*>\)|\*\*\d+ total\*\*|\*\*\w+:\*\* \S+|Query: \{.*\}|> \S.*)$/;
+  /^(?:Sources and links:|Images:|\[Link \d+\]\(<[^<>]*>\)|!\[Image \d+\]\(<[^<>]*>\)|\*\*\d+ total\*\*|\*\*\w+:\*\* \S+|Query: `\{.*\}`|> \S.*)$/;
 
 /**
  * The non-blank Markdown lines after a result's JSON fence. Asserts that the fence holds one JSON

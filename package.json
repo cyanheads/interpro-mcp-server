@@ -2,7 +2,7 @@
   "name": "@cyanheads/interpro-mcp-server",
   "version": "0.1.3",
   "mcpName": "io.github.cyanheads/interpro-mcp-server",
-  "description": "Search InterPro entries, map protein domains and functional sites, and find proteins by domain via MCP. STDIO or Streamable HTTP.",
+  "description": "Search InterPro entries, map domains and functional sites onto UniProt proteins and PDB structures, find proteins by domain, and scan raw protein sequences via MCP. STDIO or Streamable HTTP.",
   "author": "Casey Hand <casey@caseyjhand.com> (https://caseyjhand.com)",
   "homepage": "https://github.com/cyanheads/interpro-mcp-server#readme",
   "bugs": {
@@ -33,7 +33,8 @@
     "CLAUDE.md",
     "AGENTS.md",
     "Dockerfile",
-    "server.json"
+    "server.json",
+    "skills/"
   ],
   "scripts": {
     "build": "bun run scripts/build.ts",
@@ -70,6 +71,8 @@
     "interpro",
     "pfam",
     "protein-domains",
+    "pdb",
+    "interproscan",
     "bioinformatics"
   ],
   "repository": {
@@ -86,20 +89,20 @@
     "access": "public"
   },
   "dependencies": {
-    "@cyanheads/mcp-ts-core": "^0.13.16",
+    "@cyanheads/mcp-ts-core": "^0.13.18",
     "htmlparser2": "^12.0.0",
     "pino-pretty": "^13.2.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.2",
+    "@biomejs/biome": "2.6.3",
     "@socketsecurity/bun-security-scanner": "^1.1.3",
     "@types/node": "26.6.5",
     "@vitest/coverage-istanbul": "5.0.5",
     "depcheck": "^1.4.7",
     "fast-check": "^4.10.2",
-    "ignore": "^7.0.13",
-    "tsc-alias": "^1.9.8",
+    "ignore": "^7.0.14",
+    "tsc-alias": "^1.9.9",
     "typescript": "^7.0.2",
     "vitest": "^5.0.5"
   }
