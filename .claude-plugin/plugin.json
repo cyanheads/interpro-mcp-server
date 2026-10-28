@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "interpro-mcp-server",
   "version": "0.1.3",
-  "description": "Search InterPro entries, map protein domains and functional sites, and find proteins by domain via MCP. STDIO or Streamable HTTP.",
+  "description": "Search InterPro entries, map domains and functional sites onto UniProt proteins and PDB structures, find proteins by domain, and scan raw protein sequences via MCP. STDIO or Streamable HTTP.",
   "author": {
     "name": "cyanheads",
     "email": "casey@caseyjhand.com",
@@ -11,13 +11,22 @@
   "homepage": "https://github.com/cyanheads/interpro-mcp-server#readme",
   "repository": "https://github.com/cyanheads/interpro-mcp-server",
   "license": "Apache-2.0",
-  "keywords": ["mcp", "mcp-server", "model-context-protocol", "ai-agents", "ai-tools", "typescript", "cyanheads", "interpro", "pfam", "protein-domains", "bioinformatics"],
+  "keywords": ["mcp", "mcp-server", "model-context-protocol", "ai-agents", "ai-tools", "typescript", "cyanheads", "interpro", "pfam", "protein-domains", "pdb", "interproscan", "bioinformatics"],
+  "userConfig": {
+    "INTERPRO_SCAN_EMAIL": {
+      "type": "string",
+      "title": "InterProScan contact email",
+      "description": "Optional. Contact address the EBI Job Dispatcher requires to submit InterProScan jobs for sequences with no precalculated matches; without it interpro_scan_sequence still returns precalculated matches. EBI stores it with job data for seven days.",
+      "default": ""
+    }
+  },
   "mcpServers": {
     "interpro-mcp-server": {
       "command": "npx",
       "args": ["-y", "@cyanheads/interpro-mcp-server"],
       "env": {
-        "MCP_TRANSPORT_TYPE": "stdio"
+        "MCP_TRANSPORT_TYPE": "stdio",
+        "INTERPRO_SCAN_EMAIL": "${user_config.INTERPRO_SCAN_EMAIL}"
       }
     }
   }

@@ -1,7 +1,7 @@
 {
   "name": "interpro-mcp-server",
   "version": "0.1.3",
-  "description": "Search InterPro entries, map protein domains and functional sites, and find proteins by domain via MCP. STDIO or Streamable HTTP.",
+  "description": "Search InterPro entries, map domains and functional sites onto UniProt proteins and PDB structures, find proteins by domain, and scan raw protein sequences via MCP. STDIO or Streamable HTTP.",
   "author": {
     "name": "cyanheads",
     "email": "casey@caseyjhand.com",
@@ -10,12 +10,12 @@
   "homepage": "https://github.com/cyanheads/interpro-mcp-server#readme",
   "repository": "https://github.com/cyanheads/interpro-mcp-server",
   "license": "Apache-2.0",
-  "keywords": ["mcp", "mcp-server", "model-context-protocol", "ai-agents", "ai-tools", "typescript", "cyanheads", "interpro", "pfam", "protein-domains", "bioinformatics"],
+  "keywords": ["mcp", "mcp-server", "model-context-protocol", "ai-agents", "ai-tools", "typescript", "cyanheads", "interpro", "pfam", "protein-domains", "pdb", "interproscan", "bioinformatics"],
   "mcpServers": "./.codex-plugin/mcp.json",
   "interface": {
     "displayName": "interpro-mcp-server",
-    "shortDescription": "Search InterPro entries, map protein domains and functional sites, and find proteins by domain via MCP. STDIO or Streamable HTTP.",
-    "longDescription": "Reads InterPro and the member databases it integrates (Pfam, PROSITE, SMART, CDD, PANTHER, and others) through the keyless EMBL-EBI API. Search InterPro entries by GO annotation or entries and member signatures by text or type, read their full metadata, map a UniProt protein's domains, repeats, and functional sites to residue coordinates, walk Pfam, CDD, and PIRSF clans, and find the proteins that carry a signature, by default reviewed human proteins. Results are read-only and paged with cursors, and no credentials are needed.",
+    "shortDescription": "Search InterPro entries, map domains and functional sites onto UniProt proteins and PDB structures, find proteins by domain, and scan raw protein sequences via MCP. STDIO or Streamable HTTP.",
+    "longDescription": "Reads InterPro and the member databases it integrates (Pfam, PROSITE, SMART, CDD, PANTHER, and others) through the keyless EMBL-EBI API. Search InterPro entries by GO annotation or entries and member signatures by text or type, read their full metadata, map a UniProt protein's or a PDB entry's chains to domains, repeats, and functional sites with residue coordinates, walk Pfam, CDD, and PIRSF clans, find the proteins that carry a signature (by default reviewed human proteins, optionally within one proteome), and scan a raw protein sequence, from precalculated matches or an InterProScan job. Results are paged with cursors and no credentials are needed; submitting InterProScan jobs for sequences with no precalculated matches needs an operator-set contact email.",
     "developerName": "cyanheads",
     "category": "research",
     "capabilities": ["Read"],

@@ -4,6 +4,7 @@
     "args": ["-y", "@cyanheads/interpro-mcp-server"],
     "env": {
       "MCP_TRANSPORT_TYPE": "stdio"
-    }
+    },
+    "env_vars": ["INTERPRO_SCAN_EMAIL"]
   }
 }

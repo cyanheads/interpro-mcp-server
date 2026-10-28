@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "interpro-mcp-server",
   "version": "0.1.3",
-  "description": "Search InterPro entries, map protein domains and functional sites, and find proteins by domain via MCP. STDIO or Streamable HTTP.",
+  "description": "Search InterPro entries, map domains and functional sites onto UniProt proteins and PDB structures, find proteins by domain, and scan raw protein sequences via MCP. STDIO or Streamable HTTP.",
   "author": { "name": "cyanheads" },
   "repository": { "type": "git", "url": "https://github.com/cyanheads/interpro-mcp-server" },
   "homepage": "https://github.com/cyanheads/interpro-mcp-server#readme",
@@ -16,7 +16,8 @@
       "env": {
         "MCP_TRANSPORT_TYPE": "stdio",
         "MCP_AUTH_MODE": "none",
-        "NODE_ENV": "production"
+        "NODE_ENV": "production",
+        "INTERPRO_SCAN_EMAIL": "${user_config.INTERPRO_SCAN_EMAIL}"
       }
     }
   },
@@ -25,5 +26,13 @@
   },
   "tools_generated": true,
   "prompts_generated": true,
-  "user_config": {}
+  "user_config": {
+    "INTERPRO_SCAN_EMAIL": {
+      "type": "string",
+      "title": "InterProScan contact email",
+      "description": "Optional. Contact address the EBI Job Dispatcher requires to submit InterProScan jobs for sequences with no precalculated matches. Without it interpro_scan_sequence still returns precalculated matches and fails other sequences as scan_not_configured. EBI stores the address with job data for seven days.",
+      "required": false,
+      "default": ""
+    }
+  }
 }
