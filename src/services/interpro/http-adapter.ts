@@ -1,26 +1,45 @@
 /**
- * @fileoverview Bounded HTTP/1.1 adapter for InterPro's malformed bodyless 204 responses.
+ * @fileoverview Bounded HTTP/1.1 adapter for InterPro's malformed bodyless 204 responses, also
+ * carrying the Matches API and Job Dispatcher requests on the same fixed origin.
  * @module services/interpro/http-adapter
  */
 
 import type { IncomingMessage } from 'node:http';
 import { request } from 'node:https';
 import type { ConnectionOptions } from 'node:tls';
-import { serviceUnavailable, timeout } from '@cyanheads/mcp-ts-core/errors';
+import {
+  JsonRpcErrorCode,
+  type McpError,
+  serviceUnavailable,
+  timeout,
+} from '@cyanheads/mcp-ts-core/errors';
+import { httpErrorFromResponse } from '@cyanheads/mcp-ts-core/utils';
 import { API_BASE } from './routing.js';
 
 /** Maximum decoded response size, shared by native and injected transports. */
 export const MAX_RESPONSE_BYTES = 4 * 1024 * 1024;
 /** Fetch-compatible injection seam; callers supply the composed request signal. */
 export type InterproFetch = (url: string, init: RequestInit) => Promise<Response>;
+/**
+ * The documented path prefixes on the fixed origin: the InterPro API, the InterPro Matches API,
+ * and the Job Dispatcher's InterProScan 6 service. The URL parser resolves dot segments first.
+ */
+const ALLOWED_PATH_PREFIXES = [
+  '/interpro/api/',
+  '/interpro/matches/api/',
+  '/Tools/services/rest/iprscan6/',
+] as const;
 
-/** Collect one response without following redirects or retaining malformed connections. */
-export const interproHttpFetch: InterproFetch = (url, init) =>
+/**
+ * Collect one response without following redirects or retaining malformed connections, failing
+ * as `upstream_timeout` when the whole response outlasts `attemptMs`.
+ */
+const collect = (url: string, init: RequestInit, attemptMs: number) =>
   new Promise<Response>((resolve, reject) => {
     const target = new URL(url);
     if (
       target.origin !== new URL(API_BASE).origin ||
-      !target.pathname.startsWith('/interpro/api/')
+      !ALLOWED_PATH_PREFIXES.some((prefix) => target.pathname.startsWith(prefix))
     ) {
       reject(
         serviceUnavailable('InterPro request left the fixed API origin.', {
@@ -55,14 +74,27 @@ export const interproHttpFetch: InterproFetch = (url, init) =>
             retryable: true,
           }),
         ),
-      15_000,
+      attemptMs,
     );
     const connectionOptions: ConnectionOptions = { ALPNProtocols: ['http/1.1'] };
+    const body = typeof init.body === 'string' ? init.body : undefined;
+    const requestHeaders = new Headers(init.headers);
+    const accept = requestHeaders.get('accept') ?? 'application/json';
+    const contentType = requestHeaders.get('content-type');
     const req = request(target, {
       ...connectionOptions,
-      method: 'GET',
+      method: body === undefined ? 'GET' : 'POST',
       agent: false,
-      headers: { Accept: 'application/json', 'Accept-Encoding': 'identity' },
+      headers: {
+        Accept: accept,
+        'Accept-Encoding': 'identity',
+        ...(body === undefined
+          ? {}
+          : {
+              'Content-Type': contentType ?? 'application/json',
+              'Content-Length': String(Buffer.byteLength(body, 'utf8')),
+            }),
+      },
     });
     req.on('error', (cause) =>
       fail(
@@ -176,5 +208,43 @@ export const interproHttpFetch: InterproFetch = (url, init) =>
     });
     signal?.addEventListener('abort', abort, { once: true });
     if (signal?.aborted) abort();
-    else req.end();
+    else if (body === undefined) req.end();
+    else req.end(body);
   });
+
+/**
+ * Classify a non-OK upstream response: 5xx (except 501), 408, and 429 are retryable; any other
+ * client status is reported as a non-retryable service failure, not a caller error.
+ */
+export async function upstreamStatusError(response: Response, service: string): Promise<McpError> {
+  const status = response.status;
+  const reason =
+    status === 408 || status === 504
+      ? 'upstream_timeout'
+      : status === 429
+        ? 'upstream_rate_limited'
+        : status >= 500
+          ? 'upstream_unavailable'
+          : 'upstream_rejected';
+  return await httpErrorFromResponse(response, {
+    service,
+    captureBody: false,
+    codeOverride: (value) =>
+      value < 500 && value !== 408 && value !== 429
+        ? JsonRpcErrorCode.ServiceUnavailable
+        : undefined,
+    data: {
+      reason,
+      retryable: (status >= 500 && status !== 501) || status === 408 || status === 429,
+    },
+  });
+}
+
+/** A transport whose whole-response backstop is `attemptMs`; callers bound attempts more tightly. */
+export const createInterproHttpFetch =
+  (attemptMs: number): InterproFetch =>
+  (url, init) =>
+    collect(url, init, attemptMs);
+
+/** The InterPro API transport: small JSON pages, so 15 seconds bounds each whole response. */
+export const interproHttpFetch: InterproFetch = createInterproHttpFetch(15_000);

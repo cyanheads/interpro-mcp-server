@@ -1,0 +1,594 @@
+{
+  "interproscan-version": "6.0.2.2",
+  "interpro-version": "110.0",
+  "results": [
+    {
+      "sequence": "MADQLTEEQWAEFKEAFSLFDKDGDGTITTKELGTVMRSYGQNPTEAELQDMINEVDADGNGTIDFPEFLTMMARKMKDHDSEEEIREAFRVFDKDGNGYISAAELRHVMTNLGEKLTDWEVDEMIREADIDGDGQVNYCEFVQMMTAK",
+      "md5": "6A4866B2B971131F9DA9B818F1E3508B",
+      "matches": [
+        {
+          "signature": {
+            "accession": "PIRSR603915-1",
+            "name": "PIRSR603915-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR603915-1",
+          "evalue": 0.0000012,
+          "score": 13.0,
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 47,
+              "end": 122,
+              "representative": false,
+              "hmmStart": 663,
+              "hmmEnd": 735,
+              "hmmLength": 903,
+              "hmmBounds": "INCOMPLETE",
+              "evalue": 0.0000012,
+              "score": 13.0,
+              "envelopeStart": 31,
+              "envelopeEnd": 133,
+              "location-fragments": [{ "start": 47, "end": 122, "dc-status": "CONTINUOUS" }],
+              "sites": [
+                {
+                  "description": "BINDING: Ca(2+)",
+                  "numLocations": 3,
+                  "siteLocations": [
+                    { "start": 94, "end": 94, "residue": "D" },
+                    { "start": 96, "end": 96, "residue": "D" },
+                    { "start": 105, "end": 105, "residue": "E" }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PIRSR608080-1",
+            "name": "PIRSR608080-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR608080-1",
+          "evalue": 4.0e-15,
+          "score": 42.8,
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 79,
+              "end": 147,
+              "representative": false,
+              "hmmStart": 36,
+              "hmmEnd": 107,
+              "hmmLength": 109,
+              "hmmBounds": "INCOMPLETE",
+              "evalue": 4.0e-15,
+              "score": 42.8,
+              "envelopeStart": 73,
+              "envelopeEnd": 149,
+              "location-fragments": [{ "start": 79, "end": 147, "dc-status": "CONTINUOUS" }],
+              "sites": [
+                {
+                  "description": "BINDING: Ca(2+)",
+                  "numLocations": 8,
+                  "siteLocations": [
+                    { "start": 94, "end": 94, "residue": "D" },
+                    { "start": 96, "end": 96, "residue": "D" },
+                    { "start": 100, "end": 100, "residue": "Y" },
+                    { "start": 105, "end": 105, "residue": "E" },
+                    { "start": 130, "end": 130, "residue": "D" },
+                    { "start": 132, "end": 132, "residue": "D" },
+                    { "start": 134, "end": 134, "residue": "D" },
+                    { "start": 141, "end": 141, "residue": "E" }
+                  ]
+                }
+              ]
+            },
+            {
+              "start": 6,
+              "end": 74,
+              "representative": false,
+              "hmmStart": 36,
+              "hmmEnd": 107,
+              "hmmLength": 109,
+              "hmmBounds": "INCOMPLETE",
+              "evalue": 7.5e-11,
+              "score": 29.1,
+              "envelopeStart": 2,
+              "envelopeEnd": 76,
+              "location-fragments": [{ "start": 6, "end": 74, "dc-status": "CONTINUOUS" }],
+              "sites": [
+                {
+                  "description": "BINDING: Ca(2+)",
+                  "numLocations": 6,
+                  "siteLocations": [
+                    { "start": 21, "end": 21, "residue": "D" },
+                    { "start": 23, "end": 23, "residue": "D" },
+                    { "start": 32, "end": 32, "residue": "E" },
+                    { "start": 57, "end": 57, "residue": "D" },
+                    { "start": 59, "end": 59, "residue": "D" },
+                    { "start": 68, "end": 68, "residue": "E" }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PF13499",
+            "name": "EF-hand_7",
+            "description": "EF-hand domain pair",
+            "type": "Domain",
+            "signatureLibraryRelease": { "library": "Pfam", "version": "38.2" },
+            "entry": {
+              "accession": "IPR002048",
+              "name": "EF_hand_dom",
+              "description": "EF-hand domain",
+              "type": "Domain"
+            }
+          },
+          "model-ac": "PF13499",
+          "evalue": 3.1e-36,
+          "score": 134.8,
+          "source": "Pfam",
+          "locations": [
+            {
+              "start": 83,
+              "end": 147,
+              "representative": false,
+              "hmmStart": 1,
+              "hmmEnd": 67,
+              "hmmLength": 67,
+              "hmmBounds": "COMPLETE",
+              "evalue": 3.0e-16,
+              "score": 70.8,
+              "envelopeStart": 83,
+              "envelopeEnd": 147,
+              "location-fragments": [{ "start": 83, "end": 147, "dc-status": "CONTINUOUS" }]
+            },
+            {
+              "start": 13,
+              "end": 73,
+              "representative": false,
+              "hmmStart": 4,
+              "hmmEnd": 66,
+              "hmmLength": 67,
+              "hmmBounds": "INCOMPLETE",
+              "evalue": 4.6e-14,
+              "score": 63.8,
+              "envelopeStart": 11,
+              "envelopeEnd": 74,
+              "location-fragments": [{ "start": 13, "end": 73, "dc-status": "CONTINUOUS" }]
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PS50222",
+            "name": "EF_HAND_2",
+            "description": "EF-hand calcium-binding domain profile",
+            "type": "Domain",
+            "signatureLibraryRelease": { "library": "PROSITE profiles", "version": "2026_01" },
+            "entry": {
+              "accession": "IPR002048",
+              "name": "EF_hand_dom",
+              "description": "EF-hand domain",
+              "type": "Domain"
+            }
+          },
+          "model-ac": "PS50222",
+          "source": "PROSITE profiles",
+          "locations": [
+            {
+              "start": 8,
+              "end": 43,
+              "representative": false,
+              "score": 16.103443,
+              "cigarAlignment": "31M1I2M1I1M",
+              "alignment": "EQWAEFKEAFSLFDKDGDGTITTKELGTVMRsYGqN",
+              "location-fragments": [{ "start": 8, "end": 43, "dc-status": "CONTINUOUS" }]
+            },
+            {
+              "start": 44,
+              "end": 79,
+              "representative": false,
+              "score": 14.792358,
+              "cigarAlignment": "31M1I2M1I1M",
+              "alignment": "PTEAELQDMINEVDADGNGTIDFPEFLTMMArKMkD",
+              "location-fragments": [{ "start": 44, "end": 79, "dc-status": "CONTINUOUS" }]
+            },
+            {
+              "start": 81,
+              "end": 116,
+              "representative": false,
+              "score": 18.00033,
+              "cigarAlignment": "31M1I2M1I1M",
+              "alignment": "DSEEEIREAFRVFDKDGNGYISAAELRHVMTnLGeK",
+              "location-fragments": [{ "start": 81, "end": 116, "dc-status": "CONTINUOUS" }]
+            },
+            {
+              "start": 121,
+              "end": 149,
+              "representative": true,
+              "score": 12.114401,
+              "cigarAlignment": "4D27M1I1M2D",
+              "alignment": "----EVDEMIREADIDGDGQVNYCEFVQMMTaK--",
+              "location-fragments": [{ "start": 121, "end": 149, "dc-status": "CONTINUOUS" }]
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "cd00051",
+            "name": "EFh",
+            "description": null,
+            "type": "Domain",
+            "signatureLibraryRelease": { "library": "CDD", "version": "3.21" },
+            "entry": {
+              "accession": "IPR002048",
+              "name": "EF_hand_dom",
+              "description": "EF-hand domain",
+              "type": "Domain"
+            }
+          },
+          "model-ac": "cd00051",
+          "source": "CDD",
+          "locations": [
+            {
+              "start": 12,
+              "end": 74,
+              "representative": false,
+              "evalue": 2.18192e-22,
+              "score": 82.5957,
+              "location-fragments": [{ "start": 12, "end": 74, "dc-status": "CONTINUOUS" }],
+              "sites": []
+            },
+            {
+              "start": 85,
+              "end": 147,
+              "representative": false,
+              "evalue": 1.14973e-21,
+              "score": 80.6697,
+              "location-fragments": [{ "start": 85, "end": 147, "dc-status": "CONTINUOUS" }],
+              "sites": []
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "SSF47473",
+            "name": null,
+            "description": "EF-hand",
+            "type": "Homologous_superfamily",
+            "signatureLibraryRelease": { "library": "SUPERFAMILY", "version": "1.75" },
+            "entry": {
+              "accession": "IPR011992",
+              "name": "EF-hand-dom_pair",
+              "description": "EF-hand domain pair",
+              "type": "Homologous_superfamily"
+            }
+          },
+          "model-ac": "0037066",
+          "source": "SUPERFAMILY",
+          "locations": [
+            {
+              "start": 2,
+              "end": 147,
+              "representative": false,
+              "hmmLength": 194,
+              "evalue": 8.48e-57,
+              "location-fragments": [{ "start": 2, "end": 147, "dc-status": "CONTINUOUS" }]
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "G3DSA:1.10.238.10",
+            "name": null,
+            "description": "EF-hand",
+            "type": "Homologous_superfamily",
+            "signatureLibraryRelease": { "library": "CATH-Gene3D", "version": "4.3.0" },
+            "entry": {
+              "accession": "IPR011992",
+              "name": "EF-hand-dom_pair",
+              "description": "EF-hand domain pair",
+              "type": "Homologous_superfamily"
+            }
+          },
+          "model-ac": "5n69G01",
+          "evalue": 3.2e-62,
+          "score": 208.8,
+          "source": "CATH-Gene3D",
+          "locations": [
+            {
+              "start": 1,
+              "end": 74,
+              "representative": true,
+              "hmmStart": 8,
+              "hmmEnd": 83,
+              "hmmLength": 87,
+              "hmmBounds": "INCOMPLETE",
+              "evalue": 7.3e-33,
+              "score": 114.7,
+              "envelopeStart": 1,
+              "envelopeEnd": 78,
+              "location-fragments": [{ "start": 1, "end": 74, "dc-status": "CONTINUOUS" }]
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "G3DSA:1.10.238.10",
+            "name": null,
+            "description": "EF-hand",
+            "type": "Homologous_superfamily",
+            "signatureLibraryRelease": { "library": "CATH-Gene3D", "version": "4.3.0" },
+            "entry": {
+              "accession": "IPR011992",
+              "name": "EF-hand-dom_pair",
+              "description": "EF-hand domain pair",
+              "type": "Homologous_superfamily"
+            }
+          },
+          "model-ac": "2bkiD01",
+          "evalue": 2.3e-54,
+          "score": 183.1,
+          "source": "CATH-Gene3D",
+          "locations": [
+            {
+              "start": 75,
+              "end": 123,
+              "representative": true,
+              "hmmStart": 1,
+              "hmmEnd": 56,
+              "hmmLength": 56,
+              "hmmBounds": "COMPLETE",
+              "evalue": 2.8e-28,
+              "score": 99.6,
+              "envelopeStart": 71,
+              "envelopeEnd": 126,
+              "location-fragments": [{ "start": 75, "end": 123, "dc-status": "CONTINUOUS" }]
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "G3DSA:1.10.238.10",
+            "name": null,
+            "description": "EF-hand",
+            "type": "Homologous_superfamily",
+            "signatureLibraryRelease": { "library": "CATH-Gene3D", "version": "4.3.0" },
+            "entry": {
+              "accession": "IPR011992",
+              "name": "EF-hand-dom_pair",
+              "description": "EF-hand domain pair",
+              "type": "Homologous_superfamily"
+            }
+          },
+          "model-ac": "2hf5A00",
+          "evalue": 5.2e-51,
+          "score": 172.5,
+          "source": "CATH-Gene3D",
+          "locations": [
+            {
+              "start": 124,
+              "end": 149,
+              "representative": false,
+              "hmmStart": 2,
+              "hmmEnd": 29,
+              "hmmLength": 68,
+              "hmmBounds": "INCOMPLETE",
+              "evalue": 0.0000012,
+              "score": 30.4,
+              "envelopeStart": 121,
+              "envelopeEnd": 149,
+              "location-fragments": [{ "start": 124, "end": 149, "dc-status": "CONTINUOUS" }]
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PS00018",
+            "name": "EF_HAND_1",
+            "description": "EF-hand calcium-binding domain",
+            "type": "Conserved_site",
+            "signatureLibraryRelease": { "library": "PROSITE patterns", "version": "2026_01" },
+            "entry": {
+              "accession": "IPR018247",
+              "name": "EF_Hand_1_Ca_BS",
+              "description": "EF-Hand 1, calcium-binding site",
+              "type": "Binding_site"
+            }
+          },
+          "model-ac": "PS00018",
+          "source": "PROSITE patterns",
+          "locations": [
+            {
+              "start": 21,
+              "end": 33,
+              "representative": false,
+              "level": "STRONG",
+              "cigarAlignment": "9M2I2M",
+              "alignment": "DKDGDGTITtkEL",
+              "location-fragments": [{ "start": 21, "end": 33, "dc-status": "CONTINUOUS" }]
+            },
+            {
+              "start": 57,
+              "end": 69,
+              "representative": false,
+              "level": "STRONG",
+              "cigarAlignment": "9M2I2M",
+              "alignment": "DADGNGTIDfpEF",
+              "location-fragments": [{ "start": 57, "end": 69, "dc-status": "CONTINUOUS" }]
+            },
+            {
+              "start": 94,
+              "end": 106,
+              "representative": false,
+              "level": "STRONG",
+              "cigarAlignment": "9M2I2M",
+              "alignment": "DKDGNGYISaaEL",
+              "location-fragments": [{ "start": 94, "end": 106, "dc-status": "CONTINUOUS" }]
+            },
+            {
+              "start": 130,
+              "end": 142,
+              "representative": false,
+              "level": "STRONG",
+              "cigarAlignment": "9M2I2M",
+              "alignment": "DIDGDGQVNycEF",
+              "location-fragments": [{ "start": 130, "end": 142, "dc-status": "CONTINUOUS" }]
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "SM00054",
+            "name": "EFh",
+            "description": "EF-hand, calcium binding motif",
+            "type": "Domain",
+            "signatureLibraryRelease": { "library": "SMART", "version": "9.0" },
+            "entry": {
+              "accession": "IPR002048",
+              "name": "EF_hand_dom",
+              "description": "EF-hand domain",
+              "type": "Domain"
+            }
+          },
+          "model-ac": "SM00054",
+          "evalue": 2.0e-47,
+          "score": 173.6,
+          "source": "SMART",
+          "locations": [
+            {
+              "start": 12,
+              "end": 40,
+              "representative": false,
+              "hmmStart": 1,
+              "hmmEnd": 29,
+              "hmmLength": 29,
+              "hmmBounds": "COMPLETE",
+              "evalue": 1.2e-7,
+              "score": 41.4,
+              "location-fragments": [{ "start": 12, "end": 40, "dc-status": "CONTINUOUS" }]
+            },
+            {
+              "start": 48,
+              "end": 76,
+              "representative": false,
+              "hmmStart": 1,
+              "hmmEnd": 29,
+              "hmmLength": 29,
+              "hmmBounds": "COMPLETE",
+              "evalue": 7.2e-9,
+              "score": 45.5,
+              "location-fragments": [{ "start": 48, "end": 76, "dc-status": "CONTINUOUS" }]
+            },
+            {
+              "start": 85,
+              "end": 113,
+              "representative": false,
+              "hmmStart": 1,
+              "hmmEnd": 29,
+              "hmmLength": 29,
+              "hmmBounds": "COMPLETE",
+              "evalue": 5.0e-9,
+              "score": 46.0,
+              "location-fragments": [{ "start": 85, "end": 113, "dc-status": "CONTINUOUS" }]
+            },
+            {
+              "start": 121,
+              "end": 149,
+              "representative": false,
+              "hmmStart": 1,
+              "hmmEnd": 29,
+              "hmmLength": 29,
+              "hmmBounds": "COMPLETE",
+              "evalue": 2.0e-7,
+              "score": 40.7,
+              "location-fragments": [{ "start": 121, "end": 149, "dc-status": "CONTINUOUS" }]
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PTHR23048",
+            "name": null,
+            "description": "MYOSIN LIGHT CHAIN 1, 3",
+            "type": "Family",
+            "signatureLibraryRelease": { "library": "PANTHER", "version": "19.0" },
+            "entry": {
+              "accession": "IPR050230",
+              "name": "CALM/Myosin/TropC-like",
+              "description": "Calmodulin/Myosin light chain/Troponin C-like",
+              "type": "Family"
+            }
+          },
+          "model-ac": "PTHR23048",
+          "name": "MYOSIN LIGHT CHAIN 1, 3",
+          "evalue": 8.1e-69,
+          "score": 242.1,
+          "proteinClass": null,
+          "graftPoint": null,
+          "ancestralNode": null,
+          "source": "PANTHER",
+          "locations": [
+            {
+              "start": 2,
+              "end": 148,
+              "representative": true,
+              "evalue": 8.8e-69,
+              "score": 242.0,
+              "hmmStart": 5,
+              "hmmEnd": 155,
+              "hmmLength": 157,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 1,
+              "envelopeEnd": 149,
+              "location-fragments": [{ "start": 2, "end": 148, "dc-status": "CONTINUOUS" }]
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "G3DSA:1.10.238.10:FF:000527",
+            "name": null,
+            "description": "Calmodulin-3",
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "CATH-FunFam", "version": "4.3.0" },
+            "entry": null
+          },
+          "model-ac": "1.10.238.10-FF-000527",
+          "evalue": 3.3e-94,
+          "score": 314.6,
+          "source": "CATH-FunFam",
+          "locations": [
+            {
+              "start": 2,
+              "end": 149,
+              "representative": false,
+              "hmmStart": 1,
+              "hmmEnd": 148,
+              "hmmLength": 148,
+              "hmmBounds": "COMPLETE",
+              "evalue": 3.7e-94,
+              "score": 314.5,
+              "envelopeStart": 2,
+              "envelopeEnd": 149,
+              "location-fragments": [{ "start": 2, "end": 149, "dc-status": "CONTINUOUS" }]
+            }
+          ]
+        }
+      ],
+      "xref": [{ "name": "query", "id": "query" }]
+    }
+  ]
+}

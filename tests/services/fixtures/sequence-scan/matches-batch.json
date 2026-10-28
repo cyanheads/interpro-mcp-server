@@ -1,0 +1,4773 @@
+{
+  "results": [
+    {
+      "md5": "EBD0AA0BC77B635530A6938487B7099B",
+      "matches": [
+        {
+          "signature": {
+            "accession": "PF13499",
+            "name": "EF-hand_7",
+            "description": "EF-hand domain pair",
+            "type": "Domain",
+            "signatureLibraryRelease": { "library": "Pfam", "version": "38.2" },
+            "entry": {
+              "accession": "IPR002048",
+              "name": "EF_hand_dom",
+              "description": "EF-hand domain",
+              "type": "Domain",
+              "parent": null
+            }
+          },
+          "model-ac": "PF13499",
+          "source": "Pfam",
+          "locations": [
+            {
+              "start": 12,
+              "end": 73,
+              "location-fragments": [{ "start": 12, "end": 73, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 3,
+              "hmmEnd": 66,
+              "hmmLength": 67,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 10,
+              "envelopeEnd": 74,
+              "evalue": 3.3e-14,
+              "score": 64.3
+            },
+            {
+              "start": 83,
+              "end": 147,
+              "location-fragments": [{ "start": 83, "end": 147, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 1,
+              "hmmEnd": 67,
+              "hmmLength": 67,
+              "hmmBounds": "COMPLETE",
+              "envelopeStart": 83,
+              "envelopeEnd": 147,
+              "evalue": 2.5e-19,
+              "score": 80.7
+            }
+          ],
+          "score": 144.0,
+          "evalue": 4.3e-39
+        },
+        {
+          "signature": {
+            "accession": "PIRSR603915-1",
+            "name": "PIRSR603915-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR603915-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 46,
+              "end": 119,
+              "location-fragments": [{ "start": 46, "end": 119, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 662,
+              "hmmEnd": 732,
+              "hmmLength": 903,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 34,
+              "envelopeEnd": 130,
+              "evalue": 0.0063,
+              "score": 12.9,
+              "sites": [
+                {
+                  "description": "BINDING: Ca(2+)",
+                  "numLocations": 3,
+                  "siteLocations": [
+                    { "start": 94, "end": 94, "residue": "D" },
+                    { "start": 96, "end": 96, "residue": "D" },
+                    { "start": 105, "end": 105, "residue": "E" }
+                  ]
+                }
+              ]
+            }
+          ],
+          "score": 12.9,
+          "evalue": 0.0063
+        },
+        {
+          "signature": {
+            "accession": "PIRSR608080-1",
+            "name": "PIRSR608080-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR608080-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 6,
+              "end": 74,
+              "location-fragments": [{ "start": 6, "end": 74, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 36,
+              "hmmEnd": 107,
+              "hmmLength": 109,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 2,
+              "envelopeEnd": 77,
+              "evalue": 9.6e-7,
+              "score": 27.8,
+              "sites": [
+                {
+                  "description": "BINDING: Ca(2+)",
+                  "numLocations": 6,
+                  "siteLocations": [
+                    { "start": 21, "end": 21, "residue": "D" },
+                    { "start": 23, "end": 23, "residue": "D" },
+                    { "start": 32, "end": 32, "residue": "E" },
+                    { "start": 57, "end": 57, "residue": "D" },
+                    { "start": 59, "end": 59, "residue": "D" },
+                    { "start": 68, "end": 68, "residue": "E" }
+                  ]
+                }
+              ]
+            },
+            {
+              "start": 79,
+              "end": 147,
+              "location-fragments": [{ "start": 79, "end": 147, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 36,
+              "hmmEnd": 107,
+              "hmmLength": 109,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 73,
+              "envelopeEnd": 149,
+              "evalue": 1.1e-12,
+              "score": 46.9,
+              "sites": [
+                {
+                  "description": "BINDING: Ca(2+)",
+                  "numLocations": 8,
+                  "siteLocations": [
+                    { "start": 94, "end": 94, "residue": "D" },
+                    { "start": 96, "end": 96, "residue": "D" },
+                    { "start": 100, "end": 100, "residue": "Y" },
+                    { "start": 105, "end": 105, "residue": "E" },
+                    { "start": 130, "end": 130, "residue": "D" },
+                    { "start": 132, "end": 132, "residue": "D" },
+                    { "start": 134, "end": 134, "residue": "D" },
+                    { "start": 141, "end": 141, "residue": "E" }
+                  ]
+                }
+              ]
+            }
+          ],
+          "score": 46.9,
+          "evalue": 1.1e-12
+        },
+        {
+          "signature": {
+            "accession": "PR00450",
+            "name": "RECOVERIN",
+            "description": null,
+            "type": "Family",
+            "signatureLibraryRelease": { "library": "PRINTS", "version": "42.0" },
+            "entry": null
+          },
+          "model-ac": "PR00450",
+          "source": "PRINTS",
+          "locations": [
+            {
+              "start": 5,
+              "end": 24,
+              "location-fragments": [{ "start": 5, "end": 24, "dc-status": "CONTINUOUS" }],
+              "score": 0.0839,
+              "pvalue": 22.69,
+              "motifNumber": 2
+            },
+            {
+              "start": 52,
+              "end": 73,
+              "location-fragments": [{ "start": 52, "end": 73, "dc-status": "CONTINUOUS" }],
+              "score": 1.98e-7,
+              "pvalue": 36.71,
+              "motifNumber": 3
+            },
+            {
+              "start": 99,
+              "end": 117,
+              "location-fragments": [{ "start": 99, "end": 117, "dc-status": "CONTINUOUS" }],
+              "score": 0.00204,
+              "pvalue": 22.87,
+              "motifNumber": 5
+            }
+          ],
+          "evalue": 0.000047,
+          "graphscan": ".iI.i.."
+        },
+        {
+          "signature": {
+            "accession": "G3DSA:1.10.238.10:FF:000527",
+            "name": null,
+            "description": "Calmodulin-3",
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "CATH-FunFam", "version": "4.3.0" },
+            "entry": null
+          },
+          "model-ac": "1.10.238.10-FF-000527",
+          "source": "CATH-FunFam",
+          "locations": [
+            {
+              "start": 2,
+              "end": 149,
+              "location-fragments": [{ "start": 2, "end": 149, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 1,
+              "hmmEnd": 148,
+              "hmmLength": 148,
+              "hmmBounds": "COMPLETE",
+              "envelopeStart": 2,
+              "envelopeEnd": 149,
+              "evalue": 2.6e-97,
+              "score": 324.7
+            }
+          ],
+          "score": 324.9,
+          "evalue": 2.3e-97
+        },
+        {
+          "signature": {
+            "accession": "G3DSA:1.10.238.10",
+            "name": null,
+            "description": "EF-hand",
+            "type": "Homologous_superfamily",
+            "signatureLibraryRelease": { "library": "CATH-Gene3D", "version": "4.3.0" },
+            "entry": {
+              "accession": "IPR011992",
+              "name": "EF-hand-dom_pair",
+              "description": "EF-hand domain pair",
+              "type": "Homologous_superfamily",
+              "parent": null
+            }
+          },
+          "model-ac": "5n69G01",
+          "source": "CATH-Gene3D",
+          "locations": [
+            {
+              "start": 1,
+              "end": 74,
+              "location-fragments": [{ "start": 1, "end": 74, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 8,
+              "hmmEnd": 83,
+              "hmmLength": 87,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 1,
+              "envelopeEnd": 78,
+              "evalue": 1.8e-34,
+              "score": 119.9
+            }
+          ],
+          "score": 217.9,
+          "evalue": 4.5e-65
+        },
+        {
+          "signature": {
+            "accession": "G3DSA:1.10.238.10",
+            "name": null,
+            "description": "EF-hand",
+            "type": "Homologous_superfamily",
+            "signatureLibraryRelease": { "library": "CATH-Gene3D", "version": "4.3.0" },
+            "entry": {
+              "accession": "IPR011992",
+              "name": "EF-hand-dom_pair",
+              "description": "EF-hand domain pair",
+              "type": "Homologous_superfamily",
+              "parent": null
+            }
+          },
+          "model-ac": "2bkiD01",
+          "source": "CATH-Gene3D",
+          "locations": [
+            {
+              "start": 75,
+              "end": 123,
+              "location-fragments": [{ "start": 75, "end": 123, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 1,
+              "hmmEnd": 56,
+              "hmmLength": 56,
+              "hmmBounds": "COMPLETE",
+              "envelopeStart": 71,
+              "envelopeEnd": 126,
+              "evalue": 9.2e-29,
+              "score": 101.1
+            }
+          ],
+          "score": 190.3,
+          "evalue": 1.3e-56
+        },
+        {
+          "signature": {
+            "accession": "G3DSA:1.10.238.10",
+            "name": null,
+            "description": "EF-hand",
+            "type": "Homologous_superfamily",
+            "signatureLibraryRelease": { "library": "CATH-Gene3D", "version": "4.3.0" },
+            "entry": {
+              "accession": "IPR011992",
+              "name": "EF-hand-dom_pair",
+              "description": "EF-hand domain pair",
+              "type": "Homologous_superfamily",
+              "parent": null
+            }
+          },
+          "model-ac": "2hf5A00",
+          "source": "CATH-Gene3D",
+          "locations": [
+            {
+              "start": 124,
+              "end": 149,
+              "location-fragments": [{ "start": 124, "end": 149, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 2,
+              "hmmEnd": 29,
+              "hmmLength": 68,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 120,
+              "envelopeEnd": 149,
+              "evalue": 9.2e-8,
+              "score": 34.0
+            }
+          ],
+          "score": 176.0,
+          "evalue": 4.2e-52
+        },
+        {
+          "signature": {
+            "accession": "cd00051",
+            "name": "EFh",
+            "description": null,
+            "type": "Domain",
+            "signatureLibraryRelease": { "library": "CDD", "version": "3.21" },
+            "entry": {
+              "accession": "IPR002048",
+              "name": "EF_hand_dom",
+              "description": "EF-hand domain",
+              "type": "Domain",
+              "parent": null
+            }
+          },
+          "model-ac": "cd00051",
+          "source": "CDD",
+          "locations": [
+            {
+              "start": 12,
+              "end": 74,
+              "location-fragments": [{ "start": 12, "end": 74, "dc-status": "CONTINUOUS" }],
+              "evalue": 3.79725e-22,
+              "score": 81.8253,
+              "sites": []
+            },
+            {
+              "start": 85,
+              "end": 147,
+              "location-fragments": [{ "start": 85, "end": 147, "dc-status": "CONTINUOUS" }],
+              "evalue": 8.54953e-24,
+              "score": 86.0625,
+              "sites": []
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PTHR23048",
+            "name": null,
+            "description": "MYOSIN LIGHT CHAIN 1, 3",
+            "type": "Family",
+            "signatureLibraryRelease": { "library": "PANTHER", "version": "19.0" },
+            "entry": {
+              "accession": "IPR050230",
+              "name": "CALM/Myosin/TropC-like",
+              "description": "Calmodulin/Myosin light chain/Troponin C-like",
+              "type": "Family",
+              "parent": null
+            }
+          },
+          "model-ac": "PTHR23048:SF0",
+          "source": "PANTHER",
+          "locations": [
+            {
+              "start": 2,
+              "end": 148,
+              "location-fragments": [{ "start": 2, "end": 148, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 5,
+              "hmmEnd": 155,
+              "hmmLength": 157,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 1,
+              "envelopeEnd": 149,
+              "evalue": 9.4e-72,
+              "score": 251.7
+            }
+          ],
+          "score": 251.7,
+          "evalue": 9.4e-72,
+          "ancestralNode": "AN316"
+        },
+        {
+          "signature": {
+            "accession": "PS00018",
+            "name": "EF_HAND_1",
+            "description": "EF-hand calcium-binding domain",
+            "type": "Conserved_site",
+            "signatureLibraryRelease": { "library": "PROSITE patterns", "version": "2026_01" },
+            "entry": {
+              "accession": "IPR018247",
+              "name": "EF_Hand_1_Ca_BS",
+              "description": "EF-Hand 1, calcium-binding site",
+              "type": "Binding_site",
+              "parent": null
+            }
+          },
+          "model-ac": "PS00018",
+          "source": "PROSITE patterns",
+          "locations": [
+            {
+              "start": 21,
+              "end": 33,
+              "location-fragments": [{ "start": 21, "end": 33, "dc-status": "CONTINUOUS" }],
+              "cigarAlignment": "9M2I2M"
+            },
+            {
+              "start": 57,
+              "end": 69,
+              "location-fragments": [{ "start": 57, "end": 69, "dc-status": "CONTINUOUS" }],
+              "cigarAlignment": "9M2I2M"
+            },
+            {
+              "start": 94,
+              "end": 106,
+              "location-fragments": [{ "start": 94, "end": 106, "dc-status": "CONTINUOUS" }],
+              "cigarAlignment": "9M2I2M"
+            },
+            {
+              "start": 130,
+              "end": 142,
+              "location-fragments": [{ "start": 130, "end": 142, "dc-status": "CONTINUOUS" }],
+              "cigarAlignment": "9M2I2M"
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PS50222",
+            "name": "EF_HAND_2",
+            "description": "EF-hand calcium-binding domain profile",
+            "type": "Domain",
+            "signatureLibraryRelease": { "library": "PROSITE profiles", "version": "2026_01" },
+            "entry": {
+              "accession": "IPR002048",
+              "name": "EF_hand_dom",
+              "description": "EF-hand domain",
+              "type": "Domain",
+              "parent": null
+            }
+          },
+          "model-ac": "PS50222",
+          "source": "PROSITE profiles",
+          "locations": [
+            {
+              "start": 8,
+              "end": 43,
+              "location-fragments": [{ "start": 8, "end": 43, "dc-status": "CONTINUOUS" }],
+              "score": 17.302946,
+              "cigarAlignment": "31M1I2M1I1M"
+            },
+            {
+              "start": 44,
+              "end": 79,
+              "location-fragments": [{ "start": 44, "end": 79, "dc-status": "CONTINUOUS" }],
+              "score": 14.792358,
+              "cigarAlignment": "31M1I2M1I1M"
+            },
+            {
+              "start": 81,
+              "end": 116,
+              "location-fragments": [{ "start": 81, "end": 116, "dc-status": "CONTINUOUS" }],
+              "score": 18.00033,
+              "cigarAlignment": "31M1I2M1I1M"
+            },
+            {
+              "start": 117,
+              "end": 149,
+              "location-fragments": [{ "start": 117, "end": 149, "dc-status": "CONTINUOUS" }],
+              "score": 15.545536,
+              "cigarAlignment": "31M1I1M2D"
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "SM00054",
+            "name": "EFh",
+            "description": "EF-hand, calcium binding motif",
+            "type": "Domain",
+            "signatureLibraryRelease": { "library": "SMART", "version": "9.0" },
+            "entry": {
+              "accession": "IPR002048",
+              "name": "EF_hand_dom",
+              "description": "EF-hand domain",
+              "type": "Domain",
+              "parent": null
+            }
+          },
+          "model-ac": "SM00054",
+          "source": "SMART",
+          "locations": [
+            {
+              "start": 12,
+              "end": 40,
+              "location-fragments": [{ "start": 12, "end": 40, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 1,
+              "hmmEnd": 29,
+              "hmmLength": 29,
+              "hmmBounds": "COMPLETE",
+              "evalue": 8.5e-9,
+              "score": 45.2
+            },
+            {
+              "start": 48,
+              "end": 76,
+              "location-fragments": [{ "start": 48, "end": 76, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 1,
+              "hmmEnd": 29,
+              "hmmLength": 29,
+              "hmmBounds": "COMPLETE",
+              "evalue": 7.2e-9,
+              "score": 45.5
+            },
+            {
+              "start": 85,
+              "end": 113,
+              "location-fragments": [{ "start": 85, "end": 113, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 1,
+              "hmmEnd": 29,
+              "hmmLength": 29,
+              "hmmBounds": "COMPLETE",
+              "evalue": 5e-9,
+              "score": 46.0
+            },
+            {
+              "start": 121,
+              "end": 149,
+              "location-fragments": [{ "start": 121, "end": 149, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 1,
+              "hmmEnd": 29,
+              "hmmLength": 29,
+              "hmmBounds": "COMPLETE",
+              "evalue": 1.5e-9,
+              "score": 47.7
+            }
+          ],
+          "score": 184.4,
+          "evalue": 1.1e-50
+        },
+        {
+          "signature": {
+            "accession": "SSF47473",
+            "name": null,
+            "description": "EF-hand",
+            "type": "Homologous_superfamily",
+            "signatureLibraryRelease": { "library": "SUPERFAMILY", "version": "1.75" },
+            "entry": {
+              "accession": "IPR011992",
+              "name": "EF-hand-dom_pair",
+              "description": "EF-hand domain pair",
+              "type": "Homologous_superfamily",
+              "parent": null
+            }
+          },
+          "model-ac": "0037066",
+          "source": "SUPERFAMILY",
+          "locations": [
+            {
+              "start": 2,
+              "end": 147,
+              "location-fragments": [{ "start": 2, "end": 147, "dc-status": "CONTINUOUS" }],
+              "hmmLength": 194,
+              "evalue": 4.06e-59
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PS00018",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "PROSITE Patterns", "version": "2025_01" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 21,
+              "end": 33,
+              "location-fragments": [{ "start": 21, "end": 33, "dc-status": "CONTINUOUS" }],
+              "score": 0.9999723
+            },
+            {
+              "start": 57,
+              "end": 69,
+              "location-fragments": [{ "start": 57, "end": 69, "dc-status": "CONTINUOUS" }],
+              "score": 0.99996275
+            },
+            {
+              "start": 94,
+              "end": 106,
+              "location-fragments": [{ "start": 94, "end": 106, "dc-status": "CONTINUOUS" }],
+              "score": 0.99999684
+            },
+            {
+              "start": 130,
+              "end": 142,
+              "location-fragments": [{ "start": 130, "end": 142, "dc-status": "CONTINUOUS" }],
+              "score": 0.99999076
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PS50222",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "PROSITE Profiles", "version": "2025_01" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 8,
+              "end": 43,
+              "location-fragments": [{ "start": 8, "end": 43, "dc-status": "CONTINUOUS" }],
+              "score": 0.9999953
+            },
+            {
+              "start": 44,
+              "end": 79,
+              "location-fragments": [{ "start": 44, "end": 79, "dc-status": "CONTINUOUS" }],
+              "score": 0.99994594
+            },
+            {
+              "start": 81,
+              "end": 116,
+              "location-fragments": [{ "start": 81, "end": 116, "dc-status": "CONTINUOUS" }],
+              "score": 0.99998045
+            },
+            {
+              "start": 117,
+              "end": 149,
+              "location-fragments": [{ "start": 117, "end": 149, "dc-status": "CONTINUOUS" }],
+              "score": 0.9999221
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "G3DSA:1.10.238.10",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "CATH-Gene3D", "version": "4.3.0" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 1,
+              "end": 74,
+              "location-fragments": [{ "start": 1, "end": 74, "dc-status": "CONTINUOUS" }],
+              "score": 0.999735
+            },
+            {
+              "start": 75,
+              "end": 123,
+              "location-fragments": [{ "start": 75, "end": 123, "dc-status": "CONTINUOUS" }],
+              "score": 0.99973845
+            },
+            {
+              "start": 124,
+              "end": 149,
+              "location-fragments": [{ "start": 124, "end": 149, "dc-status": "CONTINUOUS" }],
+              "score": 0.99969786
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "SSF47473",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "SUPERFAMILY", "version": "1.75" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 2,
+              "end": 147,
+              "location-fragments": [{ "start": 2, "end": 147, "dc-status": "CONTINUOUS" }],
+              "score": 0.9996896
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PTHR23048",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "PANTHER", "version": "19.0" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 2,
+              "end": 148,
+              "location-fragments": [{ "start": 2, "end": 148, "dc-status": "CONTINUOUS" }],
+              "score": 0.9999001
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "cd00051",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "CDD", "version": "3.21" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 12,
+              "end": 74,
+              "location-fragments": [{ "start": 12, "end": 74, "dc-status": "CONTINUOUS" }],
+              "score": 0.99970675
+            },
+            {
+              "start": 85,
+              "end": 147,
+              "location-fragments": [{ "start": 85, "end": 147, "dc-status": "CONTINUOUS" }],
+              "score": 0.9999734
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PR00450",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "PRINTS", "version": "42.0" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 5,
+              "end": 24,
+              "location-fragments": [{ "start": 5, "end": 24, "dc-status": "CONTINUOUS" }],
+              "score": 0.99135953
+            },
+            {
+              "start": 52,
+              "end": 73,
+              "location-fragments": [{ "start": 52, "end": 73, "dc-status": "CONTINUOUS" }],
+              "score": 0.98863417
+            },
+            {
+              "start": 99,
+              "end": 117,
+              "location-fragments": [{ "start": 99, "end": 117, "dc-status": "CONTINUOUS" }],
+              "score": 0.9907582
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "SM00054",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "SMART", "version": "9.0" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 12,
+              "end": 40,
+              "location-fragments": [{ "start": 12, "end": 40, "dc-status": "CONTINUOUS" }],
+              "score": 0.9999943
+            },
+            {
+              "start": 48,
+              "end": 76,
+              "location-fragments": [{ "start": 48, "end": 76, "dc-status": "CONTINUOUS" }],
+              "score": 0.999996
+            },
+            {
+              "start": 85,
+              "end": 113,
+              "location-fragments": [{ "start": 85, "end": 113, "dc-status": "CONTINUOUS" }],
+              "score": 0.99999833
+            },
+            {
+              "start": 121,
+              "end": 149,
+              "location-fragments": [{ "start": 121, "end": 149, "dc-status": "CONTINUOUS" }],
+              "score": 0.99998707
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PF13499",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "Pfam", "version": "37.3" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 12,
+              "end": 73,
+              "location-fragments": [{ "start": 12, "end": 73, "dc-status": "CONTINUOUS" }],
+              "score": 0.9999473
+            },
+            {
+              "start": 83,
+              "end": 147,
+              "location-fragments": [{ "start": 83, "end": 147, "dc-status": "CONTINUOUS" }],
+              "score": 0.999999
+            }
+          ]
+        }
+      ],
+      "found": true
+    },
+    { "md5": "6A4866B2B971131F9DA9B818F1E3508B", "matches": [], "found": false },
+    {
+      "md5": "1620296E269940B19BAFA78CA71E003A",
+      "matches": [
+        {
+          "signature": {
+            "accession": "G3DSA:2.30.29.30:FF:000027",
+            "name": null,
+            "description": "Non-specific serine/threonine protein kinase",
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "CATH-FunFam", "version": "4.3.0" },
+            "entry": null
+          },
+          "model-ac": "2.30.29.30-FF-000027",
+          "source": "CATH-FunFam",
+          "locations": [
+            {
+              "start": 1,
+              "end": 119,
+              "location-fragments": [{ "start": 1, "end": 119, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 1,
+              "hmmEnd": 120,
+              "hmmLength": 120,
+              "hmmBounds": "COMPLETE",
+              "envelopeStart": 1,
+              "envelopeEnd": 119,
+              "evalue": 1.3e-66,
+              "score": 223.6
+            }
+          ],
+          "score": 224.2,
+          "evalue": 8e-67
+        },
+        {
+          "signature": {
+            "accession": "G3DSA:3.30.200.20:FF:000838",
+            "name": null,
+            "description": "Non-specific serine/threonine protein kinase",
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "CATH-FunFam", "version": "4.3.0" },
+            "entry": null
+          },
+          "model-ac": "3.30.200.20-FF-000838",
+          "source": "CATH-FunFam",
+          "locations": [
+            {
+              "start": 139,
+              "end": 235,
+              "location-fragments": [{ "start": 139, "end": 235, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 4,
+              "hmmEnd": 95,
+              "hmmLength": 104,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 139,
+              "envelopeEnd": 238,
+              "evalue": 2.6e-54,
+              "score": 183.4
+            }
+          ],
+          "score": 183.6,
+          "evalue": 2.2e-54
+        },
+        {
+          "signature": {
+            "accession": "G3DSA:1.10.510.10:FF:000033",
+            "name": null,
+            "description": "Non-specific serine/threonine protein kinase",
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "CATH-FunFam", "version": "4.3.0" },
+            "entry": null
+          },
+          "model-ac": "1.10.510.10-FF-000033",
+          "source": "CATH-FunFam",
+          "locations": [
+            {
+              "start": 236,
+              "end": 439,
+              "location-fragments": [{ "start": 236, "end": 439, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 1,
+              "hmmEnd": 206,
+              "hmmLength": 206,
+              "hmmBounds": "COMPLETE",
+              "envelopeStart": 233,
+              "envelopeEnd": 439,
+              "evalue": 1.8e-130,
+              "score": 434.7
+            }
+          ],
+          "score": 435.3,
+          "evalue": 1.2e-130
+        },
+        {
+          "signature": {
+            "accession": "G3DSA:2.30.29.30",
+            "name": null,
+            "description": "Pleckstrin-homology domain (PH domain)/Phosphotyrosine-binding domain (PTB)",
+            "type": "Homologous_superfamily",
+            "signatureLibraryRelease": { "library": "CATH-Gene3D", "version": "4.3.0" },
+            "entry": {
+              "accession": "IPR011993",
+              "name": "PH-like_dom_sf",
+              "description": "PH-like domain superfamily",
+              "type": "Homologous_superfamily",
+              "parent": null
+            }
+          },
+          "model-ac": "1unqA00",
+          "source": "CATH-Gene3D",
+          "locations": [
+            {
+              "start": 1,
+              "end": 123,
+              "location-fragments": [{ "start": 1, "end": 123, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 4,
+              "hmmEnd": 124,
+              "hmmLength": 125,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 1,
+              "envelopeEnd": 123,
+              "evalue": 2.3e-40,
+              "score": 139.4
+            }
+          ],
+          "score": 140.2,
+          "evalue": 1.3e-40
+        },
+        {
+          "signature": {
+            "accession": "G3DSA:3.30.200.20",
+            "name": null,
+            "description": "Phosphorylase Kinase; domain 1",
+            "type": "Homologous_superfamily",
+            "signatureLibraryRelease": { "library": "CATH-Gene3D", "version": "4.3.0" },
+            "entry": null
+          },
+          "model-ac": "5li9A01",
+          "source": "CATH-Gene3D",
+          "locations": [
+            {
+              "start": 148,
+              "end": 455,
+              "location-fragments": [
+                { "start": 148, "end": 229, "dc-status": "C_TERMINAL_DISC" },
+                { "start": 428, "end": 455, "dc-status": "N_TERMINAL_DISC" }
+              ],
+              "hmmStart": 2,
+              "hmmEnd": 304,
+              "hmmLength": 312,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 147,
+              "envelopeEnd": 463,
+              "evalue": 1.5e-131,
+              "score": 440.1
+            }
+          ],
+          "score": 440.4,
+          "evalue": 1.2e-131
+        },
+        {
+          "signature": {
+            "accession": "G3DSA:1.10.510.10",
+            "name": null,
+            "description": "Transferase(Phosphotransferase) domain 1",
+            "type": "Homologous_superfamily",
+            "signatureLibraryRelease": { "library": "CATH-Gene3D", "version": "4.3.0" },
+            "entry": null
+          },
+          "model-ac": "5li9A02",
+          "source": "CATH-Gene3D",
+          "locations": [
+            {
+              "start": 230,
+              "end": 427,
+              "location-fragments": [{ "start": 230, "end": 427, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 2,
+              "hmmEnd": 304,
+              "hmmLength": 312,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 147,
+              "envelopeEnd": 463,
+              "evalue": 1.5e-131,
+              "score": 440.1
+            }
+          ],
+          "score": 440.4,
+          "evalue": 1.2e-131
+        },
+        {
+          "signature": {
+            "accession": "cd05594",
+            "name": "STKc_PKB_alpha",
+            "description": "Catalytic domain of the Serine/Threonine Kinase, Protein Kinase B alpha (also called Akt1)",
+            "type": "Domain",
+            "signatureLibraryRelease": { "library": "CDD", "version": "3.21" },
+            "entry": {
+              "accession": "IPR034676",
+              "name": "Akt1",
+              "description": "Protein kinase B alpha, catalytic domain",
+              "type": "Domain",
+              "parent": null
+            }
+          },
+          "model-ac": "cd05594",
+          "source": "CDD",
+          "locations": [
+            {
+              "start": 124,
+              "end": 479,
+              "location-fragments": [{ "start": 124, "end": 479, "dc-status": "CONTINUOUS" }],
+              "evalue": 0.0,
+              "score": 719.119,
+              "sites": [
+                {
+                  "description": "active site",
+                  "numLocations": 38,
+                  "siteLocations": [
+                    { "start": 156, "end": 156, "residue": "L" },
+                    { "start": 157, "end": 157, "residue": "G" },
+                    { "start": 159, "end": 159, "residue": "G" },
+                    { "start": 160, "end": 160, "residue": "T" },
+                    { "start": 164, "end": 164, "residue": "V" },
+                    { "start": 177, "end": 177, "residue": "A" },
+                    { "start": 179, "end": 179, "residue": "K" },
+                    { "start": 191, "end": 191, "residue": "E" },
+                    { "start": 194, "end": 194, "residue": "H" },
+                    { "start": 211, "end": 211, "residue": "T" },
+                    { "start": 227, "end": 227, "residue": "M" },
+                    { "start": 228, "end": 228, "residue": "E" },
+                    { "start": 229, "end": 229, "residue": "Y" },
+                    { "start": 230, "end": 230, "residue": "A" },
+                    { "start": 234, "end": 234, "residue": "E" },
+                    { "start": 236, "end": 236, "residue": "F" },
+                    { "start": 240, "end": 240, "residue": "S" },
+                    { "start": 274, "end": 274, "residue": "D" },
+                    { "start": 276, "end": 276, "residue": "K" },
+                    { "start": 278, "end": 278, "residue": "E" },
+                    { "start": 279, "end": 279, "residue": "N" },
+                    { "start": 281, "end": 281, "residue": "M" },
+                    { "start": 291, "end": 291, "residue": "T" },
+                    { "start": 292, "end": 292, "residue": "D" },
+                    { "start": 295, "end": 295, "residue": "L" },
+                    { "start": 309, "end": 309, "residue": "F" },
+                    { "start": 310, "end": 310, "residue": "C" },
+                    { "start": 311, "end": 311, "residue": "G" },
+                    { "start": 312, "end": 312, "residue": "T" },
+                    { "start": 313, "end": 313, "residue": "P" },
+                    { "start": 314, "end": 314, "residue": "E" },
+                    { "start": 315, "end": 315, "residue": "Y" },
+                    { "start": 316, "end": 316, "residue": "L" },
+                    { "start": 341, "end": 341, "residue": "E" },
+                    { "start": 347, "end": 347, "residue": "L" },
+                    { "start": 350, "end": 350, "residue": "Y" },
+                    { "start": 438, "end": 438, "residue": "F" },
+                    { "start": 442, "end": 442, "residue": "F" }
+                  ]
+                },
+                {
+                  "description": "ATP binding site",
+                  "numLocations": 20,
+                  "siteLocations": [
+                    { "start": 156, "end": 156, "residue": "L" },
+                    { "start": 157, "end": 157, "residue": "G" },
+                    { "start": 159, "end": 159, "residue": "G" },
+                    { "start": 164, "end": 164, "residue": "V" },
+                    { "start": 177, "end": 177, "residue": "A" },
+                    { "start": 179, "end": 179, "residue": "K" },
+                    { "start": 211, "end": 211, "residue": "T" },
+                    { "start": 227, "end": 227, "residue": "M" },
+                    { "start": 228, "end": 228, "residue": "E" },
+                    { "start": 229, "end": 229, "residue": "Y" },
+                    { "start": 230, "end": 230, "residue": "A" },
+                    { "start": 234, "end": 234, "residue": "E" },
+                    { "start": 274, "end": 274, "residue": "D" },
+                    { "start": 276, "end": 276, "residue": "K" },
+                    { "start": 278, "end": 278, "residue": "E" },
+                    { "start": 279, "end": 279, "residue": "N" },
+                    { "start": 281, "end": 281, "residue": "M" },
+                    { "start": 291, "end": 291, "residue": "T" },
+                    { "start": 292, "end": 292, "residue": "D" },
+                    { "start": 438, "end": 438, "residue": "F" }
+                  ]
+                },
+                {
+                  "description": "polypeptide substrate binding site",
+                  "numLocations": 22,
+                  "siteLocations": [
+                    { "start": 160, "end": 160, "residue": "T" },
+                    { "start": 191, "end": 191, "residue": "E" },
+                    { "start": 194, "end": 194, "residue": "H" },
+                    { "start": 234, "end": 234, "residue": "E" },
+                    { "start": 236, "end": 236, "residue": "F" },
+                    { "start": 240, "end": 240, "residue": "S" },
+                    { "start": 274, "end": 274, "residue": "D" },
+                    { "start": 276, "end": 276, "residue": "K" },
+                    { "start": 278, "end": 278, "residue": "E" },
+                    { "start": 295, "end": 295, "residue": "L" },
+                    { "start": 309, "end": 309, "residue": "F" },
+                    { "start": 310, "end": 310, "residue": "C" },
+                    { "start": 311, "end": 311, "residue": "G" },
+                    { "start": 312, "end": 312, "residue": "T" },
+                    { "start": 313, "end": 313, "residue": "P" },
+                    { "start": 314, "end": 314, "residue": "E" },
+                    { "start": 315, "end": 315, "residue": "Y" },
+                    { "start": 316, "end": 316, "residue": "L" },
+                    { "start": 341, "end": 341, "residue": "E" },
+                    { "start": 347, "end": 347, "residue": "L" },
+                    { "start": 350, "end": 350, "residue": "Y" },
+                    { "start": 442, "end": 442, "residue": "F" }
+                  ]
+                },
+                {
+                  "description": "activation loop (A-loop)",
+                  "numLocations": 24,
+                  "siteLocations": [
+                    { "start": 291, "end": 291, "residue": "T" },
+                    { "start": 292, "end": 292, "residue": "D" },
+                    { "start": 293, "end": 293, "residue": "F" },
+                    { "start": 294, "end": 294, "residue": "G" },
+                    { "start": 295, "end": 295, "residue": "L" },
+                    { "start": 296, "end": 296, "residue": "C" },
+                    { "start": 297, "end": 297, "residue": "K" },
+                    { "start": 298, "end": 298, "residue": "E" },
+                    { "start": 299, "end": 299, "residue": "G" },
+                    { "start": 300, "end": 300, "residue": "I" },
+                    { "start": 301, "end": 301, "residue": "K" },
+                    { "start": 302, "end": 302, "residue": "D" },
+                    { "start": 303, "end": 303, "residue": "G" },
+                    { "start": 304, "end": 304, "residue": "A" },
+                    { "start": 305, "end": 305, "residue": "T" },
+                    { "start": 306, "end": 306, "residue": "M" },
+                    { "start": 307, "end": 307, "residue": "K" },
+                    { "start": 308, "end": 308, "residue": "T" },
+                    { "start": 309, "end": 309, "residue": "F" },
+                    { "start": 310, "end": 310, "residue": "C" },
+                    { "start": 311, "end": 311, "residue": "G" },
+                    { "start": 312, "end": 312, "residue": "T" },
+                    { "start": 313, "end": 313, "residue": "P" },
+                    { "start": 314, "end": 314, "residue": "E" }
+                  ]
+                },
+                {
+                  "description": "hydrophobic motif (HM)",
+                  "numLocations": 6,
+                  "siteLocations": [
+                    { "start": 469, "end": 469, "residue": "F" },
+                    { "start": 470, "end": 470, "residue": "P" },
+                    { "start": 471, "end": 471, "residue": "Q" },
+                    { "start": 472, "end": 472, "residue": "F" },
+                    { "start": 473, "end": 473, "residue": "S" },
+                    { "start": 474, "end": 474, "residue": "Y" }
+                  ]
+                },
+                {
+                  "description": "turn motif phosphorylation site",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 450, "end": 450, "residue": "T" }]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "cd01241",
+            "name": "PH_PKB",
+            "description": "Protein Kinase B-like pleckstrin homology (PH) domain",
+            "type": "Domain",
+            "signatureLibraryRelease": { "library": "CDD", "version": "3.21" },
+            "entry": {
+              "accession": "IPR039026",
+              "name": "PH_PKB",
+              "description": "Protein Kinase B, pleckstrin homology domain",
+              "type": "Domain",
+              "parent": "IPR001849"
+            }
+          },
+          "model-ac": "cd01241",
+          "source": "CDD",
+          "locations": [
+            {
+              "start": 4,
+              "end": 111,
+              "location-fragments": [{ "start": 4, "end": 111, "dc-status": "CONTINUOUS" }],
+              "evalue": 1.43273e-73,
+              "score": 225.589,
+              "sites": [
+                {
+                  "description": "phosphoinositide binding site",
+                  "numLocations": 11,
+                  "siteLocations": [
+                    { "start": 14, "end": 14, "residue": "K" },
+                    { "start": 16, "end": 16, "residue": "G" },
+                    { "start": 17, "end": 17, "residue": "E" },
+                    { "start": 18, "end": 18, "residue": "Y" },
+                    { "start": 19, "end": 19, "residue": "I" },
+                    { "start": 23, "end": 23, "residue": "R" },
+                    { "start": 25, "end": 25, "residue": "R" },
+                    { "start": 52, "end": 52, "residue": "L" },
+                    { "start": 53, "end": 53, "residue": "N" },
+                    { "start": 55, "end": 55, "residue": "F" },
+                    { "start": 86, "end": 86, "residue": "R" }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "mobidb-lite",
+            "name": "disorder_prediction",
+            "description": "Consensus disorder prediction",
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "MobiDB-lite", "version": "4.0" },
+            "entry": null
+          },
+          "model-ac": "mobidb-lite",
+          "source": "MobiDB-lite",
+          "locations": [
+            {
+              "start": 113,
+              "end": 138,
+              "location-fragments": [{ "start": 113, "end": 138, "dc-status": "CONTINUOUS" }],
+              "sequence-feature": null
+            },
+            {
+              "start": 450,
+              "end": 480,
+              "location-fragments": [{ "start": 450, "end": 480, "dc-status": "CONTINUOUS" }],
+              "sequence-feature": null
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PTHR24351",
+            "name": null,
+            "description": "RIBOSOMAL PROTEIN S6 KINASE",
+            "type": "Family",
+            "signatureLibraryRelease": { "library": "PANTHER", "version": "19.0" },
+            "entry": null
+          },
+          "model-ac": "PTHR24351",
+          "source": "PANTHER",
+          "locations": [
+            {
+              "start": 114,
+              "end": 476,
+              "location-fragments": [{ "start": 114, "end": 476, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 28,
+              "hmmEnd": 372,
+              "hmmLength": 375,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 37,
+              "envelopeEnd": 479,
+              "evalue": 2.5e-150,
+              "score": 512.2
+            }
+          ],
+          "score": 512.2,
+          "evalue": 2.5e-150,
+          "ancestralNode": null
+        },
+        {
+          "signature": {
+            "accession": "PF00069",
+            "name": "Pkinase",
+            "description": "Protein kinase domain",
+            "type": "Domain",
+            "signatureLibraryRelease": { "library": "Pfam", "version": "38.2" },
+            "entry": {
+              "accession": "IPR000719",
+              "name": "Prot_kinase_dom",
+              "description": "Protein kinase domain",
+              "type": "Domain",
+              "parent": null
+            }
+          },
+          "model-ac": "PF00069",
+          "source": "Pfam",
+          "locations": [
+            {
+              "start": 150,
+              "end": 408,
+              "location-fragments": [{ "start": 150, "end": 408, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 1,
+              "hmmEnd": 262,
+              "hmmLength": 262,
+              "hmmBounds": "COMPLETE",
+              "envelopeStart": 150,
+              "envelopeEnd": 408,
+              "evalue": 4e-76,
+              "score": 267.5
+            }
+          ],
+          "score": 267.9,
+          "evalue": 3e-76
+        },
+        {
+          "signature": {
+            "accession": "PF00169",
+            "name": "PH",
+            "description": "PH domain",
+            "type": "Domain",
+            "signatureLibraryRelease": { "library": "Pfam", "version": "38.2" },
+            "entry": {
+              "accession": "IPR001849",
+              "name": "PH_domain",
+              "description": "Pleckstrin homology domain",
+              "type": "Domain",
+              "parent": null
+            }
+          },
+          "model-ac": "PF00169",
+          "source": "Pfam",
+          "locations": [
+            {
+              "start": 7,
+              "end": 106,
+              "location-fragments": [{ "start": 7, "end": 106, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 2,
+              "hmmEnd": 103,
+              "hmmLength": 105,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 6,
+              "envelopeEnd": 108,
+              "evalue": 1.2e-15,
+              "score": 69.2
+            }
+          ],
+          "score": 70.2,
+          "evalue": 6e-16
+        },
+        {
+          "signature": {
+            "accession": "PF00433",
+            "name": "Pkinase_C",
+            "description": "Protein kinase C terminal domain",
+            "type": "Family",
+            "signatureLibraryRelease": { "library": "Pfam", "version": "38.2" },
+            "entry": {
+              "accession": "IPR017892",
+              "name": "Pkinase_C",
+              "description": "Protein kinase, C-terminal",
+              "type": "Domain",
+              "parent": "IPR000961"
+            }
+          },
+          "model-ac": "PF00433",
+          "source": "Pfam",
+          "locations": [
+            {
+              "start": 429,
+              "end": 474,
+              "location-fragments": [{ "start": 429, "end": 474, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 1,
+              "hmmEnd": 44,
+              "hmmLength": 44,
+              "hmmBounds": "COMPLETE",
+              "envelopeStart": 429,
+              "envelopeEnd": 474,
+              "evalue": 2.5e-7,
+              "score": 42.6
+            }
+          ],
+          "score": 43.6,
+          "evalue": 1.2e-7
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000550-1",
+            "name": "PIRSR000550-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000550-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 95,
+              "end": 440,
+              "location-fragments": [{ "start": 95, "end": 440, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 257,
+              "hmmEnd": 607,
+              "hmmLength": 607,
+              "hmmBounds": "C_TERMINAL_COMPLETE",
+              "envelopeStart": 67,
+              "envelopeEnd": 440,
+              "evalue": 3.6e-116,
+              "score": 387.1,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 387.1,
+          "evalue": 3.6e-116
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000550-3",
+            "name": "PIRSR000550-3",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000550-3",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 95,
+              "end": 440,
+              "location-fragments": [{ "start": 95, "end": 440, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 257,
+              "hmmEnd": 607,
+              "hmmLength": 607,
+              "hmmBounds": "C_TERMINAL_COMPLETE",
+              "envelopeStart": 67,
+              "envelopeEnd": 440,
+              "evalue": 3.6e-116,
+              "score": 387.1,
+              "sites": [
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 2,
+                  "siteLocations": [
+                    { "start": 156, "end": 164, "residue": "LGKGTFGKV" },
+                    { "start": 179, "end": 179, "residue": "K" }
+                  ]
+                }
+              ]
+            }
+          ],
+          "score": 387.1,
+          "evalue": 3.6e-116
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000551-50",
+            "name": "PIRSR000551-50",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000551-50",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 108,
+              "end": 475,
+              "location-fragments": [{ "start": 108, "end": 475, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 349,
+              "hmmEnd": 712,
+              "hmmLength": 719,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 64,
+              "envelopeEnd": 479,
+              "evalue": 1.2e-137,
+              "score": 458.4,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 458.4,
+          "evalue": 1.2e-137
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000551-51",
+            "name": "PIRSR000551-51",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000551-51",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 108,
+              "end": 475,
+              "location-fragments": [{ "start": 108, "end": 475, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 349,
+              "hmmEnd": 712,
+              "hmmLength": 719,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 64,
+              "envelopeEnd": 479,
+              "evalue": 1.2e-137,
+              "score": 458.4,
+              "sites": [
+                {
+                  "description": "NP_BIND: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 156, "end": 164, "residue": "LGKGTFGKV" }]
+                },
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 179, "end": 179, "residue": "K" }]
+                }
+              ]
+            }
+          ],
+          "score": 458.4,
+          "evalue": 1.2e-137
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000552-1",
+            "name": "PIRSR000552-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000552-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 154,
+              "end": 353,
+              "location-fragments": [{ "start": 154, "end": 353, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 580,
+              "hmmEnd": 780,
+              "hmmLength": 888,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 96,
+              "envelopeEnd": 392,
+              "evalue": 3.2e-33,
+              "score": 113.0,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 113.0,
+          "evalue": 3.2e-33
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000552-2",
+            "name": "PIRSR000552-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000552-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 154,
+              "end": 353,
+              "location-fragments": [{ "start": 154, "end": 353, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 580,
+              "hmmEnd": 780,
+              "hmmLength": 888,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 96,
+              "envelopeEnd": 392,
+              "evalue": 3.2e-33,
+              "score": 113.0,
+              "sites": [
+                {
+                  "description": "NP_BIND: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 156, "end": 164, "residue": "LGKGTFGKV" }]
+                },
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 179, "end": 179, "residue": "K" }]
+                }
+              ]
+            }
+          ],
+          "score": 113.0,
+          "evalue": 3.2e-33
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000554-1",
+            "name": "PIRSR000554-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000554-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 120,
+              "end": 463,
+              "location-fragments": [{ "start": 120, "end": 463, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 215,
+              "hmmEnd": 569,
+              "hmmLength": 589,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 53,
+              "envelopeEnd": 476,
+              "evalue": 2.8e-107,
+              "score": 357.7,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 357.7,
+          "evalue": 2.8e-107
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000554-2",
+            "name": "PIRSR000554-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000554-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 120,
+              "end": 463,
+              "location-fragments": [{ "start": 120, "end": 463, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 215,
+              "hmmEnd": 569,
+              "hmmLength": 589,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 53,
+              "envelopeEnd": 476,
+              "evalue": 2.8e-107,
+              "score": 357.7,
+              "sites": [
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 179, "end": 179, "residue": "K" }]
+                }
+              ]
+            }
+          ],
+          "score": 357.7,
+          "evalue": 2.8e-107
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000556-1",
+            "name": "PIRSR000556-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000556-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 139,
+              "end": 354,
+              "location-fragments": [{ "start": 139, "end": 354, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 70,
+              "hmmEnd": 291,
+              "hmmLength": 548,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 120,
+              "envelopeEnd": 392,
+              "evalue": 1.1e-24,
+              "score": 85.1,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 85.1,
+          "evalue": 1.1e-24
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000556-2",
+            "name": "PIRSR000556-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000556-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 139,
+              "end": 354,
+              "location-fragments": [{ "start": 139, "end": 354, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 70,
+              "hmmEnd": 291,
+              "hmmLength": 548,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 120,
+              "envelopeEnd": 392,
+              "evalue": 1.1e-24,
+              "score": 85.1,
+              "sites": [
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 179, "end": 179, "residue": "K" }]
+                }
+              ]
+            }
+          ],
+          "score": 85.1,
+          "evalue": 1.1e-24
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000559-1",
+            "name": "PIRSR000559-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000559-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 95,
+              "end": 444,
+              "location-fragments": [{ "start": 95, "end": 444, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 233,
+              "hmmEnd": 580,
+              "hmmLength": 597,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 62,
+              "envelopeEnd": 458,
+              "evalue": 4.9e-82,
+              "score": 274.2,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 274.2,
+          "evalue": 4.9e-82
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000559-2",
+            "name": "PIRSR000559-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000559-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 95,
+              "end": 444,
+              "location-fragments": [{ "start": 95, "end": 444, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 233,
+              "hmmEnd": 580,
+              "hmmLength": 597,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 62,
+              "envelopeEnd": 458,
+              "evalue": 4.9e-82,
+              "score": 274.2,
+              "sites": [
+                {
+                  "description": "NP_BIND: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 156, "end": 164, "residue": "LGKGTFGKV" }]
+                },
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 179, "end": 179, "residue": "K" }]
+                }
+              ]
+            }
+          ],
+          "score": 274.2,
+          "evalue": 4.9e-82
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000604-1",
+            "name": "PIRSR000604-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000604-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 82,
+              "end": 350,
+              "location-fragments": [{ "start": 82, "end": 350, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 280,
+              "hmmEnd": 549,
+              "hmmLength": 615,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 26,
+              "envelopeEnd": 389,
+              "evalue": 2.2e-17,
+              "score": 61.0,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 61.0,
+          "evalue": 2.2e-17
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000604-2",
+            "name": "PIRSR000604-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000604-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 82,
+              "end": 350,
+              "location-fragments": [{ "start": 82, "end": 350, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 280,
+              "hmmEnd": 549,
+              "hmmLength": 615,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 26,
+              "envelopeEnd": 389,
+              "evalue": 2.2e-17,
+              "score": 61.0,
+              "sites": [
+                {
+                  "description": "NP_BIND: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 156, "end": 164, "residue": "LGKGTFGKV" }]
+                },
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 179, "end": 179, "residue": "K" }]
+                }
+              ]
+            }
+          ],
+          "score": 61.0,
+          "evalue": 2.2e-17
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000605-50",
+            "name": "PIRSR000605-50",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000605-50",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 124,
+              "end": 475,
+              "location-fragments": [{ "start": 124, "end": 475, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 50,
+              "hmmEnd": 402,
+              "hmmLength": 517,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 82,
+              "envelopeEnd": 478,
+              "evalue": 3.8e-115,
+              "score": 383.7,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 383.7,
+          "evalue": 3.8e-115
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000605-51",
+            "name": "PIRSR000605-51",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000605-51",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 124,
+              "end": 475,
+              "location-fragments": [{ "start": 124, "end": 475, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 50,
+              "hmmEnd": 402,
+              "hmmLength": 517,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 82,
+              "envelopeEnd": 478,
+              "evalue": 3.8e-115,
+              "score": 383.7,
+              "sites": [
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 179, "end": 179, "residue": "K" }]
+                },
+                {
+                  "description": "NP_BIND: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 156, "end": 164, "residue": "LGKGTFGKV" }]
+                }
+              ]
+            }
+          ],
+          "score": 383.7,
+          "evalue": 3.8e-115
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000606-51",
+            "name": "PIRSR000606-51",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000606-51",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 123,
+              "end": 454,
+              "location-fragments": [{ "start": 123, "end": 454, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 25,
+              "hmmEnd": 357,
+              "hmmLength": 738,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 95,
+              "envelopeEnd": 479,
+              "evalue": 8.5e-117,
+              "score": 389.5,
+              "sites": [
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 179, "end": 179, "residue": "K" }]
+                },
+                {
+                  "description": "NP_BIND: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 156, "end": 164, "residue": "LGKGTFGKV" }]
+                }
+              ]
+            }
+          ],
+          "score": 389.5,
+          "evalue": 8.5e-117
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000617-1",
+            "name": "PIRSR000617-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000617-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 154,
+              "end": 351,
+              "location-fragments": [{ "start": 154, "end": 351, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 1081,
+              "hmmEnd": 1284,
+              "hmmLength": 1389,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 139,
+              "envelopeEnd": 366,
+              "evalue": 2.7e-10,
+              "score": 36.3,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 36.3,
+          "evalue": 2.7e-10
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000617-2",
+            "name": "PIRSR000617-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000617-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 154,
+              "end": 351,
+              "location-fragments": [{ "start": 154, "end": 351, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 1081,
+              "hmmEnd": 1284,
+              "hmmLength": 1389,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 139,
+              "envelopeEnd": 366,
+              "evalue": 2.7e-10,
+              "score": 36.3,
+              "sites": [
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 179, "end": 179, "residue": "K" }]
+                }
+              ]
+            }
+          ],
+          "score": 36.3,
+          "evalue": 2.7e-10
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000619-1",
+            "name": "PIRSR000619-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000619-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 148,
+              "end": 344,
+              "location-fragments": [{ "start": 148, "end": 344, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 711,
+              "hmmEnd": 910,
+              "hmmLength": 1262,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 124,
+              "envelopeEnd": 360,
+              "evalue": 2.5e-9,
+              "score": 33.4,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 33.4,
+          "evalue": 2.5e-9
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000619-2",
+            "name": "PIRSR000619-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000619-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 148,
+              "end": 344,
+              "location-fragments": [{ "start": 148, "end": 344, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 711,
+              "hmmEnd": 910,
+              "hmmLength": 1262,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 124,
+              "envelopeEnd": 360,
+              "evalue": 2.5e-9,
+              "score": 33.4,
+              "sites": [
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 179, "end": 179, "residue": "K" }]
+                },
+                {
+                  "description": "NP_BIND: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 156, "end": 164, "residue": "LGKGTFGKV" }]
+                }
+              ]
+            }
+          ],
+          "score": 33.4,
+          "evalue": 2.5e-9
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000620-1",
+            "name": "PIRSR000620-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000620-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 143,
+              "end": 360,
+              "location-fragments": [{ "start": 143, "end": 360, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 12,
+              "hmmEnd": 244,
+              "hmmLength": 306,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 132,
+              "envelopeEnd": 392,
+              "evalue": 2e-10,
+              "score": 38.3,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 38.3,
+          "evalue": 2e-10
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000620-2",
+            "name": "PIRSR000620-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000620-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 143,
+              "end": 360,
+              "location-fragments": [{ "start": 143, "end": 360, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 12,
+              "hmmEnd": 244,
+              "hmmLength": 306,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 132,
+              "envelopeEnd": 392,
+              "evalue": 2e-10,
+              "score": 38.3,
+              "sites": [
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 2,
+                  "siteLocations": [
+                    { "start": 179, "end": 179, "residue": "K" },
+                    { "start": 292, "end": 292, "residue": "D" }
+                  ]
+                }
+              ]
+            }
+          ],
+          "score": 38.3,
+          "evalue": 2e-10
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000624-1",
+            "name": "PIRSR000624-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000624-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 201,
+              "end": 361,
+              "location-fragments": [{ "start": 201, "end": 361, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 526,
+              "hmmEnd": 704,
+              "hmmLength": 942,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 124,
+              "envelopeEnd": 370,
+              "evalue": 0.0000019,
+              "score": 23.9,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 23.9,
+          "evalue": 0.0000019
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000628-1",
+            "name": "PIRSR000628-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000628-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 257,
+              "end": 361,
+              "location-fragments": [{ "start": 257, "end": 361, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 555,
+              "hmmEnd": 661,
+              "hmmLength": 744,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 118,
+              "envelopeEnd": 375,
+              "evalue": 3.9e-10,
+              "score": 36.6,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 36.6,
+          "evalue": 3.9e-10
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000628-2",
+            "name": "PIRSR000628-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000628-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 257,
+              "end": 361,
+              "location-fragments": [{ "start": 257, "end": 361, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 555,
+              "hmmEnd": 661,
+              "hmmLength": 744,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 118,
+              "envelopeEnd": 375,
+              "evalue": 3.9e-10,
+              "score": 36.6,
+              "sites": [
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 292, "end": 292, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 36.6,
+          "evalue": 3.9e-10
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000631-1",
+            "name": "PIRSR000631-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000631-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 256,
+              "end": 361,
+              "location-fragments": [{ "start": 256, "end": 361, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 857,
+              "hmmEnd": 964,
+              "hmmLength": 1114,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 241,
+              "envelopeEnd": 392,
+              "evalue": 7.5e-8,
+              "score": 28.6,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 28.6,
+          "evalue": 7.5e-8
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000632-1",
+            "name": "PIRSR000632-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000632-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 140,
+              "end": 355,
+              "location-fragments": [{ "start": 140, "end": 355, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 559,
+              "hmmEnd": 776,
+              "hmmLength": 831,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 133,
+              "envelopeEnd": 391,
+              "evalue": 3.9e-14,
+              "score": 49.9,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 49.9,
+          "evalue": 3.9e-14
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000632-2",
+            "name": "PIRSR000632-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000632-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 140,
+              "end": 355,
+              "location-fragments": [{ "start": 140, "end": 355, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 559,
+              "hmmEnd": 776,
+              "hmmLength": 831,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 133,
+              "envelopeEnd": 391,
+              "evalue": 3.9e-14,
+              "score": 49.9,
+              "sites": [
+                {
+                  "description": "NP_BIND: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 156, "end": 164, "residue": "LGKGTFGKV" }]
+                },
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 179, "end": 179, "residue": "K" }]
+                }
+              ]
+            }
+          ],
+          "score": 49.9,
+          "evalue": 3.9e-14
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000636-1",
+            "name": "PIRSR000636-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000636-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 150,
+              "end": 344,
+              "location-fragments": [{ "start": 150, "end": 344, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 846,
+              "hmmEnd": 1047,
+              "hmmLength": 1129,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 48,
+              "envelopeEnd": 367,
+              "evalue": 3.6e-23,
+              "score": 79.4,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 79.4,
+          "evalue": 3.6e-23
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000636-2",
+            "name": "PIRSR000636-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000636-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 150,
+              "end": 344,
+              "location-fragments": [{ "start": 150, "end": 344, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 846,
+              "hmmEnd": 1047,
+              "hmmLength": 1129,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 48,
+              "envelopeEnd": 367,
+              "evalue": 3.6e-23,
+              "score": 79.4,
+              "sites": [
+                {
+                  "description": "NP_BIND: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 156, "end": 164, "residue": "LGKGTFGKV" }]
+                },
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 179, "end": 179, "residue": "K" }]
+                }
+              ]
+            }
+          ],
+          "score": 79.4,
+          "evalue": 3.6e-23
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000660-1",
+            "name": "PIRSR000660-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000660-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 211,
+              "end": 391,
+              "location-fragments": [{ "start": 211, "end": 391, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 769,
+              "hmmEnd": 965,
+              "hmmLength": 1658,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 188,
+              "envelopeEnd": 397,
+              "evalue": 7.8e-14,
+              "score": 47.9,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 47.9,
+          "evalue": 7.8e-14
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000660-2",
+            "name": "PIRSR000660-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000660-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 141,
+              "end": 208,
+              "location-fragments": [{ "start": 141, "end": 208, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 582,
+              "hmmEnd": 645,
+              "hmmLength": 1658,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 89,
+              "envelopeEnd": 215,
+              "evalue": 0.000082,
+              "score": 18.0,
+              "sites": [
+                {
+                  "description": "NP_BIND: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 156, "end": 164, "residue": "LGKGTFGKV" }]
+                },
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 179, "end": 179, "residue": "K" }]
+                }
+              ]
+            }
+          ],
+          "score": 18.0,
+          "evalue": 0.000082
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000661-50",
+            "name": "PIRSR000661-50",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000661-50",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 154,
+              "end": 393,
+              "location-fragments": [{ "start": 154, "end": 393, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 193,
+              "hmmEnd": 444,
+              "hmmLength": 805,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 105,
+              "envelopeEnd": 422,
+              "evalue": 7.5e-37,
+              "score": 125.3,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 125.3,
+          "evalue": 7.5e-37
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000661-51",
+            "name": "PIRSR000661-51",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000661-51",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 154,
+              "end": 393,
+              "location-fragments": [{ "start": 154, "end": 393, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 193,
+              "hmmEnd": 444,
+              "hmmLength": 805,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 105,
+              "envelopeEnd": 422,
+              "evalue": 7.5e-37,
+              "score": 125.3,
+              "sites": [
+                {
+                  "description": "NP_BIND: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 156, "end": 164, "residue": "LGKGTFGKV" }]
+                },
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 179, "end": 179, "residue": "K" }]
+                }
+              ]
+            }
+          ],
+          "score": 125.3,
+          "evalue": 7.5e-37
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000666-1",
+            "name": "PIRSR000666-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000666-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 149,
+              "end": 369,
+              "location-fragments": [{ "start": 149, "end": 369, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 551,
+              "hmmEnd": 771,
+              "hmmLength": 899,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 126,
+              "envelopeEnd": 379,
+              "evalue": 1.4e-14,
+              "score": 51.3,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 51.3,
+          "evalue": 1.4e-14
+        },
+        {
+          "signature": {
+            "accession": "PIRSR000666-2",
+            "name": "PIRSR000666-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR000666-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 149,
+              "end": 369,
+              "location-fragments": [{ "start": 149, "end": 369, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 551,
+              "hmmEnd": 771,
+              "hmmLength": 899,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 126,
+              "envelopeEnd": 379,
+              "evalue": 1.4e-14,
+              "score": 51.3,
+              "sites": [
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 2,
+                  "siteLocations": [
+                    { "start": 156, "end": 164, "residue": "LGKGTFGKV" },
+                    { "start": 179, "end": 179, "residue": "K" }
+                  ]
+                }
+              ]
+            }
+          ],
+          "score": 51.3,
+          "evalue": 1.4e-14
+        },
+        {
+          "signature": {
+            "accession": "PIRSR037014-1",
+            "name": "PIRSR037014-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR037014-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 154,
+              "end": 409,
+              "location-fragments": [{ "start": 154, "end": 409, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 24,
+              "hmmEnd": 272,
+              "hmmLength": 921,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 133,
+              "envelopeEnd": 474,
+              "evalue": 3.7e-44,
+              "score": 149.4,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 149.4,
+          "evalue": 3.7e-44
+        },
+        {
+          "signature": {
+            "accession": "PIRSR037014-2",
+            "name": "PIRSR037014-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR037014-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 154,
+              "end": 409,
+              "location-fragments": [{ "start": 154, "end": 409, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 24,
+              "hmmEnd": 272,
+              "hmmLength": 921,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 133,
+              "envelopeEnd": 474,
+              "evalue": 3.7e-44,
+              "score": 149.4,
+              "sites": [
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 179, "end": 179, "residue": "K" }]
+                },
+                {
+                  "description": "NP_BIND: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 156, "end": 164, "residue": "LGKGTFGKV" }]
+                }
+              ]
+            }
+          ],
+          "score": 149.4,
+          "evalue": 3.7e-44
+        },
+        {
+          "signature": {
+            "accession": "PIRSR037281-1",
+            "name": "PIRSR037281-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR037281-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 113,
+              "end": 287,
+              "location-fragments": [{ "start": 113, "end": 287, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 95,
+              "hmmEnd": 272,
+              "hmmLength": 480,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 89,
+              "envelopeEnd": 305,
+              "evalue": 0.000002,
+              "score": 25.0,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 25.0,
+          "evalue": 0.000002
+        },
+        {
+          "signature": {
+            "accession": "PIRSR037281-2",
+            "name": "PIRSR037281-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR037281-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 113,
+              "end": 287,
+              "location-fragments": [{ "start": 113, "end": 287, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 95,
+              "hmmEnd": 272,
+              "hmmLength": 480,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 89,
+              "envelopeEnd": 305,
+              "evalue": 0.000002,
+              "score": 25.0,
+              "sites": [
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 179, "end": 179, "residue": "K" }]
+                }
+              ]
+            }
+          ],
+          "score": 25.0,
+          "evalue": 0.000002
+        },
+        {
+          "signature": {
+            "accession": "PIRSR037281-3",
+            "name": "PIRSR037281-3",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR037281-3",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 113,
+              "end": 287,
+              "location-fragments": [{ "start": 113, "end": 287, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 95,
+              "hmmEnd": 272,
+              "hmmLength": 480,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 89,
+              "envelopeEnd": 305,
+              "evalue": 0.000002,
+              "score": 25.0,
+              "sites": [
+                {
+                  "description": "METAL: Magnesium; via carbonyl oxygen",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 279, "end": 279, "residue": "N" }]
+                }
+              ]
+            }
+          ],
+          "score": 25.0,
+          "evalue": 0.000002
+        },
+        {
+          "signature": {
+            "accession": "PIRSR037393-1",
+            "name": "PIRSR037393-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR037393-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 110,
+              "end": 342,
+              "location-fragments": [{ "start": 110, "end": 342, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 194,
+              "hmmEnd": 437,
+              "hmmLength": 548,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 56,
+              "envelopeEnd": 351,
+              "evalue": 1.5e-14,
+              "score": 51.8,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 51.8,
+          "evalue": 1.5e-14
+        },
+        {
+          "signature": {
+            "accession": "PIRSR037393-2",
+            "name": "PIRSR037393-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR037393-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 110,
+              "end": 342,
+              "location-fragments": [{ "start": 110, "end": 342, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 194,
+              "hmmEnd": 437,
+              "hmmLength": 548,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 56,
+              "envelopeEnd": 351,
+              "evalue": 1.5e-14,
+              "score": 51.8,
+              "sites": [
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 179, "end": 179, "residue": "K" }]
+                }
+              ]
+            }
+          ],
+          "score": 51.8,
+          "evalue": 1.5e-14
+        },
+        {
+          "signature": {
+            "accession": "PIRSR037568-1",
+            "name": "PIRSR037568-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR037568-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 144,
+              "end": 440,
+              "location-fragments": [{ "start": 144, "end": 440, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 61,
+              "hmmEnd": 361,
+              "hmmLength": 1182,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 131,
+              "envelopeEnd": 447,
+              "evalue": 3.8e-60,
+              "score": 201.6,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 201.6,
+          "evalue": 3.8e-60
+        },
+        {
+          "signature": {
+            "accession": "PIRSR037568-2",
+            "name": "PIRSR037568-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR037568-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 144,
+              "end": 440,
+              "location-fragments": [{ "start": 144, "end": 440, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 61,
+              "hmmEnd": 361,
+              "hmmLength": 1182,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 131,
+              "envelopeEnd": 447,
+              "evalue": 3.8e-60,
+              "score": 201.6,
+              "sites": [
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 179, "end": 179, "residue": "K" }]
+                }
+              ]
+            }
+          ],
+          "score": 201.6,
+          "evalue": 3.8e-60
+        },
+        {
+          "signature": {
+            "accession": "PIRSR037921-1",
+            "name": "PIRSR037921-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR037921-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 148,
+              "end": 351,
+              "location-fragments": [{ "start": 148, "end": 351, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 12,
+              "hmmEnd": 227,
+              "hmmLength": 405,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 137,
+              "envelopeEnd": 361,
+              "evalue": 2.1e-15,
+              "score": 55.0,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 55.0,
+          "evalue": 2.1e-15
+        },
+        {
+          "signature": {
+            "accession": "PIRSR037921-2",
+            "name": "PIRSR037921-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR037921-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 148,
+              "end": 351,
+              "location-fragments": [{ "start": 148, "end": 351, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 12,
+              "hmmEnd": 227,
+              "hmmLength": 405,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 137,
+              "envelopeEnd": 361,
+              "evalue": 2.1e-15,
+              "score": 55.0,
+              "sites": [
+                {
+                  "description": "NP_BIND: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 156, "end": 164, "residue": "LGKGTFGKV" }]
+                },
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 179, "end": 179, "residue": "K" }]
+                }
+              ]
+            }
+          ],
+          "score": 55.0,
+          "evalue": 2.1e-15
+        },
+        {
+          "signature": {
+            "accession": "PIRSR037993-1",
+            "name": "PIRSR037993-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR037993-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 145,
+              "end": 392,
+              "location-fragments": [{ "start": 145, "end": 392, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 34,
+              "hmmEnd": 280,
+              "hmmLength": 318,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 119,
+              "envelopeEnd": 423,
+              "evalue": 3.2e-24,
+              "score": 83.6,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 83.6,
+          "evalue": 3.2e-24
+        },
+        {
+          "signature": {
+            "accession": "PIRSR037993-2",
+            "name": "PIRSR037993-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR037993-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 145,
+              "end": 392,
+              "location-fragments": [{ "start": 145, "end": 392, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 34,
+              "hmmEnd": 280,
+              "hmmLength": 318,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 119,
+              "envelopeEnd": 423,
+              "evalue": 3.2e-24,
+              "score": 83.6,
+              "sites": [
+                {
+                  "description": "BINDING: ATP; via carbonyl oxygen",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 228, "end": 228, "residue": "E" }]
+                },
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 179, "end": 179, "residue": "K" }]
+                },
+                {
+                  "description": "NP_BIND: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 156, "end": 164, "residue": "LGKGTFGKV" }]
+                }
+              ]
+            }
+          ],
+          "score": 83.6,
+          "evalue": 3.2e-24
+        },
+        {
+          "signature": {
+            "accession": "PIRSR038165-50",
+            "name": "PIRSR038165-50",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR038165-50",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 195,
+              "end": 353,
+              "location-fragments": [{ "start": 195, "end": 353, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 200,
+              "hmmEnd": 356,
+              "hmmLength": 965,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 132,
+              "envelopeEnd": 357,
+              "evalue": 6.1e-26,
+              "score": 89.3,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 89.3,
+          "evalue": 6.1e-26
+        },
+        {
+          "signature": {
+            "accession": "PIRSR038172-1",
+            "name": "PIRSR038172-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR038172-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 146,
+              "end": 363,
+              "location-fragments": [{ "start": 146, "end": 363, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 13,
+              "hmmEnd": 227,
+              "hmmLength": 788,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 133,
+              "envelopeEnd": 391,
+              "evalue": 3.1e-28,
+              "score": 96.7,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 96.7,
+          "evalue": 3.1e-28
+        },
+        {
+          "signature": {
+            "accession": "PIRSR038172-2",
+            "name": "PIRSR038172-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR038172-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 146,
+              "end": 363,
+              "location-fragments": [{ "start": 146, "end": 363, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 13,
+              "hmmEnd": 227,
+              "hmmLength": 788,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 133,
+              "envelopeEnd": 391,
+              "evalue": 3.1e-28,
+              "score": 96.7,
+              "sites": [
+                {
+                  "description": "NP_BIND: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 156, "end": 164, "residue": "LGKGTFGKV" }]
+                },
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 179, "end": 179, "residue": "K" }]
+                }
+              ]
+            }
+          ],
+          "score": 96.7,
+          "evalue": 3.1e-28
+        },
+        {
+          "signature": {
+            "accession": "PIRSR038189-1",
+            "name": "PIRSR038189-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR038189-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 155,
+              "end": 299,
+              "location-fragments": [{ "start": 155, "end": 299, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 184,
+              "hmmEnd": 329,
+              "hmmLength": 332,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 146,
+              "envelopeEnd": 302,
+              "evalue": 5.5e-10,
+              "score": 37.0,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 37.0,
+          "evalue": 5.5e-10
+        },
+        {
+          "signature": {
+            "accession": "PIRSR038189-2",
+            "name": "PIRSR038189-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR038189-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 155,
+              "end": 299,
+              "location-fragments": [{ "start": 155, "end": 299, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 184,
+              "hmmEnd": 329,
+              "hmmLength": 332,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 146,
+              "envelopeEnd": 302,
+              "evalue": 5.5e-10,
+              "score": 37.0,
+              "sites": [
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 2,
+                  "siteLocations": [
+                    { "start": 179, "end": 179, "residue": "K" },
+                    { "start": 276, "end": 276, "residue": "K" }
+                  ]
+                }
+              ]
+            }
+          ],
+          "score": 37.0,
+          "evalue": 5.5e-10
+        },
+        {
+          "signature": {
+            "accession": "PIRSR500947-50",
+            "name": "PIRSR500947-50",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR500947-50",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 257,
+              "end": 349,
+              "location-fragments": [{ "start": 257, "end": 349, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 776,
+              "hmmEnd": 870,
+              "hmmLength": 987,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 247,
+              "envelopeEnd": 361,
+              "evalue": 0.000039,
+              "score": 20.1,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 20.1,
+          "evalue": 0.000039
+        },
+        {
+          "signature": {
+            "accession": "PIRSR500948-1",
+            "name": "PIRSR500948-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR500948-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 258,
+              "end": 344,
+              "location-fragments": [{ "start": 258, "end": 344, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 811,
+              "hmmEnd": 898,
+              "hmmLength": 1098,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 248,
+              "envelopeEnd": 362,
+              "evalue": 3.4e-7,
+              "score": 26.2,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 26.2,
+          "evalue": 3.4e-7
+        },
+        {
+          "signature": {
+            "accession": "PIRSR500950-50",
+            "name": "PIRSR500950-50",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR500950-50",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 259,
+              "end": 344,
+              "location-fragments": [{ "start": 259, "end": 344, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 805,
+              "hmmEnd": 891,
+              "hmmLength": 1088,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 246,
+              "envelopeEnd": 359,
+              "evalue": 6.7e-9,
+              "score": 32.2,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 32.2,
+          "evalue": 6.7e-9
+        },
+        {
+          "signature": {
+            "accession": "PIRSR500951-1",
+            "name": "PIRSR500951-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR500951-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 258,
+              "end": 345,
+              "location-fragments": [{ "start": 258, "end": 345, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 678,
+              "hmmEnd": 767,
+              "hmmLength": 874,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 246,
+              "envelopeEnd": 376,
+              "evalue": 0.000019,
+              "score": 21.0,
+              "sites": [
+                {
+                  "description": "METAL: Magnesium",
+                  "numLocations": 2,
+                  "siteLocations": [
+                    { "start": 279, "end": 279, "residue": "N" },
+                    { "start": 292, "end": 292, "residue": "D" }
+                  ]
+                }
+              ]
+            }
+          ],
+          "score": 21.0,
+          "evalue": 0.000019
+        },
+        {
+          "signature": {
+            "accession": "PIRSR600239-51",
+            "name": "PIRSR600239-51",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR600239-51",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 143,
+              "end": 429,
+              "location-fragments": [{ "start": 143, "end": 429, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 184,
+              "hmmEnd": 474,
+              "hmmLength": 597,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 139,
+              "envelopeEnd": 451,
+              "evalue": 7.9e-89,
+              "score": 297.2,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 297.2,
+          "evalue": 7.9e-89
+        },
+        {
+          "signature": {
+            "accession": "PIRSR620777-50",
+            "name": "PIRSR620777-50",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR620777-50",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 256,
+              "end": 392,
+              "location-fragments": [{ "start": 256, "end": 392, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 654,
+              "hmmEnd": 793,
+              "hmmLength": 817,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 252,
+              "envelopeEnd": 405,
+              "evalue": 2.9e-7,
+              "score": 26.9,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 26.9,
+          "evalue": 2.9e-7
+        },
+        {
+          "signature": {
+            "accession": "PIRSR628788-1",
+            "name": "PIRSR628788-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR628788-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 147,
+              "end": 350,
+              "location-fragments": [{ "start": 147, "end": 350, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 10,
+              "hmmEnd": 219,
+              "hmmLength": 326,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 139,
+              "envelopeEnd": 372,
+              "evalue": 1.8e-14,
+              "score": 51.4,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 51.4,
+          "evalue": 1.8e-14
+        },
+        {
+          "signature": {
+            "accession": "PIRSR628788-2",
+            "name": "PIRSR628788-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR628788-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 147,
+              "end": 350,
+              "location-fragments": [{ "start": 147, "end": 350, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 10,
+              "hmmEnd": 219,
+              "hmmLength": 326,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 139,
+              "envelopeEnd": 372,
+              "evalue": 1.8e-14,
+              "score": 51.4,
+              "sites": [
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 179, "end": 179, "residue": "K" }]
+                }
+              ]
+            }
+          ],
+          "score": 51.4,
+          "evalue": 1.8e-14
+        },
+        {
+          "signature": {
+            "accession": "PIRSR630220-1",
+            "name": "PIRSR630220-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR630220-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 118,
+              "end": 370,
+              "location-fragments": [{ "start": 118, "end": 370, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 96,
+              "hmmEnd": 352,
+              "hmmLength": 1040,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 104,
+              "envelopeEnd": 376,
+              "evalue": 1.1e-12,
+              "score": 45.1,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 45.1,
+          "evalue": 1.1e-12
+        },
+        {
+          "signature": {
+            "accession": "PIRSR630220-2",
+            "name": "PIRSR630220-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR630220-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 118,
+              "end": 370,
+              "location-fragments": [{ "start": 118, "end": 370, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 96,
+              "hmmEnd": 352,
+              "hmmLength": 1040,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 104,
+              "envelopeEnd": 376,
+              "evalue": 1.1e-12,
+              "score": 45.1,
+              "sites": [
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 179, "end": 179, "residue": "K" }]
+                },
+                {
+                  "description": "NP_BIND: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 156, "end": 164, "residue": "LGKGTFGKV" }]
+                }
+              ]
+            }
+          ],
+          "score": 45.1,
+          "evalue": 1.1e-12
+        },
+        {
+          "signature": {
+            "accession": "PIRSR630616-1",
+            "name": "PIRSR630616-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR630616-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 119,
+              "end": 407,
+              "location-fragments": [{ "start": 119, "end": 407, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 50,
+              "hmmEnd": 330,
+              "hmmLength": 349,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 63,
+              "envelopeEnd": 422,
+              "evalue": 3.6e-63,
+              "score": 211.7,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 211.7,
+          "evalue": 3.6e-63
+        },
+        {
+          "signature": {
+            "accession": "PIRSR630616-2",
+            "name": "PIRSR630616-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR630616-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 119,
+              "end": 407,
+              "location-fragments": [{ "start": 119, "end": 407, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 50,
+              "hmmEnd": 330,
+              "hmmLength": 349,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 63,
+              "envelopeEnd": 422,
+              "evalue": 3.6e-63,
+              "score": 211.7,
+              "sites": [
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 4,
+                  "siteLocations": [
+                    { "start": 179, "end": 179, "residue": "K" },
+                    { "start": 228, "end": 230, "residue": "EYA" },
+                    { "start": 278, "end": 279, "residue": "EN" },
+                    { "start": 292, "end": 292, "residue": "D" }
+                  ]
+                }
+              ]
+            }
+          ],
+          "score": 211.7,
+          "evalue": 3.6e-63
+        },
+        {
+          "signature": {
+            "accession": "PIRSR630616-3",
+            "name": "PIRSR630616-3",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR630616-3",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 119,
+              "end": 407,
+              "location-fragments": [{ "start": 119, "end": 407, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 50,
+              "hmmEnd": 330,
+              "hmmLength": 349,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 63,
+              "envelopeEnd": 422,
+              "evalue": 3.6e-63,
+              "score": 211.7,
+              "sites": [
+                {
+                  "description": "CROSSLNK: Glycyl lysine isopeptide (Lys-Gly) (interchain with G-Cter in SUMO2)",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 276, "end": 276, "residue": "K" }]
+                }
+              ]
+            }
+          ],
+          "score": 211.7,
+          "evalue": 3.6e-63
+        },
+        {
+          "signature": {
+            "accession": "PIRSR637770-1",
+            "name": "PIRSR637770-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR637770-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 147,
+              "end": 351,
+              "location-fragments": [{ "start": 147, "end": 351, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 6,
+              "hmmEnd": 211,
+              "hmmLength": 338,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 142,
+              "envelopeEnd": 362,
+              "evalue": 1.5e-28,
+              "score": 97.8,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 274, "end": 274, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 97.8,
+          "evalue": 1.5e-28
+        },
+        {
+          "signature": {
+            "accession": "PIRSR637770-2",
+            "name": "PIRSR637770-2",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR637770-2",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 147,
+              "end": 351,
+              "location-fragments": [{ "start": 147, "end": 351, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 6,
+              "hmmEnd": 211,
+              "hmmLength": 338,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 142,
+              "envelopeEnd": 362,
+              "evalue": 1.5e-28,
+              "score": 97.8,
+              "sites": [
+                {
+                  "description": "NP_BIND: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 156, "end": 164, "residue": "LGKGTFGKV" }]
+                },
+                {
+                  "description": "BINDING: ATP",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 179, "end": 179, "residue": "K" }]
+                }
+              ]
+            }
+          ],
+          "score": 97.8,
+          "evalue": 1.5e-28
+        },
+        {
+          "signature": {
+            "accession": "PIRSR638784-1",
+            "name": "PIRSR638784-1",
+            "description": null,
+            "type": "Region",
+            "signatureLibraryRelease": { "library": "PIRSR", "version": "2025_05" },
+            "entry": null
+          },
+          "model-ac": "PIRSR638784-1",
+          "source": "PIRSR",
+          "locations": [
+            {
+              "start": 149,
+              "end": 362,
+              "location-fragments": [{ "start": 149, "end": 362, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 23,
+              "hmmEnd": 236,
+              "hmmLength": 360,
+              "hmmBounds": "INCOMPLETE",
+              "envelopeStart": 137,
+              "envelopeEnd": 386,
+              "evalue": 1.3e-18,
+              "score": 65.3,
+              "sites": [
+                {
+                  "description": "ACT_SITE: Proton acceptor",
+                  "numLocations": 1,
+                  "siteLocations": [{ "start": 292, "end": 292, "residue": "D" }]
+                }
+              ]
+            }
+          ],
+          "score": 65.3,
+          "evalue": 1.3e-18
+        },
+        {
+          "signature": {
+            "accession": "PS00107",
+            "name": "PROTEIN_KINASE_ATP",
+            "description": "Protein kinases ATP-binding region signature",
+            "type": "Conserved_site",
+            "signatureLibraryRelease": { "library": "PROSITE patterns", "version": "2026_01" },
+            "entry": {
+              "accession": "IPR017441",
+              "name": "Protein_kinase_ATP_BS",
+              "description": "Protein kinase, ATP binding site",
+              "type": "Binding_site",
+              "parent": null
+            }
+          },
+          "model-ac": "PS00107",
+          "source": "PROSITE patterns",
+          "locations": [
+            {
+              "start": 156,
+              "end": 189,
+              "location-fragments": [{ "start": 156, "end": 189, "dc-status": "CONTINUOUS" }],
+              "cigarAlignment": "10M1I1M18I4M"
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PS00108",
+            "name": "PROTEIN_KINASE_ST",
+            "description": "Serine/Threonine protein kinases active-site signature",
+            "type": "Conserved_site",
+            "signatureLibraryRelease": { "library": "PROSITE patterns", "version": "2026_01" },
+            "entry": {
+              "accession": "IPR008271",
+              "name": "Ser/Thr_kinase_AS",
+              "description": "Serine/threonine-protein kinase, active site",
+              "type": "Active_site",
+              "parent": null
+            }
+          },
+          "model-ac": "PS00108",
+          "source": "PROSITE patterns",
+          "locations": [
+            {
+              "start": 270,
+              "end": 282,
+              "location-fragments": [{ "start": 270, "end": 282, "dc-status": "CONTINUOUS" }],
+              "cigarAlignment": "1M1I1M1I3M2I4M"
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PS50003",
+            "name": "PH_DOMAIN",
+            "description": "PH domain profile",
+            "type": "Domain",
+            "signatureLibraryRelease": { "library": "PROSITE profiles", "version": "2026_01" },
+            "entry": {
+              "accession": "IPR001849",
+              "name": "PH_domain",
+              "description": "Pleckstrin homology domain",
+              "type": "Domain",
+              "parent": null
+            }
+          },
+          "model-ac": "PS50003",
+          "source": "PROSITE profiles",
+          "locations": [
+            {
+              "start": 5,
+              "end": 108,
+              "location-fragments": [{ "start": 5, "end": 108, "dc-status": "CONTINUOUS" }],
+              "score": 16.184401,
+              "cigarAlignment": "14M1D13M1I9M2I26M4D12M2I25M"
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PS50011",
+            "name": "PROTEIN_KINASE_DOM",
+            "description": "Protein kinase domain profile",
+            "type": "Domain",
+            "signatureLibraryRelease": { "library": "PROSITE profiles", "version": "2026_01" },
+            "entry": {
+              "accession": "IPR000719",
+              "name": "Prot_kinase_dom",
+              "description": "Protein kinase domain",
+              "type": "Domain",
+              "parent": null
+            }
+          },
+          "model-ac": "PS50011",
+          "source": "PROSITE profiles",
+          "locations": [
+            {
+              "start": 150,
+              "end": 408,
+              "location-fragments": [{ "start": 150, "end": 408, "dc-status": "CONTINUOUS" }],
+              "score": 49.134743,
+              "cigarAlignment": "40M1I52M2D1M1I23M1I54M1D29M1D16M1I1M6D1M1I26M5I6M"
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PS51285",
+            "name": "AGC_KINASE_CTER",
+            "description": "AGC-kinase C-terminal domain profile",
+            "type": "Domain",
+            "signatureLibraryRelease": { "library": "PROSITE profiles", "version": "2026_01" },
+            "entry": {
+              "accession": "IPR000961",
+              "name": "AGC-kinase_C",
+              "description": "AGC-kinase, C-terminal",
+              "type": "Domain",
+              "parent": null
+            }
+          },
+          "model-ac": "PS51285",
+          "source": "PROSITE profiles",
+          "locations": [
+            {
+              "start": 409,
+              "end": 480,
+              "location-fragments": [{ "start": 409, "end": 480, "dc-status": "CONTINUOUS" }],
+              "score": 15.349573,
+              "cigarAlignment": "43M4I25M4D"
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "SM00220",
+            "name": "S_TKc",
+            "description": "Serine/Threonine protein kinases, catalytic domain",
+            "type": "Domain",
+            "signatureLibraryRelease": { "library": "SMART", "version": "9.0" },
+            "entry": {
+              "accession": "IPR000719",
+              "name": "Prot_kinase_dom",
+              "description": "Protein kinase domain",
+              "type": "Domain",
+              "parent": null
+            }
+          },
+          "model-ac": "SM00220",
+          "source": "SMART",
+          "locations": [
+            {
+              "start": 150,
+              "end": 408,
+              "location-fragments": [{ "start": 150, "end": 408, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 1,
+              "hmmEnd": 231,
+              "hmmLength": 231,
+              "hmmBounds": "COMPLETE",
+              "evalue": 2.2e-107,
+              "score": 372.7
+            }
+          ],
+          "score": 372.7,
+          "evalue": 2.2e-107
+        },
+        {
+          "signature": {
+            "accession": "SM00233",
+            "name": "PH",
+            "description": "Pleckstrin homology domain.",
+            "type": "Domain",
+            "signatureLibraryRelease": { "library": "SMART", "version": "9.0" },
+            "entry": {
+              "accession": "IPR001849",
+              "name": "PH_domain",
+              "description": "Pleckstrin homology domain",
+              "type": "Domain",
+              "parent": null
+            }
+          },
+          "model-ac": "SM00233",
+          "source": "SMART",
+          "locations": [
+            {
+              "start": 6,
+              "end": 110,
+              "location-fragments": [{ "start": 6, "end": 110, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 1,
+              "hmmEnd": 82,
+              "hmmLength": 82,
+              "hmmBounds": "COMPLETE",
+              "evalue": 1e-16,
+              "score": 71.5
+            }
+          ],
+          "score": 71.5,
+          "evalue": 1e-16
+        },
+        {
+          "signature": {
+            "accession": "SM00133",
+            "name": "S_TK_X",
+            "description": "Extension to Ser/Thr-type protein kinases",
+            "type": "Domain",
+            "signatureLibraryRelease": { "library": "SMART", "version": "9.0" },
+            "entry": {
+              "accession": "IPR000961",
+              "name": "AGC-kinase_C",
+              "description": "AGC-kinase, C-terminal",
+              "type": "Domain",
+              "parent": null
+            }
+          },
+          "model-ac": "SM00133",
+          "source": "SMART",
+          "locations": [
+            {
+              "start": 409,
+              "end": 476,
+              "location-fragments": [{ "start": 409, "end": 476, "dc-status": "CONTINUOUS" }],
+              "hmmStart": 1,
+              "hmmEnd": 79,
+              "hmmLength": 79,
+              "hmmBounds": "COMPLETE",
+              "evalue": 7e-20,
+              "score": 82.1
+            }
+          ],
+          "score": 82.1,
+          "evalue": 7e-20
+        },
+        {
+          "signature": {
+            "accession": "SSF56112",
+            "name": null,
+            "description": "Protein kinase-like (PK-like)",
+            "type": "Homologous_superfamily",
+            "signatureLibraryRelease": { "library": "SUPERFAMILY", "version": "1.75" },
+            "entry": {
+              "accession": "IPR011009",
+              "name": "Kinase-like_dom_sf",
+              "description": "Protein kinase-like domain superfamily",
+              "type": "Homologous_superfamily",
+              "parent": null
+            }
+          },
+          "model-ac": "0041710",
+          "source": "SUPERFAMILY",
+          "locations": [
+            {
+              "start": 145,
+              "end": 459,
+              "location-fragments": [{ "start": 145, "end": 459, "dc-status": "CONTINUOUS" }],
+              "hmmLength": 337,
+              "evalue": 9.7e-99
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "SSF50729",
+            "name": null,
+            "description": "PH domain-like",
+            "type": "Homologous_superfamily",
+            "signatureLibraryRelease": { "library": "SUPERFAMILY", "version": "1.75" },
+            "entry": null
+          },
+          "model-ac": "0047098",
+          "source": "SUPERFAMILY",
+          "locations": [
+            {
+              "start": 1,
+              "end": 113,
+              "location-fragments": [{ "start": 1, "end": 113, "dc-status": "CONTINUOUS" }],
+              "hmmLength": 117,
+              "evalue": 1.21e-24
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PS00108",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "PROSITE patterns", "version": "2025_01" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 270,
+              "end": 282,
+              "location-fragments": [{ "start": 270, "end": 282, "dc-status": "CONTINUOUS" }],
+              "score": 0.99999875
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PS00107",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "PROSITE patterns", "version": "2025_01" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 156,
+              "end": 189,
+              "location-fragments": [{ "start": 156, "end": 189, "dc-status": "CONTINUOUS" }],
+              "score": 0.99999905
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PS50003",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "PROSITE profiles", "version": "2025_01" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 5,
+              "end": 108,
+              "location-fragments": [{ "start": 5, "end": 108, "dc-status": "CONTINUOUS" }],
+              "score": 0.9999942
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PS51285",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "PROSITE profiles", "version": "2025_01" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 409,
+              "end": 480,
+              "location-fragments": [{ "start": 409, "end": 480, "dc-status": "CONTINUOUS" }],
+              "score": 0.99998945
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PS50011",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "PROSITE profiles", "version": "2025_01" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 150,
+              "end": 408,
+              "location-fragments": [{ "start": 150, "end": 408, "dc-status": "CONTINUOUS" }],
+              "score": 0.99990344
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PTHR24351",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "PANTHER", "version": "19.0" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 111,
+              "end": 476,
+              "location-fragments": [{ "start": 111, "end": 476, "dc-status": "CONTINUOUS" }],
+              "score": 0.9999227
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "G3DSA:3.30.200.20",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "CATH-Gene3D", "version": "4.3.0" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 148,
+              "end": 455,
+              "location-fragments": [
+                { "start": 148, "end": 229, "dc-status": "C_TERMINAL_DISC" },
+                { "start": 429, "end": 455, "dc-status": "N_TERMINAL_DISC" }
+              ],
+              "score": 0.9997823
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "G3DSA:1.10.510.10",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "CATH-Gene3D", "version": "4.3.0" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 230,
+              "end": 428,
+              "location-fragments": [{ "start": 230, "end": 428, "dc-status": "CONTINUOUS" }],
+              "score": 0.9996496
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "G3DSA:2.30.29.30",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "CATH-Gene3D", "version": "4.3.0" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 1,
+              "end": 123,
+              "location-fragments": [{ "start": 1, "end": 123, "dc-status": "CONTINUOUS" }],
+              "score": 0.9978083
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "cd01241",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "CDD", "version": "3.21" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 5,
+              "end": 110,
+              "location-fragments": [{ "start": 5, "end": 110, "dc-status": "CONTINUOUS" }],
+              "score": 0.99978477
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "cd05594",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "CDD", "version": "3.21" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 123,
+              "end": 480,
+              "location-fragments": [{ "start": 123, "end": 480, "dc-status": "CONTINUOUS" }],
+              "score": 0.9903568
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "SSF50729",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "SUPERFAMILY", "version": "1.75" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 2,
+              "end": 111,
+              "location-fragments": [{ "start": 2, "end": 111, "dc-status": "CONTINUOUS" }],
+              "score": 0.99987996
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "SSF56112",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "SUPERFAMILY", "version": "1.75" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 145,
+              "end": 458,
+              "location-fragments": [{ "start": 145, "end": 458, "dc-status": "CONTINUOUS" }],
+              "score": 0.9993903
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "SM00220",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "SMART", "version": "9.0" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 150,
+              "end": 408,
+              "location-fragments": [{ "start": 150, "end": 408, "dc-status": "CONTINUOUS" }],
+              "score": 0.9999992
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "SM00233",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "SMART", "version": "9.0" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 6,
+              "end": 110,
+              "location-fragments": [{ "start": 6, "end": 110, "dc-status": "CONTINUOUS" }],
+              "score": 0.9999951
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "SM00133",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "SMART", "version": "9.0" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 409,
+              "end": 476,
+              "location-fragments": [{ "start": 409, "end": 476, "dc-status": "CONTINUOUS" }],
+              "score": 0.99998397
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PF00169",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "Pfam", "version": "37.3" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 7,
+              "end": 106,
+              "location-fragments": [{ "start": 7, "end": 106, "dc-status": "CONTINUOUS" }],
+              "score": 0.9999656
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PF00433",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "Pfam", "version": "37.3" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 429,
+              "end": 474,
+              "location-fragments": [{ "start": 429, "end": 474, "dc-status": "CONTINUOUS" }],
+              "score": 0.99997336
+            }
+          ]
+        },
+        {
+          "signature": {
+            "accession": "PF00069",
+            "name": null,
+            "description": null,
+            "type": null,
+            "signatureLibraryRelease": { "library": "Pfam", "version": "37.3" },
+            "entry": null
+          },
+          "model-ac": null,
+          "source": "InterPro-N",
+          "locations": [
+            {
+              "start": 150,
+              "end": 408,
+              "location-fragments": [{ "start": 150, "end": 408, "dc-status": "CONTINUOUS" }],
+              "score": 0.9999877
+            }
+          ]
+        }
+      ],
+      "found": true
+    },
+    { "md5": "CBBF4B5F4FB746E5B01D6F31F9ADAE55", "matches": [], "found": false },
+    { "md5": "00000000000000000000000000000000", "matches": [], "found": false }
+  ]
+}
