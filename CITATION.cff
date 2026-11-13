@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: interpro-mcp-server
+abstract: "Search InterPro entries, map domains and functional sites onto UniProt proteins and PDB structures, find proteins by domain, and scan raw protein sequences via MCP. STDIO or Streamable HTTP."
+type: software
+authors:
+  - family-names: Hand
+    given-names: Casey
+    orcid: "https://orcid.org/0009-0009-3726-568X"
+repository-code: "https://github.com/cyanheads/interpro-mcp-server"
+license: Apache-2.0
+doi: 10.5281/zenodo.24193010
+keywords:
+  - mcp
+  - model-context-protocol
+  - interpro
+  - pfam
+  - protein-domains
+  - pdb
+  - interproscan
+  - bioinformatics
