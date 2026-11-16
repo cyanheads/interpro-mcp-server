@@ -17,13 +17,15 @@ Not covered: protein name or gene search, similarity search, structure coordinat
 
 | Identifier | Shape | Where it comes from | Where it goes |
 |:--|:--|:--|:--|
-| InterPro entry | `IPR011615` | `interpro_search_entries`; a member signature's `integrated` | `interpro_get_entry`, `interpro_find_proteins_by_domain` |
-| Member signature | `PF00870`, `cd08367`, `G3DSA:2.60.40.720` | map matches; an InterPro entry's `member_databases`; scan `signature.accession` | `interpro_get_entry`, `interpro_find_proteins_by_domain` |
+| InterPro entry | `IPR011615` | `interpro_search_entries`; a member signature's `integrated` | `interpro_get_entry`, `interpro_find_proteins_by_domain`, `interpro_find_structures` |
+| Member signature | `PF00870`, `cd08367`, `G3DSA:2.60.40.720` | map matches; an InterPro entry's `member_databases`; scan `signature.accession` | `interpro_get_entry`, `interpro_find_proteins_by_domain`, `interpro_find_structures` |
 | Clan | `CL0073` (Pfam), `cl…` (CDD), `PIRSF…` | `set_info.accession` on a Pfam, CDD, or PIRSF signature | `interpro_get_clan` |
 | GO term | `GO:0000976` | `go_terms` on an InterPro entry | `interpro_search_entries` GO filter |
 | Architecture | 40 hex characters | `protein.ida_accession`, first segment of `interpro_get_protein_domains` | `interpro_find_proteins_by_domain` |
 | Proteome and taxon | `UP000005640`, `9606` | `protein.proteome` and `protein.source_organism.taxId`, same first segment | `interpro_find_proteins_by_domain`, as a pair |
-| PDB chain | `A`, case-sensitive | `structure.chains`, first segment of `interpro_get_structure_domains` | the same tool, one chain |
+| PDB ID | `1tsr` | `metadata.accession` of a row from `interpro_find_structures` | `interpro_get_structure_domains` as `pdbId` |
+| PDB chain | `A`, case-sensitive | `structure.chains`, first segment of `interpro_get_structure_domains`; `chain` on a record from `interpro_find_structures` | `interpro_get_structure_domains`, one chain |
+| Isoform | `P04637-2` | `isoforms`, first segment of `interpro_get_protein_domains` for a canonical protein | `interpro_get_protein_domains` as `accession` |
 | Chain's UniProt protein | `p04637`, lowercase | `record.protein` in structure records; null when unmapped | `interpro_get_protein_domains`, any case |
 | Scan job | `iprscan6-R…` | `interpro_scan_sequence` when no precalculated result exists | `interpro_get_scan_result`, for seven days |
 
@@ -34,9 +36,14 @@ Continuation segments omit the first segment's `protein` or `structure` metadata
 - **Clans hang off member signatures.** An InterPro entry's `set_info` is null even when its Pfam member sits in a clan (IPR011615: null; its member PF00870: CL0073). From an InterPro entry, read `member_databases`, then the Pfam, CDD, or PIRSF member's `set_info`. `set_info` is core metadata, kept even when `sections` is empty.
 - **GO terms live on InterPro entries only.** A member signature returns no `go_terms` (PF00870 has none; IPR011615 carries GO:0000976). Follow the member's `integrated` to its InterPro entry first. `integrated: null` marks an unintegrated signature: it has no InterPro entry, so no GO terms reach it.
 - **Pass the proteome with its taxon.** Take `protein.proteome` and `protein.source_organism.taxId` from the same map and pass both. PF00870 in mouse proteome UP000000589 returns 0 proteins under the default taxon and 3 with taxon 10090.
-- **Zero proteins is not proof of absence.** The upstream returns the same empty result for a wrong accession, an unknown taxon or proteome, and a true empty intersection. Confirm the accession with `interpro_get_entry` and the taxon against a mapped protein before reporting that none exist.
+- **Discovery defaults to reviewed human proteins.** To search every organism, pass `taxonId` `1`, the taxonomy root; add `reviewedOnly: false` to include unreviewed proteins. A proteome still needs a `taxonId` that is its organism or an ancestor, and `1` is an ancestor of all.
+- **Zero proteins is not proof of absence.** The upstream returns the same empty result for a wrong accession, an unknown taxon or proteome, and a true empty intersection. Confirm the accession with `interpro_get_entry` and the taxon against a mapped protein before reporting that none exist. With `architectureId` set, the grouping may simply not include the entry: omit it, or take `ida_accession` from a protein that carries the entry.
+- **Maps and lists are limit-sized segments.** The protein map (`limit` 20, up to 200), structure map (10, up to 60), `interpro_find_structures` (20, up to 50), scan tools (20, up to 200), and a clan graph (`relationshipLimit` 20, up to 5,000) clamp larger values with a notice. Follow the cursor, or the next offset, until `hasMore` is false before concluding a region, chain, or relationship is absent.
+- **Entry overlaps page at 20.** An `overlaps_with` array of more than 20 records returns its first 20 with `overlapsPage`; continue with `overlapOffset` (and `overlapLimit` up to 10,000 for larger pages) before counting overlaps.
+- **Isoforms map from the isoform accession.** `interpro_get_protein_domains` takes `P04637-2`, but extra features and residue annotations are canonical-only, so an isoform with either flag fails. `protein.sequence` is omitted unless `includeSequence: true`; `protein.length` always gives the count.
 - **A capped structure match can hide chains.** Before saying a chain lacks a match that has `chainRecordLimitReached`, map that chain alone (1ryp has 28 protein chains; IPR001353 and G3DSA:3.60.20.10 list 20 each).
 - **A missing match is not missing function.** No signature hit means no model matched, not that the protein lacks the activity or fold.
+- **Continue precalculated scans by cursor alone.** `interpro_scan_sequence` with only the `cursor` resumes the matches without resending the sequence.
 - **Read a scan job by its jobId.** `interpro_scan_sequence` hands back an existing job only while that job is pending and this server process is tracking it. Once the finished result has been read, or after a server restart, calling it again with the same sequence submits a new job. After the first call, poll and page only through `interpro_get_scan_result`. Each poll waits well under a minute, so expect several over a run, and give the user the jobId when the work may outlast the session.
 - **The precalculated lookup is an exact-sequence match.** It keys on the MD5 of the residues, so one substitution misses, and a designed or mutated sequence nearly always needs a job. A server that cannot submit jobs answers `scan_not_configured`: tell the user only sequences already in UniParc can be scanned there, and don't retry.
 - **Prefer the accession when one exists.** For a sequence that is a UniProt protein, `interpro_get_protein_domains` returns what a scan lacks: protein metadata with `ida_accession`, `proteome`, and GO terms, plus optional residue rules.
@@ -66,6 +73,7 @@ Structure records carry three numberings for each match. Never assume two of the
 
 ### Chains worth knowing
 
+- **Which structures contain a protein or entry.** Call `interpro_find_structures` with exactly one of `proteinAccession` or `entryAccession`; rows come in PDB ID order with experiment type and resolution (null for NMR and some EM). Pass a row's `metadata.accession` and a record's `chain` to `interpro_get_structure_domains`. InterPro nests at most 20 chain records per row (`chainRecordLimitReached`), so a capped row can omit chains: read the structure with `interpro_get_structure_domains`.
 - **A structure chain in author numbering.** Call `interpro_get_structure_domains` with the PDB ID and the chain exactly as `structure.chains` spells it. Nucleic-acid chains are not listed. For residue rules or the architecture, follow `record.protein` to `interpro_get_protein_domains`.
 - **Same architecture in the protein's proteome.** The first `interpro_get_protein_domains` segment gives `ida_accession`, `proteome`, and `source_organism.taxId`. Then call `interpro_find_proteins_by_domain` with any Pfam signature of that architecture plus all three. The query protein comes back too, so drop it when asked for others. For P04637 (PF00870, UP000005640, taxon 9606) the reviewed result is P04637 alone.
 - **What else is in a clan.** `interpro_get_entry` on the Pfam signature, then `interpro_get_clan` with its `set_info.accession`. Members are signatures of that database, each with its own `integrated` InterPro entry (CL0073 has 17 Pfam members).

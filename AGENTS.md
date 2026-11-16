@@ -2,8 +2,8 @@
 
 **Server:** @cyanheads/interpro-mcp-server
 **Version:** 0.2.0
-**Framework:** [@cyanheads/mcp-ts-core](https://www.npmjs.com/package/@cyanheads/mcp-ts-core) `^0.13.18`
-**Engines:** Bun ≥1.4.0, Node ≥24.0.0
+**Framework:** [@cyanheads/mcp-ts-core](https://www.npmjs.com/package/@cyanheads/mcp-ts-core) `^0.13.22`
+**Engines:** Bun ≥1.4.4, Node ≥24.0.0
 **MCP SDK:** `@modelcontextprotocol/server` ^2.4.0
 **Zod:** ^4.6.7
 
@@ -48,7 +48,7 @@ Tailor suggestions to what's actually missing or stale — don't recite the full
 
 ### Tool
 
-Abridged from `src/mcp-server/tools/definitions/interpro-get-entry.tool.ts`. All nine tools share this shape: a service call through `service.begin(ctx)`, `ctx.enrich` for notices, a per-tool `errors` contract, and the shared `formatInterpro` formatter.
+Abridged from `src/mcp-server/tools/definitions/interpro-get-entry.tool.ts`. All ten tools share this shape: a service call through `service.begin(ctx)`, `ctx.enrich` for notices, a per-tool `errors` contract, and the shared `formatInterpro` formatter.
 
 ```ts
 import { tool, z } from '@cyanheads/mcp-ts-core';
@@ -96,7 +96,7 @@ export const interproGetEntry = tool('interpro_get_entry', {
 });
 ```
 
-There are no resources or prompts. The InterPro API is keyless; the one server-specific environment variable, optional `INTERPRO_SCAN_EMAIL` (parsed in `src/config/server-config.ts`), is the contact address the EBI Job Dispatcher requires for InterProScan submissions. Unset, `interpro_scan_sequence` still serves precalculated matches and fails other sequences as `scan_not_configured`; the hosted instance leaves it unset. The scan tools (`interpro_scan_sequence`, `interpro_get_scan_result`) run through `src/services/sequence-scan/`, outside the InterPro pacer, and `interpro_scan_sequence` is the only tool that is not read-only. `interpro_get_structure_domains` lifts each match's nested chain records into top-level `structures[]` joined by `entry` to stay inside the depth-8 parity walker, and its numbering contract (chain `start`/`end` beside author `auth_start`/`auth_end`, UniProt positions) is retained verbatim. Optional `proteomeId` on discovery joins the route after `taxonId` and binds to the cursor scope only when present. Search/member pages clamp positive integer limits to 100, discovery to 50, with default 20 and composed notices. GO filters require the InterPro source and accept either `goTerm` or `goCategory`, never both; member recovery follows `member_databases` or `integratedInto`. Entry `sections` selects named metadata while retaining core and unknown fields; explicit `overlapLimit` enables whole-record paging. Retained descriptions gain readable `descriptionText` through `htmlparser2`, alongside unchanged raw descriptions and annotation flags. Protein maps append requested residue rules after matches and extra features, preserving complete records and old cursor scopes when the new flag is absent/false. Discovery requests native fragment status on every page; optional `architectureId` adds native IDA grouping and explicit entry/taxon detail availability without inventing missing arrays. Bind only explicit selections to cursor scope and preserve unknown upstream values.
+There are no resources or prompts. The InterPro API is keyless; the one server-specific environment variable, optional `INTERPRO_SCAN_EMAIL` (parsed in `src/config/server-config.ts`), is the contact address the EBI Job Dispatcher requires for InterProScan submissions. Unset, `interpro_scan_sequence` still serves precalculated matches and fails other sequences as `scan_not_configured`; the hosted instance leaves it unset. The scan tools (`interpro_scan_sequence`, `interpro_get_scan_result`) run through `src/services/sequence-scan/`, outside the InterPro pacer, and `interpro_scan_sequence` is the only tool that is not read-only. Output size is the caller's count `limit` (protein map 20/200, structure map 10/60, `interpro_find_structures` 20/50, scan tools 20/200, clan `relationshipLimit` 20/5,000, default/clamp), clamped with a notice; there is no byte budget. The scan service retains finished results for 10 minutes so cursor pages do not re-download them, and the InterPro pacer allows three requests in flight with one start per second. `interpro_find_structures` lifts each row's nested chain records into top-level `chains` joined by `pdbId`, as the structure map does. `interpro_get_structure_domains` lifts each match's nested chain records into top-level `structures[]` joined by `entry` to stay inside the depth-8 parity walker, and its numbering contract (chain `start`/`end` beside author `auth_start`/`auth_end`, UniProt positions) is retained verbatim. Optional `proteomeId` on discovery joins the route after `taxonId` and binds to the cursor scope only when present. Search/member pages clamp positive integer limits to 100, discovery to 50, with default 20 and composed notices. GO filters require the InterPro source and accept either `goTerm` or `goCategory`, never both; member recovery follows `member_databases` or `integratedInto`. Entry `sections` selects named metadata while retaining core and unknown fields; an `overlaps_with` array of more than 20 records pages by default, and `overlapLimit` or `overlapOffset` sets the page size of whole records. Retained descriptions gain readable `descriptionText` through `htmlparser2`, alongside unchanged raw descriptions and annotation flags. Protein maps append requested residue rules after matches and extra features, preserving complete records and old cursor scopes when the new flag is absent/false. Discovery requests native fragment status on every page; optional `architectureId` adds native IDA grouping and explicit entry/taxon detail availability without inventing missing arrays. Bind only explicit selections to cursor scope and preserve unknown upstream values.
 
 ### Server identity and instructions
 
@@ -106,7 +106,7 @@ There are no resources or prompts. The InterPro API is keyless; the one server-s
 await createApp({
   name: 'interpro-mcp-server',
   title: 'interpro-mcp-server',
-  tools: [/* nine definitions */],
+  tools: [/* ten definitions */],
   sessionMode: 'stateless',
   skills: 'skills',
   setup() {
@@ -196,7 +196,6 @@ src/
       schemas.ts                        # Wire and output Zod schemas
       structure-schemas.ts              # PDB ID and chain validation, structure and chain-record schemas
       cursors.ts                        # Opaque cursor envelopes
-      budget.ts                         # 100,000-byte response budget and whole-item fitting
       relationships.ts                  # Clan relationship-graph slicing
       reference.ts                      # Static vocabulary for interpro_list_reference
       format.ts                         # Shared content[] formatter
@@ -209,9 +208,9 @@ src/
       scan-output.ts                    # Shared scan output schema and match segmentation
   mcp-server/
     tools/definitions/
-      interpro-[name].tool.ts           # Nine tool definitions
+      interpro-[name].tool.ts           # Ten tool definitions
 tests/
-  services/                             # Service, adapter, and budget tests
+  services/                             # Service and adapter tests
   tools/                                # Tool contract tests
 ```
 
@@ -325,7 +324,7 @@ When you complete a skill's checklist, check the boxes and add a completion time
 
 ## Bundling
 
-`npm run bundle` produces a `.mcpb` extension bundle for one-click install in Claude Desktop. `mcpb pack` reads `.mcpbignore`, not `.gitignore`, so every root path the bundle must not ship — source, tests, docs, caches, logs, agent docs, plugin manifests, gitignored local files — needs a root-anchored line there (`/docs/`, never `docs/`, which also strips `node_modules/*/docs/`); `lint:packaging` names each missing or unanchored line. Root `skills/` ships on purpose. The pack step is followed by `scripts/clean-mcpb.ts`, which prunes dev dependencies (`mcpb clean`) and strips four classes of `node_modules/**` content that root-anchored `.mcpbignore` patterns cannot reach: dependency-shipped agent docs (`framework-skills/`, `skills/`, `.claude/`, `.agents/`, `SKILL.md`); platform-specific native bindings, which would otherwise lock the bundle to the platform it was packed on; node-gyp build output beside a `binding.gyp` (`config.gypi`, Makefiles, `obj.target/`, `.deps/`, object files and debug symbols), which records the packing machine's paths — compiled `*.node` addons stay; and build-only package files — the framework's `changelog/`, `scripts/`, `templates/`, `CLAUDE.md`, `AGENTS.md`, and config bases (`biome.json`, `vitest.config.base.mjs`, `config/tsconfig.base.json`), and `better-sqlite3`'s `deps/` and `src/` C sources. A server using DataCanvas therefore ships a portable bundle without the DuckDB native — `@duckdb/node-api` is an optional peer loaded lazily, so canvas tools report an actionable install hint and every other tool works normally. MCPB is stdio-only — HTTP and Cloudflare Workers deployments are unaffected. Consumers who don't need it can delete `manifest.json` and `.mcpbignore`; `lint:packaging` skips cleanly.
+`npm run bundle` produces a `.mcpb` extension bundle for one-click install in Claude Desktop. `mcpb pack` reads `.mcpbignore`, not `.gitignore`, so every root path the bundle must not ship — source, tests, docs, caches, logs, agent docs, plugin manifests, gitignored local files — needs a root-anchored line there (`/docs/`, never `docs/`, which also strips `node_modules/*/docs/`); `lint:packaging` names each missing or unanchored line. Root `skills/` ships on purpose. The pack step is followed by `scripts/clean-mcpb.ts`, which prunes dev dependencies (`mcpb clean`) and strips four classes of `node_modules/**` content that root-anchored `.mcpbignore` patterns cannot reach: dependency-shipped agent docs — `framework-skills/`, `skills/`, `.claude/`, `.agents/`, `AGENTS.md`, and `CLAUDE.md` at a package's root, and `SKILL.md` anywhere (a `skills/` deeper in a package is runtime code and stays); platform-specific native bindings, which would otherwise lock the bundle to the platform it was packed on; node-gyp build output beside a `binding.gyp` (`config.gypi`, Makefiles, `obj.target/`, `.deps/`, object files and debug symbols), which records the packing machine's paths — compiled `*.node` addons stay; and build-only package files — the framework's `changelog/`, `scripts/`, `templates/`, and config bases (`biome.json`, `vitest.config.base.mjs`, `config/tsconfig.base.json`), and `better-sqlite3`'s `deps/` and `src/` C sources. A server using DataCanvas therefore ships a portable bundle without the DuckDB native — `@duckdb/node-api` is an optional peer loaded lazily, so canvas tools report an actionable install hint and every other tool works normally. MCPB is stdio-only — HTTP and Cloudflare Workers deployments are unaffected. Consumers who don't need it can delete `manifest.json` and `.mcpbignore`; `lint:packaging` skips cleanly.
 
 **Adding an env var requires both files:** `server.json` (registry discovery, `environmentVariables[]`) and `manifest.json` (bundle install UX, `mcp_config.env` + `user_config`). `lint:packaging` (run by `devcheck`) verifies the env var names match, that every `user_config` option is wired into `mcp_config.env` as `"X": "${user_config.X}"` (the host substitutes nothing else — `"${X}"` reaches the server as that literal string), and that an optional string option carries `"default": ""`.
 
