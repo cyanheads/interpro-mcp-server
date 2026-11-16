@@ -1,6 +1,6 @@
 # interpro-mcp-server - Directory Structure
 
-Generated on: 2026-10-28 15:39:38
+Generated on: 2026-11-16 06:16:24
 
 ```text
 interpro-mcp-server/
@@ -26,6 +26,7 @@ interpro-mcp-server/
 ├── changelog/
 │   ├── 0.1.x/
 │   ├── 0.2.x/
+│   ├── 0.3.x/
 │   └── template.md
 ├── docs/
 │   └── design.md
@@ -150,6 +151,7 @@ interpro-mcp-server/
 │   │   └── tools/
 │   │       └── definitions/
 │   │           ├── interpro-find-proteins-by-domain.tool.ts
+│   │           ├── interpro-find-structures.tool.ts
 │   │           ├── interpro-get-clan.tool.ts
 │   │           ├── interpro-get-entry.tool.ts
 │   │           ├── interpro-get-protein-domains.tool.ts
@@ -160,7 +162,6 @@ interpro-mcp-server/
 │   │           └── interpro-search-entries.tool.ts
 │   ├── services/
 │   │   ├── interpro/
-│   │   │   ├── budget.ts
 │   │   │   ├── cursors.ts
 │   │   │   ├── description-text.ts
 │   │   │   ├── format.ts
@@ -190,7 +191,6 @@ interpro-mcp-server/
 │   │   │       ├── iprscan6-calmodulin-variant.json
 │   │   │       ├── matches-batch.json
 │   │   │       └── sequences.json
-│   │   ├── interpro-budget.test.ts
 │   │   ├── interpro-description-text.test.ts
 │   │   ├── interpro-foundation.test.ts
 │   │   ├── interpro-http-adapter.test.ts
@@ -199,9 +199,11 @@ interpro-mcp-server/
 │   ├── smoke/
 │   └── tools/
 │       ├── fixtures/
+│       │   ├── interpro-find-structures.json
 │       │   └── interpro-structures.json
 │       ├── contract-helpers.ts
 │       ├── interpro-entries.test.ts
+│       ├── interpro-find-structures.test.ts
 │       ├── interpro-list-reference.tool.test.ts
 │       ├── interpro-proteins.test.ts
 │       ├── interpro-sequence-scan.test.ts
@@ -216,6 +218,7 @@ interpro-mcp-server/
 ├── bun.lock
 ├── bunfig.toml
 ├── CHANGELOG.md
+├── CITATION.cff
 ├── CLAUDE.md
 ├── devcheck.config.json
 ├── Dockerfile
