@@ -1,14 +1,14 @@
 /**
- * @fileoverview Output schema and budget-bounded segments of whole match records shared by the
+ * @fileoverview Output schema and count-bounded segments of whole match records shared by the
  * scan and scan-result tools, with cursors scoped to the sequence MD5 or the job ID.
  * @module services/sequence-scan/scan-output
  */
 import { z } from '@cyanheads/mcp-ts-core';
 import { validationError } from '@cyanheads/mcp-ts-core/errors';
-import { BUDGET_LABEL, fitWithinBudget } from '@/services/interpro/budget.js';
 import {
   compareText,
   decodePositionCursor,
+  decodeScopedPositionCursor,
   encodePositionCursor,
 } from '@/services/interpro/cursors.js';
 import { type ScanMatch, ScanMatchSchema } from './scan-schemas.js';
@@ -16,10 +16,34 @@ import type { ScanOutcome } from './sequence-scan-service.js';
 
 const PRECALCULATED_OPERATION = 'interpro_scan_sequence.precalculated';
 const JOB_OPERATION = 'interpro_get_scan_result.job';
+/** Match records per segment when the caller sets no limit. */
+const DEFAULT_LIMIT = 20;
+/** Most match records one segment holds; a larger limit is clamped with a notice. */
+const MAX_LIMIT = 200;
+/**
+ * A record position in the sorted match list, never a segment size. Precalculated cursors also
+ * carry the residue count the Matches API omits, so a call with only the cursor can report it;
+ * cursors minted before it was added resume without it.
+ */
 const PositionSchema = z
-  .object({ offset: z.number().int().positive(), total: z.number().int().positive() })
+  .object({
+    offset: z.number().int().positive(),
+    total: z.number().int().positive(),
+    length: z.number().int().positive().optional(),
+  })
   .strict();
 type Position = z.infer<typeof PositionSchema>;
+const PrecalculatedScopeSchema = z.object({ md5: z.string().regex(/^[0-9A-F]{32}$/) }).strict();
+
+/** The `limit` input both tools declare. */
+export const ScanLimitSchema = z
+  .number()
+  .int()
+  .min(1)
+  .default(DEFAULT_LIMIT)
+  .describe(
+    `Positive integer segment size in match records; values above ${MAX_LIMIT} are clamped to ${MAX_LIMIT} with a notice; defaults to ${DEFAULT_LIMIT}.`,
+  );
 
 /** Output fields both tools return. */
 export const ScanOutputSchema = z.object({
@@ -76,25 +100,35 @@ export type ScanOutput = z.infer<typeof ScanOutputSchema>;
 
 /** Enrichment fields both tools declare. */
 export const ScanEnrichment = {
-  notice: z.string().optional().describe('Job, continuation, or empty-result guidance.'),
+  notice: z.string().optional().describe('Job, continuation, clamp, or empty-result guidance.'),
   totalCount: z.number().optional().describe('Match records in the complete result.'),
   truncated: z.boolean().optional().describe('More segments remain.'),
   shown: z.number().int().optional().describe('Match records in this segment.'),
+  cap: z.number().int().optional().describe('Effective segment size after clamping.'),
 };
 
-const cursorTarget = (state: ScanOutcome, md5: string | undefined) =>
-  state.source === 'precalculated'
-    ? { operation: PRECALCULATED_OPERATION, scope: { md5 } }
-    : { operation: JOB_OPERATION, scope: { jobId: state.jobId } };
+/**
+ * Decode a precalculated continuation before any upstream request. With the sequence's `md5` the
+ * cursor must belong to it; without one, the cursor alone names the sequence.
+ */
+export function decodePrecalculatedCursor(
+  cursor: string,
+  md5: string | undefined,
+): { md5: string; start: Position } {
+  const { scope, position } = decodeScopedPositionCursor(
+    cursor,
+    PRECALCULATED_OPERATION,
+    md5 === undefined
+      ? PrecalculatedScopeSchema
+      : PrecalculatedScopeSchema.refine((target) => target.md5 === md5),
+    PositionSchema,
+  );
+  return { md5: scope.md5, start: position };
+}
 
-/** Decode a continuation for the given target before any upstream request. */
-export function decodeScanCursor(
-  cursor: string | undefined,
-  target: { readonly md5: string } | { readonly jobId: string },
-): Position | undefined {
-  return 'md5' in target
-    ? decodePositionCursor(cursor, PRECALCULATED_OPERATION, { md5: target.md5 }, PositionSchema)
-    : decodePositionCursor(cursor, JOB_OPERATION, { jobId: target.jobId }, PositionSchema);
+/** Decode a job-result continuation for `jobId` before any upstream request. */
+export function decodeJobCursor(cursor: string | undefined, jobId: string): Position | undefined {
+  return decodePositionCursor(cursor, JOB_OPERATION, { jobId }, PositionSchema);
 }
 
 function minStart(match: ScanMatch): number {
@@ -120,12 +154,13 @@ function sortMatches(matches: readonly ScanMatch[]): ScanMatch[] {
 interface Enrich {
   notice(text: string): void;
   total(count: number): void;
-  truncated(details: { shown: number }): void;
+  truncated(details: { shown: number; cap: number; guidance: string }): void;
 }
 
 /**
  * Build one segment of a finished result, or the pending output, and the notices that go with
- * it. `continuation` names the call that reads the next segment, as the agent should make it.
+ * it. A segment holds `min(limit, remaining)` whole records; the continuation notice prints the
+ * call that reads the next one, runnable as written.
  */
 export function buildScanOutput(
   enrich: Enrich,
@@ -134,7 +169,8 @@ export function buildScanOutput(
     readonly md5?: string;
     readonly length?: number;
     readonly start?: Position;
-    readonly continuation: (cursor: string) => string;
+    /** The caller's limit, before clamping. */
+    readonly limit: number;
   },
 ): ScanOutput {
   const base = {
@@ -173,55 +209,62 @@ export function buildScanOutput(
       reason: 'invalid_cursor',
       retryable: false,
     });
-  const { operation, scope } = cursorTarget(state, finished.md5);
-  const remaining = total - offset;
-  const segment = (count: number): ScanOutput => {
-    const end = offset + count;
-    return {
-      ...base,
-      status: 'finished',
-      ...(finished.md5 ? { md5: finished.md5 } : {}),
-      ...(finished.length ? { length: finished.length } : {}),
-      ...('interproVersion' in finished
-        ? {
-            interproVersion: finished.interproVersion,
-            interproscanVersion: finished.interproscanVersion,
-          }
-        : {}),
-      matches: all.slice(offset, end),
-      coverage: {
-        totalMatches: total,
-        offset,
-        returnedMatches: count,
-        hasMore: end < total,
-        ...(end < total
-          ? { nextCursor: encodePositionCursor(operation, scope, { offset: end, total }) }
-          : {}),
-      },
-      sourceUrl: state.sourceUrl,
-    };
+  const limit = Math.min(options.limit, MAX_LIMIT);
+  const notices =
+    options.limit > limit ? [`Requested limit ${options.limit} was clamped to ${limit}.`] : [];
+  const end = Math.min(offset + limit, total);
+  const nextCursor =
+    end < total
+      ? state.source === 'precalculated'
+        ? encodePositionCursor(
+            PRECALCULATED_OPERATION,
+            { md5: finished.md5 },
+            { offset: end, total, ...(finished.length ? { length: finished.length } : {}) },
+          )
+        : encodePositionCursor(JOB_OPERATION, { jobId: state.jobId }, { offset: end, total })
+      : undefined;
+  const output: ScanOutput = {
+    ...base,
+    status: 'finished',
+    ...(finished.md5 ? { md5: finished.md5 } : {}),
+    ...(finished.length ? { length: finished.length } : {}),
+    ...('interproVersion' in finished
+      ? {
+          interproVersion: finished.interproVersion,
+          interproscanVersion: finished.interproscanVersion,
+        }
+      : {}),
+    matches: all.slice(offset, end),
+    coverage: {
+      totalMatches: total,
+      offset,
+      returnedMatches: end - offset,
+      hasMore: nextCursor !== undefined,
+      ...(nextCursor ? { nextCursor } : {}),
+    },
+    sourceUrl: state.sourceUrl,
   };
-  const { count, output, oversized } = remaining
-    ? fitWithinBudget(remaining, segment)
-    : { count: 0, output: segment(0), oversized: false };
-  const notices: string[] = [];
-  if (oversized)
+  enrich.total(total);
+  if (nextCursor) {
+    const next = {
+      ...(state.source === 'interproscan' ? { jobId: state.jobId } : {}),
+      cursor: nextCursor,
+      ...(limit === DEFAULT_LIMIT ? {} : { limit }),
+    };
+    const tool =
+      state.source === 'precalculated' ? 'interpro_scan_sequence' : 'interpro_get_scan_result';
     notices.push(
-      `Match ${all[offset]?.signature.accession} cannot be split, so this segment holds it alone and exceeds the ${BUDGET_LABEL}.`,
+      `This segment holds matches ${offset + 1}–${end} of ${total}. Continue with ${tool} ${JSON.stringify(next)} before concluding a region has no match${limit < MAX_LIMIT ? `; limit may rise to ${MAX_LIMIT} for larger segments` : ''}.`,
     );
-  const next = output.coverage?.nextCursor;
-  if (next) {
-    notices.push(
-      `This segment holds matches ${offset + 1}–${offset + count} of ${total} and stopped at the ${BUDGET_LABEL}. Continue with ${options.continuation(next)} before concluding a region has no match.`,
-    );
-    enrich.truncated({ shown: count });
-  } else if (!total)
+    enrich.truncated({ shown: end - offset, cap: limit, guidance: notices.join(' ') });
+    return output;
+  }
+  if (!total)
     notices.push(
       state.source === 'precalculated'
         ? 'The InterPro Matches API holds a precalculated result for this sequence with no signature matches.'
         : 'InterProScan finished and reported no signature matches for this sequence.',
     );
-  enrich.total(total);
   if (notices.length) enrich.notice(notices.join(' '));
   return output;
 }

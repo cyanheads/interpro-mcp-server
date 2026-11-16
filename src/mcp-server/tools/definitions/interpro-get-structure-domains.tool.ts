@@ -1,15 +1,9 @@
 /**
- * @fileoverview PDB structure domain maps in budget-bounded segments of whole matches.
+ * @fileoverview PDB structure domain maps in counted segments of whole matches.
  * @module mcp-server/tools/definitions/interpro-get-structure-domains.tool
  */
 import { tool, z } from '@cyanheads/mcp-ts-core';
 import { JsonRpcErrorCode } from '@cyanheads/mcp-ts-core/errors';
-import {
-  BUDGET_LABEL,
-  fitWithinBudget,
-  jsonByteLength,
-  RESPONSE_BYTE_BUDGET,
-} from '@/services/interpro/budget.js';
 import {
   continuation,
   decodePositionCursor,
@@ -28,6 +22,7 @@ import {
 import {
   ChainSchema,
   isChain,
+  NESTED_CHAIN_LIMIT,
   PdbIdSchema,
   StructureMatchSchema,
   StructureMetadataSchema,
@@ -38,9 +33,13 @@ import { UPSTREAM_ERRORS } from '@/services/interpro/upstream-errors.js';
 const OPERATION = 'interpro_get_structure_domains';
 /** Uncached 200-row structure pages can outlast an attempt, so pages stay at InterPro's default. */
 const PAGE_SIZE = 20;
-const MAX_PAGES = 3;
-/** InterPro nests at most this many chain records in one match, whatever the page size. */
-const NESTED_CHAIN_LIMIT = 20;
+/** A match carries up to 20 chain records, so segments default small. */
+const MAX_LIMIT = 60;
+/**
+ * Upstream reads one call makes at most: the structure metadata and three pages on a first call,
+ * or four pages on a continuation, enough to fill MAX_LIMIT from any resume point.
+ */
+const MAX_REQUESTS = 4;
 
 /**
  * Where a continuation resumes: `skip` records into the upstream page whose cursor is `page`
@@ -84,11 +83,11 @@ const CoverageSchema = z.object({
     .describe('Opaque cursor resuming at the next whole match for the same pdbId and chain.'),
 });
 
-/** Map signatures onto one PDB entry's chains in budget-bounded segments of whole matches. */
+/** Map signatures onto one PDB entry's chains in segments of up to `limit` whole matches. */
 export const interproGetStructureDomains = tool('interpro_get_structure_domains', {
   title: 'Map structure domains',
   description:
-    "Retrieve InterPro and member-signature matches on one PDB entry's protein chains. Each chain record keeps match locations in chain numbering (1-based start/end beside author auth_start/auth_end, which can be null), in UniProt numbering, and the chain-to-UniProt residue map, with discontinuous fragments preserved; the UniProt protein is null for unmapped chains. InterPro nests at most 20 chain records per match; set chain to read one chain completely. Budgeted segments hold whole matches; the first carries structure metadata listing the protein chains. Continue coverage.nextCursor until hasMore is false.",
+    "Retrieve InterPro and member-signature matches on one PDB entry's protein chains. Each chain record keeps match locations in chain numbering (1-based start/end beside author auth_start/auth_end, which can be null), in UniProt numbering, and the chain-to-UniProt residue map, with discontinuous fragments preserved; the UniProt protein is null for unmapped chains. InterPro nests at most 20 chain records per match; set chain to read one chain completely. Each segment holds up to limit whole matches; the first carries structure metadata listing the protein chains. Continue coverage.nextCursor until hasMore is false.",
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
   auth: ['tool:interpro_get_structure_domains:read'],
   input: z.object({
@@ -96,8 +95,16 @@ export const interproGetStructureDomains = tool('interpro_get_structure_domains'
     chain: optionalString(ChainSchema).describe(
       'Protein chain to map, case-sensitive and one of structure.chains, such as A; omit for every chain.',
     ),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .default(10)
+      .describe(
+        'Positive integer number of whole matches per segment, each with all its chain records; values above 60 are clamped to 60 with a notice; defaults to 10.',
+      ),
     cursor: optionalString(z.string().trim().max(4096)).describe(
-      'Opaque coverage.nextCursor with unchanged pdbId and chain.',
+      'Opaque coverage.nextCursor with unchanged pdbId and chain; limit may change.',
     ),
   }),
   inputAliases: { accession: 'pdbId' },
@@ -150,9 +157,7 @@ export const interproGetStructureDomains = tool('interpro_get_structure_domains'
       .number()
       .int()
       .optional()
-      .describe(
-        'Most matches one call reads; a segment can stop sooner at the response byte budget.',
-      ),
+      .describe('Effective limit after clamping: the most whole matches one segment holds.'),
     effectiveQuery: z.string().optional().describe('Applied pdbId and chain as JSON.'),
   },
   errors: [
@@ -214,6 +219,7 @@ export const interproGetStructureDomains = tool('interpro_get_structure_domains'
   async handler(input, ctx) {
     const pdbId = input.pdbId.toLowerCase();
     const { chain } = input;
+    const limit = Math.min(input.limit, MAX_LIMIT);
     const scope = { pdbId, ...(chain !== undefined ? { chain } : {}) };
     const start = decodePositionCursor(input.cursor, OPERATION, scope, PositionSchema);
     const stale = () =>
@@ -257,37 +263,10 @@ export const interproGetStructureDomains = tool('interpro_get_structure_domains'
     let totalMatches = 0;
     /** Where the walk resumes after the last gathered match; undefined once the walk ends. */
     let end: Position | undefined;
-    const segment = (count: number) => {
-      const resume = items[count]?.at ?? end;
-      const matches = items.slice(0, count).map((item) => item.match);
-      return {
-        pdbId,
-        ...(chain !== undefined ? { chain } : {}),
-        ...(structure ? { structure } : {}),
-        matches: matches.map(({ metadata, structures, ...rest }) => ({
-          ...rest,
-          metadata,
-          chainRecordCount: structures.length,
-          chainRecordLimitReached: structures.length >= NESTED_CHAIN_LIMIT,
-        })),
-        structures: matches.flatMap(({ metadata, structures }) =>
-          structures.map((record) => ({ entry: metadata.accession, record })),
-        ),
-        coverage: {
-          totalMatches,
-          returnedMatches: matches.length,
-          complete: !start && resume === undefined,
-          hasMore: resume !== undefined,
-          ...(resume ? { nextCursor: encodePositionCursor(OPERATION, scope, resume) } : {}),
-        },
-        url: `https://www.ebi.ac.uk/interpro/structure/PDB/${pdbId}/`,
-        sourceUrls,
-      };
-    };
-
     let page = start?.page;
     let skip = start?.skip ?? 0;
     const seen = new Set<string>(page ? [page] : []);
+    const maxPages = start ? MAX_REQUESTS : MAX_REQUESTS - 1;
     for (let read = 1; ; read++) {
       const response = await service.request(
         call,
@@ -317,22 +296,41 @@ export const interproGetStructureDomains = tool('interpro_get_structure_domains'
         });
       const next = continuation(response.data?.next ?? null, seen);
       end = next ? { page: next, skip: 0 } : undefined;
-      if (!next) break;
+      if (!next || items.length >= limit || read === maxPages) break;
       seen.add(next);
       page = next;
       skip = 0;
-      if (read === MAX_PAGES || jsonByteLength(segment(items.length)) > RESPONSE_BYTE_BUDGET) break;
     }
 
-    const { count, output, oversized } = fitWithinBudget(items.length, segment);
-    const { coverage } = output;
-    const notices: string[] = [];
-    if (oversized) {
-      const id = items[0]?.match.metadata.accession;
-      notices.push(
-        `${isAccession(id) ? `Match ${id}` : 'This match'} cannot be split, so this segment holds it alone and exceeds the ${BUDGET_LABEL}.`,
-      );
-    }
+    const count = Math.min(limit, items.length);
+    const resume = items[count]?.at ?? end;
+    const matches = items.slice(0, count).map((item) => item.match);
+    const coverage = {
+      totalMatches,
+      returnedMatches: count,
+      complete: !start && resume === undefined,
+      hasMore: resume !== undefined,
+      ...(resume ? { nextCursor: encodePositionCursor(OPERATION, scope, resume) } : {}),
+    };
+    const output = {
+      pdbId,
+      ...(chain !== undefined ? { chain } : {}),
+      ...(structure ? { structure } : {}),
+      matches: matches.map(({ metadata, structures, ...rest }) => ({
+        ...rest,
+        metadata,
+        chainRecordCount: structures.length,
+        chainRecordLimitReached: structures.length >= NESTED_CHAIN_LIMIT,
+      })),
+      structures: matches.flatMap(({ metadata, structures }) =>
+        structures.map((record) => ({ entry: metadata.accession, record })),
+      ),
+      coverage,
+      url: `https://www.ebi.ac.uk/interpro/structure/PDB/${pdbId}/`,
+      sourceUrls,
+    };
+    const notices =
+      input.limit > limit ? [`Requested limit ${input.limit} was clamped to ${limit}.`] : [];
     const limited = output.matches.filter((match) => match.chainRecordLimitReached);
     if (limited.length) {
       const named = limited.map((match) => match.metadata.accession).filter(isAccession);
@@ -340,14 +338,11 @@ export const interproGetStructureDomains = tool('interpro_get_structure_domains'
         `InterPro nests at most ${NESTED_CHAIN_LIMIT} chain records in one match, and ${limited.length === 1 ? 'one match carries' : `${limited.length} matches carry`} that many${named.length ? ` (${named.join(', ')})` : ''}, so ${limited.length === 1 ? 'it' : 'they'} may match chains not returned. Repeat interpro_get_structure_domains with chain set to one of structure.chains to read that chain's matches completely.`,
       );
     }
-    if (coverage.nextCursor) {
-      const reason = items[count]
-        ? ` and stopped at the ${BUDGET_LABEL} before the next whole match`
-        : ` and reached the ${MAX_PAGES}-page read limit`;
+    if (coverage.nextCursor)
       notices.push(
-        `This segment covers part of the structure map${oversized ? '' : reason}. Continue with interpro_get_structure_domains ${JSON.stringify({ ...scope, cursor: coverage.nextCursor })} before concluding that a chain has no annotation.`,
+        `This segment holds ${count} whole match${count === 1 ? '' : 'es'}${count < limit ? ` and reached the ${maxPages}-page read limit` : ''}. Continue with interpro_get_structure_domains ${JSON.stringify({ ...scope, limit, cursor: coverage.nextCursor })} before concluding that a chain has no annotation${limit < MAX_LIMIT ? `; limit may rise to ${MAX_LIMIT} for larger segments` : ''}.`,
       );
-    } else if (start)
+    else if (start)
       notices.push(
         'This is the final resumed segment. Only the combined segments cover the traversal; upstream pagination is not a snapshot.',
       );
@@ -363,8 +358,7 @@ export const interproGetStructureDomains = tool('interpro_get_structure_domains'
       notices.push('Continuation segments omit the structure metadata the first segment returned.');
     ctx.enrich.total(totalMatches);
     ctx.enrich.echo(JSON.stringify(scope));
-    if (coverage.nextCursor)
-      ctx.enrich.truncated({ shown: coverage.returnedMatches, cap: MAX_PAGES * PAGE_SIZE });
+    if (coverage.nextCursor) ctx.enrich.truncated({ shown: count, cap: limit });
     if (notices.length) ctx.enrich.notice(notices.join(' '));
     return output;
   },

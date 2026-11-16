@@ -4,13 +4,20 @@
  * @module tests/tools/interpro-structures
  */
 import { readFileSync } from 'node:fs';
+import { z } from '@cyanheads/mcp-ts-core';
 import { runToolContract } from '@cyanheads/mcp-ts-core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { jsonByteLength, RESPONSE_BYTE_BUDGET } from '@/services/interpro/budget.js';
 import { encodePositionCursor } from '@/services/interpro/cursors.js';
 import { staticReference } from '@/services/interpro/reference.js';
 import { ENTRY_ROUTES } from '@/services/interpro/routing.js';
-import { failure as assertFailure, serverLines, settle, text, twin } from './contract-helpers.js';
+import {
+  failure as assertFailure,
+  queuedFetch,
+  serverLines,
+  settle,
+  text,
+  twin,
+} from './contract-helpers.js';
 
 type Json = Record<string, any>;
 const fixtures: Record<string, Json> = JSON.parse(
@@ -38,12 +45,18 @@ const synthetic = (accession: string, bytes = 1_000): Json => {
   match.structures[0].sequence = 'M'.repeat(bytes);
   return match;
 };
+/** A real 3j3q match carrying InterPro's full 20 chain records, renamed. */
+const heavy = (accession: string): Json => {
+  const match = fixture('list3j3q').results[0] as Json;
+  match.metadata.accession = accession;
+  return match;
+};
+/** `count` synthetic matches named SSF70000, SSF70001, … */
+const rows = (count: number, from = 0) =>
+  Array.from({ length: count }, (_, index) => synthetic(`SSF${70000 + from + index}`));
+const accessions = (output: Json) => output.matches.map((match: Json) => match.metadata.accession);
 function network(responses: Response[]) {
-  const fetch = vi.fn(async (_url: string) => {
-    const response = responses.shift();
-    if (!response) throw new Error('Unexpected upstream call');
-    return response;
-  });
+  const fetch = queuedFetch(responses);
   init(fetch);
   return fetch;
 }
@@ -54,20 +67,24 @@ const failure = (result: Parameters<typeof assertFailure>[0], reason: string) =>
   assertFailure(result, reason, definition);
 const notice = (result: Awaited<ReturnType<typeof call>>) =>
   (result.structuredContent as { notice?: string }).notice ?? '';
-/** Accessions of every match a cursor walk returns, following nextCursor to the end. */
-async function walk(input: Json) {
+/**
+ * Accessions of every match a cursor walk returns and each segment's match count, following
+ * nextCursor for at most `segments` calls; the walk must end within them.
+ */
+async function walk(input: Json, segments: number) {
   const seen: string[] = [];
-  const sizes: number[] = [];
+  const counts: number[] = [];
   let cursor: string | undefined;
-  do {
+  for (let calls = 0; calls < segments; calls++) {
     const output = twin(await call({ ...input, ...(cursor ? { cursor } : {}) } as never));
-    sizes.push(jsonByteLength(output));
-    seen.push(...output.matches.map((match: Json) => match.metadata.accession));
-    for (const record of output.structures)
-      expect(output.matches.map((match: Json) => match.metadata.accession)).toContain(record.entry);
+    seen.push(...accessions(output));
+    counts.push(output.matches.length);
+    for (const record of output.structures) expect(accessions(output)).toContain(record.entry);
     cursor = output.coverage.nextCursor;
-  } while (cursor);
-  return { seen, sizes };
+    if (!cursor) break;
+  }
+  expect(cursor, 'walk ended within its expected segment count').toBeUndefined();
+  return { seen, counts };
 }
 
 beforeEach(async () => {
@@ -117,7 +134,7 @@ describe('interpro_get_structure_domains first segment', () => {
       Response.json(fixture('detail1tsr')),
       Response.json(fixture('list1tsr')),
     ]);
-    const result = await call({ pdbId: '1tsr' });
+    const result = await call({ pdbId: '1tsr', limit: 12 });
     const output = twin(result);
     const [detail, list] = urls(fetch);
     expect(detail?.pathname).toBe('/interpro/api/structure/pdb/1tsr/');
@@ -276,7 +293,7 @@ describe('chain selection', () => {
       Response.json(fixture('detail1tsr')),
       Response.json(fixture('list1tsrA')),
     ]);
-    const result = await call({ pdbId: '1tsr', chain: 'A' });
+    const result = await call({ pdbId: '1tsr', chain: 'A', limit: 20 });
     const output = twin(result);
     expect(urls(fetch)[1]?.pathname).toBe('/interpro/api/entry/all/structure/pdb/1tsr/A/');
     expect(output.chain).toBe('A');
@@ -380,7 +397,7 @@ describe('variable-shape upstream chain records', () => {
       new Response('<!doctype html><title>Error: 500</title>', { status: 500 }),
       Response.json(fixture('list1tsr')),
     ]);
-    expect(twin(await call({ pdbId: '1tsr' })).matches).toHaveLength(12);
+    expect(twin(await call({ pdbId: '1tsr', limit: 12 })).matches).toHaveLength(12);
     expect(fetch).toHaveBeenCalledTimes(3);
   });
 });
@@ -432,8 +449,7 @@ describe('the 20-record nesting limit', () => {
 });
 
 describe('segments and cursors', () => {
-  it('reads three 4v6x pages per call, then resumes at the fourth without re-reading metadata', async () => {
-    // Real 4v6x rows under new accessions, so the three pages stay well inside the byte budget.
+  it('fills limit 60 from three 4v6x pages, then resumes at the fourth without re-reading metadata', async () => {
     const third: Json[] = fixture('list4v6xPage2').results.map((row: Json, index: number) => ({
       ...row,
       metadata: { ...row.metadata, accession: `SSF${50000 + index}` },
@@ -446,7 +462,7 @@ describe('segments and cursors', () => {
       page(third, 'page4', 851),
       page(fourth, null, 851),
     ]);
-    const first = await call({ pdbId: '4v6x' });
+    const first = await call({ pdbId: '4v6x', limit: 60 });
     const output = twin(first);
     expect(output.matches).toHaveLength(60);
     expect(output.coverage).toMatchObject({
@@ -457,15 +473,16 @@ describe('segments and cursors', () => {
     });
     expect(first.structuredContent).toMatchObject({ truncated: true, shown: 60, cap: 60 });
     expect(notice(first)).toContain(
-      'and reached the 3-page read limit. Continue with interpro_get_structure_domains {"pdbId":"4v6x","cursor":',
+      'This segment holds 60 whole matches. Continue with interpro_get_structure_domains {"pdbId":"4v6x","limit":60,"cursor":',
     );
+    expect(notice(first)).not.toContain('may rise');
     expect(urls(fetch).map((url) => url.searchParams.get('cursor'))).toEqual([
       null,
       null,
       'source|s|cd01885',
       'source|s|g3dsa:1.10.10.250',
     ]);
-    const second = await call({ pdbId: '4v6x', cursor: output.coverage.nextCursor });
+    const second = await call({ pdbId: '4v6x', limit: 60, cursor: output.coverage.nextCursor });
     const resumed = twin(second);
     expect(urls(fetch)[4]?.searchParams.get('cursor')).toBe('page4');
     expect(urls(fetch)[4]?.pathname).toBe('/interpro/api/entry/all/structure/pdb/4v6x/');
@@ -488,46 +505,207 @@ describe('segments and cursors', () => {
     expect(new Set(all).size).toBe(62);
   });
 
-  it('walks matches past the byte budget inside one page, each exactly once and each segment within budget', async () => {
-    const rows = Array.from({ length: 8 }, (_, index) => synthetic(`PF0000${index}`, 30_000));
-    const responses = [Response.json(fixture('detail4v6x'))];
-    for (let segmentIndex = 0; segmentIndex < 3; segmentIndex++) responses.push(page(rows));
-    const fetch = network(responses);
-    const { seen, sizes } = await walk({ pdbId: '4v6x' });
-    expect(seen).toEqual(rows.map((row) => row.metadata.accession));
-    expect(sizes).toHaveLength(3);
-    for (const size of sizes) expect(size).toBeLessThanOrEqual(RESPONSE_BYTE_BUDGET);
-    expect(fetch).toHaveBeenCalledTimes(4);
+  it("returns 3j3q's 11 heavy matches as 10, then 1, at the default limit", async () => {
+    const matches = Array.from({ length: 11 }, (_, index) => heavy(`IPR${900000 + index}`));
+    const fetch = network([
+      Response.json(fixture('detail3j3q')),
+      page(matches, null, 11),
+      page(matches, null, 11),
+    ]);
+    const first = await call({ pdbId: '3j3q' });
+    const output = twin(first);
+    expect(accessions(output)).toEqual(accessions({ matches: matches.slice(0, 10) }));
+    expect(output.structures).toHaveLength(200);
+    expect(output.coverage).toMatchObject({
+      totalMatches: 11,
+      returnedMatches: 10,
+      complete: false,
+      hasMore: true,
+    });
+    expect(first.structuredContent).toMatchObject({ truncated: true, shown: 10, cap: 10 });
+    expect(notice(first)).toContain(
+      'This segment holds 10 whole matches. Continue with interpro_get_structure_domains {"pdbId":"3j3q","limit":10,"cursor":',
+    );
+    expect(notice(first)).toContain(
+      'before concluding that a chain has no annotation; limit may rise to 60 for larger segments.',
+    );
+    expect(notice(first)).not.toMatch(/budget/i);
+    const second = await call({ pdbId: '3j3q', cursor: output.coverage.nextCursor });
+    const rest = twin(second);
+    expect(accessions(rest)).toEqual(['IPR900010']);
+    expect(rest.coverage).toEqual({
+      totalMatches: 11,
+      returnedMatches: 1,
+      complete: false,
+      hasMore: false,
+    });
+    expect(second.structuredContent).not.toHaveProperty('truncated');
+    expect(urls(fetch).map((url) => url.pathname)).toEqual([
+      '/interpro/api/structure/pdb/3j3q/',
+      '/interpro/api/entry/all/structure/pdb/3j3q/',
+      '/interpro/api/entry/all/structure/pdb/3j3q/',
+    ]);
+    expect(urls(fetch)[2]?.searchParams.get('cursor')).toBeNull();
   });
 
-  it('returns a single over-budget match alone with a notice, then continues', async () => {
-    const big = synthetic('PF00870', RESPONSE_BYTE_BUDGET + 1);
+  it('walks 43 matches across three upstream pages in default segments, each once and in order', async () => {
+    const all = rows(43);
+    const fetch = network([
+      Response.json(fixture('detail4v6x')),
+      page(all.slice(0, 20), 'p2', 43),
+      page(all.slice(0, 20), 'p2', 43),
+      page(all.slice(20, 40), 'p3', 43),
+      page(all.slice(20, 40), 'p3', 43),
+      page(all.slice(40), null, 43),
+    ]);
+    const { seen, counts } = await walk({ pdbId: '4v6x' }, 5);
+    expect(counts).toEqual([10, 10, 10, 10, 3]);
+    expect(seen).toEqual(accessions({ matches: all }));
+    expect(urls(fetch).map((url) => url.searchParams.get('cursor'))).toEqual([
+      null,
+      null,
+      null,
+      'p2',
+      'p2',
+      'p3',
+    ]);
+  });
+
+  it('fills a limit resumed mid-page from up to four upstream pages', async () => {
+    const all = rows(100);
+    const upstream = (index: number) =>
+      page(all.slice(index * 20, index * 20 + 20), index < 4 ? `p${index + 2}` : null, 100);
+    const opening = network([Response.json(fixture('detail4v6x')), upstream(0), upstream(1)]);
+    const first = twin(await call({ pdbId: '4v6x', limit: 25 }));
+    expect(opening).toHaveBeenCalledTimes(3);
+    expect(accessions(first)).toEqual(accessions({ matches: all.slice(0, 25) }));
+    const fill = network([upstream(1), upstream(2), upstream(3), upstream(4)]);
+    const resumed = await call({ pdbId: '4v6x', limit: 60, cursor: first.coverage.nextCursor });
+    const second = twin(resumed);
+    expect(urls(fill).map((url) => url.searchParams.get('cursor'))).toEqual([
+      'p2',
+      'p3',
+      'p4',
+      'p5',
+    ]);
+    expect(accessions(second)).toEqual(accessions({ matches: all.slice(25, 85) }));
+    expect(resumed.structuredContent).toMatchObject({ truncated: true, shown: 60, cap: 60 });
+    network([upstream(4)]);
+    const third = twin(await call({ pdbId: '4v6x', cursor: second.coverage.nextCursor }));
+    expect(accessions(third)).toEqual(accessions({ matches: all.slice(85, 95) }));
+    network([upstream(4)]);
+    const last = twin(await call({ pdbId: '4v6x', limit: 60, cursor: third.coverage.nextCursor }));
+    expect(accessions(last)).toEqual(accessions({ matches: all.slice(95) }));
+    expect(last.coverage.hasMore).toBe(false);
+  });
+
+  it('reads at most four upstream requests per call when upstream pages run short', async () => {
+    const all = rows(30);
+    const short = (index: number) =>
+      page(all.slice(index * 3, index * 3 + 3), index < 9 ? `p${index + 2}` : null, 30);
+    const first = network([Response.json(fixture('detail4v6x')), short(0), short(1), short(2)]);
+    const opening = await call({ pdbId: '4v6x', limit: 60 });
+    const output = twin(opening);
+    expect(first).toHaveBeenCalledTimes(4);
+    expect(accessions(output)).toEqual(accessions({ matches: all.slice(0, 9) }));
+    expect(output.coverage).toMatchObject({ returnedMatches: 9, hasMore: true });
+    expect(notice(opening)).toContain('reached the 3-page read limit');
+    const next = network([short(3), short(4), short(5), short(6)]);
+    const resumed = await call({ pdbId: '4v6x', limit: 60, cursor: output.coverage.nextCursor });
+    expect(next).toHaveBeenCalledTimes(4);
+    expect(accessions(twin(resumed))).toEqual(accessions({ matches: all.slice(9, 21) }));
+    expect(notice(resumed)).toContain('reached the 4-page read limit');
+    expect(urls(next).map((url) => url.searchParams.get('cursor'))).toEqual([
+      'p4',
+      'p5',
+      'p6',
+      'p7',
+    ]);
+  });
+
+  it.each([1, 3, 7, 60])(
+    'resumes a 0.2.0 cursor at the match it names under limit %i',
+    async (limit) => {
+      const list = fixture('list1tsr');
+      const cursor = encodePositionCursor(
+        'interpro_get_structure_domains',
+        { pdbId: '1tsr' },
+        { skip: 5, after: list.results[4].metadata.accession },
+      );
+      network([Response.json(list)]);
+      const output = twin(await call({ pdbId: '1tsr', limit, cursor }));
+      expect(accessions(output)).toEqual(accessions({ matches: list.results.slice(5, 5 + limit) }));
+      expect(output.coverage.hasMore).toBe(5 + limit < 12);
+    },
+  );
+
+  it('clamps a limit above 60 with a notice and reports the effective cap', async () => {
+    network([
+      Response.json(fixture('detail4v6x')),
+      page(rows(20), 'p2', 100),
+      page(rows(20, 20), 'p3', 100),
+      page(rows(20, 40), 'p4', 100),
+    ]);
+    const result = await call({ pdbId: '4v6x', limit: 100 });
+    expect(twin(result).matches).toHaveLength(60);
+    expect(result.structuredContent).toMatchObject({ truncated: true, shown: 60, cap: 60 });
+    expect(notice(result)).toContain('Requested limit 100 was clamped to 60.');
+    expect(notice(result)).toContain('"limit":60');
+  });
+
+  it('returns a match heavier than 100,000 bytes beside its neighbour with no size notice', async () => {
+    const big = synthetic('PF00870', 100_001);
     const small = synthetic('PF00871');
-    network([Response.json(fixture('detail4v6x')), page([big, small]), page([big, small])]);
-    const first = await call({ pdbId: '4v6x' });
-    const output = twin(first);
-    expect(output.matches.map((match: Json) => match.metadata.accession)).toEqual(['PF00870']);
-    expect(jsonByteLength(output)).toBeGreaterThan(RESPONSE_BYTE_BUDGET);
-    expect(notice(first)).toContain(
-      'Match PF00870 cannot be split, so this segment holds it alone and exceeds the 100,000-byte response budget.',
-    );
-    const rest = twin(await call({ pdbId: '4v6x', cursor: output.coverage.nextCursor }));
-    expect(rest.matches.map((match: Json) => match.metadata.accession)).toEqual(['PF00871']);
-    expect(rest.coverage.hasMore).toBe(false);
+    network([Response.json(fixture('detail4v6x')), page([big, small])]);
+    const result = await call({ pdbId: '4v6x' });
+    expect(accessions(twin(result))).toEqual(['PF00870', 'PF00871']);
+    expect(result.structuredContent).not.toHaveProperty('notice');
+  });
+
+  it('advertises limit like the other clamped limits and describes segments by count', () => {
+    const schema = z.toJSONSchema(definition.input, { io: 'input' }) as {
+      properties: Record<string, Record<string, unknown>>;
+    };
+    const { description, ...bounds } = schema.properties.limit ?? {};
+    expect(bounds).toEqual({
+      default: 10,
+      type: 'integer',
+      minimum: 1,
+      maximum: Number.MAX_SAFE_INTEGER,
+    });
+    expect(description).toContain('60');
+    for (const text of [
+      definition.description,
+      description,
+      definition.input.shape.cursor.description,
+      ...Object.values(definition.enrichment ?? {}).map((field) => field.description),
+    ])
+      expect(text).not.toMatch(/byte|budget/i);
+  });
+
+  it.each([0, -1, 1.5, 'many'])('rejects limit %s before any request', async (limit) => {
+    const fetch = network([]);
+    const result = await call({ pdbId: '4v6x', limit: limit as number });
+    expect(result.structuredContent).toMatchObject({
+      error: { code: -32602, data: { reason: 'invalid_arguments' } },
+    });
+    expect(text(result)).toContain('limit');
+    expect(text(result)).not.toMatch(/unrecognized key/i);
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it.each([
     [
       'a changed page',
-      (rows: Json[]) => page(rows.map((_row, index) => synthetic(`PF0999${index}`, 30_000))),
+      (matches: Json[]) => page(matches.map((_row, index) => synthetic(`PF0999${index}`, 30_000))),
     ],
-    ['a page shorter than the offset', (rows: Json[]) => page(rows.slice(0, 2))],
+    ['a page shorter than the offset', (matches: Json[]) => page(matches.slice(0, 2))],
   ])('rejects a cursor resuming inside %s as invalid_cursor', async (_name, second) => {
-    const rows = Array.from({ length: 6 }, (_, index) => synthetic(`PF0000${index}`, 30_000));
-    network([Response.json(fixture('detail4v6x')), page(rows)]);
-    const cursor = twin(await call({ pdbId: '4v6x' })).coverage.nextCursor;
+    const matches = Array.from({ length: 6 }, (_, index) => synthetic(`PF0000${index}`, 30_000));
+    network([Response.json(fixture('detail4v6x')), page(matches)]);
+    const cursor = twin(await call({ pdbId: '4v6x', limit: 3 })).coverage.nextCursor;
     expect(cursor).toEqual(expect.any(String));
-    network([second(rows)]);
+    network([second(matches)]);
     failure(await call({ pdbId: '4v6x', cursor }), 'invalid_cursor');
   });
 

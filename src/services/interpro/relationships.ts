@@ -49,15 +49,15 @@ export function orderRelationships(graph: RelationshipGraph): RelationshipGraph 
 }
 
 /**
- * The `count` whole records starting at `offset` in the sequence of every node followed by every
+ * The `limit` whole records starting at `offset` in the sequence of every node followed by every
  * link, as a graph of the upstream shape, with the page block that locates it.
  */
-export function sliceRelationships(graph: RelationshipGraph, offset: number, count: number) {
+export function sliceRelationships(graph: RelationshipGraph, offset: number, limit: number) {
   const nodes = graph?.nodes ?? [];
   const links = graph?.links ?? [];
   const total = nodes.length + links.length;
   const start = Math.min(offset, total);
-  const end = Math.min(start + count, total);
+  const end = Math.min(start + limit, total);
   const slice = {
     nodes: nodes.slice(Math.min(start, nodes.length), Math.min(end, nodes.length)),
     links: links.slice(Math.max(0, start - nodes.length), Math.max(0, end - nodes.length)),
@@ -69,6 +69,7 @@ export function sliceRelationships(graph: RelationshipGraph, offset: number, cou
       totalNodes: nodes.length,
       totalLinks: links.length,
       offset,
+      limit,
       returnedNodes: slice.nodes.length,
       returnedLinks: slice.links.length,
       hasMore,

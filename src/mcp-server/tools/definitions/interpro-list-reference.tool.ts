@@ -83,6 +83,14 @@ export const interproListReference = tool('interpro_list_reference', {
       thrownBy: 'service',
     },
     {
+      reason: 'retry_deadline_exceeded',
+      code: JsonRpcErrorCode.Timeout,
+      when: 'The shared fifty-second budget expires across the release and database-count reads.',
+      retryable: true,
+      recovery: 'Repeat interpro_list_reference with topic release after waiting a few seconds.',
+      thrownBy: 'service',
+    },
+    {
       reason: 'upstream_timeout',
       code: JsonRpcErrorCode.Timeout,
       when: 'InterPro returns HTTP 408/504 or an attempt exceeds its deadline.',

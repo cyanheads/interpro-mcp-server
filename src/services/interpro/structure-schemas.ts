@@ -79,3 +79,86 @@ export const StructureMatchSchema = z
     structures: z.array(StructureRecordSchema).describe('Nested chain records.'),
   })
   .catchall(JsonValueSchema);
+/**
+ * InterPro nests at most this many chain records in one structure-map match or structure list row,
+ * whatever the page size.
+ */
+export const NESTED_CHAIN_LIMIT = 20;
+/** Structure list metadata; NMR and some EM structures carry a null resolution, which stays null. */
+export const StructureSummarySchema = z
+  .object({
+    accession: z
+      .string()
+      .describe('Lowercase PDB ID, accepted as pdbId by interpro_get_structure_domains.'),
+    source_database: z.string().describe('Structure source database.'),
+    name: z.string().nullable().optional().describe('Structure title when supplied.'),
+    experiment_type: z
+      .string()
+      .nullable()
+      .optional()
+      .describe('Experimental method as upstream writes it, such as x-ray, nmr, or em.'),
+    resolution: z
+      .number()
+      .nullable()
+      .optional()
+      .describe('Resolution in ångströms; null where the method reports none, such as NMR.'),
+  })
+  .catchall(JsonValueSchema);
+/**
+ * A protein-route chain record: one chain of the structure mapped to the queried UniProt protein,
+ * its `structure_protein_locations` fragments pairing chain `start`/`end` with UniProt
+ * `protein_start`/`protein_end`. Some records carry a null `accession` and `source_database`.
+ */
+export const ProteinChainRecordSchema = z
+  .object({
+    accession: z
+      .string()
+      .nullable()
+      .describe('Lowercase UniProt accession of the queried protein; null when upstream omits it.'),
+    chain: z.string().describe('Case-sensitive chain ID.'),
+    structure_protein_locations: z
+      .array(LocationSchema)
+      .describe(
+        'Chain-to-UniProt residue maps: start/end in chain numbering, protein_start/protein_end in UniProt numbering.',
+      ),
+  })
+  .catchall(JsonValueSchema);
+/**
+ * An entry-route chain record: the queried entry's match on one chain, in chain numbering beside
+ * author numbering and, when the chain maps to UniProt, in UniProt numbering. Unmapped chains
+ * carry a null `protein` and null or empty `entry_protein_locations`.
+ */
+export const EntryChainRecordSchema = z
+  .object({
+    accession: z.string().describe('Accession of the queried entry.'),
+    chain: z.string().describe('Case-sensitive chain ID.'),
+    protein: z
+      .string()
+      .nullable()
+      .describe('Lowercase UniProt accession mapped to the chain; null when unmapped.'),
+    entry_structure_locations: z
+      .array(LocationSchema)
+      .describe(
+        'Match locations in chain numbering: start/end are 1-based chain positions; auth_start/auth_end are author residue numbers, possibly null.',
+      ),
+    entry_protein_locations: z
+      .array(LocationSchema)
+      .nullable()
+      .optional()
+      .describe('Match locations in UniProt numbering; null or empty without a usable mapping.'),
+  })
+  .catchall(JsonValueSchema);
+/** Protein-route list row: structure metadata plus at most 20 chain records for the protein. */
+export const ProteinStructureRowSchema = z
+  .object({
+    metadata: StructureSummarySchema,
+    proteins: z.array(ProteinChainRecordSchema),
+  })
+  .catchall(JsonValueSchema);
+/** Entry-route list row: structure metadata plus at most 20 chain records the entry matches. */
+export const EntryStructureRowSchema = z
+  .object({
+    metadata: StructureSummarySchema,
+    entries: z.array(EntryChainRecordSchema),
+  })
+  .catchall(JsonValueSchema);

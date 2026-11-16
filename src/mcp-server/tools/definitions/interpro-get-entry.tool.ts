@@ -34,6 +34,9 @@ const SECTIONS = [
   'overlaps_with',
 ] as const;
 const SectionSchema = z.enum(SECTIONS);
+/** Overlap records per page when the call names no overlapLimit. */
+const DEFAULT_OVERLAP_LIMIT = 20;
+const MAX_OVERLAP_LIMIT = 10_000;
 const OverlapsPageSchema = z.discriminatedUnion('available', [
   z
     .object({
@@ -62,7 +65,7 @@ const OverlapsPageSchema = z.discriminatedUnion('available', [
 export const interproGetEntry = tool('interpro_get_entry', {
   title: 'InterPro entry metadata',
   description:
-    'Retrieve one InterPro or member-database entry with full metadata by default. Select optional sections while retaining core and unknown metadata, or supply overlapLimit to page whole overlap records in upstream order; offsets are not a snapshot across calls.',
+    'Retrieve one InterPro or member-database entry with full metadata by default, except that an overlaps_with array of more than 20 records returns its first 20 with overlapsPage and the continuation call. Select optional sections while retaining core and unknown metadata; overlapLimit and overlapOffset page whole overlap records in upstream order, and offsets are not a snapshot across calls.',
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
   auth: ['tool:interpro_get_entry:read'],
   input: z.object({
@@ -87,11 +90,10 @@ export const interproGetEntry = tool('interpro_get_entry', {
     overlapLimit: z
       .number()
       .int()
-      .positive()
-      .max(Number.MAX_SAFE_INTEGER)
+      .min(1)
       .optional()
       .describe(
-        'Positive safe integer number of whole overlap records; supplying it enables overlap paging.',
+        'Positive integer number of whole overlap records per page; values above 10,000 are clamped to 10,000 with a notice. Without it, pages hold 20 records, and when overlapOffset is also omitted an overlaps_with array of at most 20 records returns whole.',
       ),
     overlapOffset: z
       .number()
@@ -100,7 +102,7 @@ export const interproGetEntry = tool('interpro_get_entry', {
       .max(Number.MAX_SAFE_INTEGER)
       .optional()
       .describe(
-        'Nonnegative safe integer overlap offset; requires overlapLimit, defaults to zero.',
+        'Nonnegative safe integer offset of the first overlap record to return; defaults to zero. Pass overlapsPage.nextOffset to continue.',
       ),
   }),
   output: z.object({
@@ -120,7 +122,7 @@ export const interproGetEntry = tool('interpro_get_entry', {
       .optional()
       .describe('Named sections actually removed from upstream metadata.'),
     overlapsPage: OverlapsPageSchema.optional().describe(
-      'Explicit overlap paging state; unavailable arrays have no fabricated total.',
+      'Overlap paging state, present when overlapLimit or overlapOffset is supplied or a default call pages an array of more than 20 records; unavailable arrays have no fabricated total.',
     ),
   }),
   enrichment: {
@@ -129,7 +131,7 @@ export const interproGetEntry = tool('interpro_get_entry', {
       .int()
       .nonnegative()
       .optional()
-      .describe('Total upstream overlap records when explicit paging has an available array.'),
+      .describe('Total upstream overlap records when the reply pages an available array.'),
     notice: z
       .string()
       .optional()
@@ -139,18 +141,12 @@ export const interproGetEntry = tool('interpro_get_entry', {
   },
   errors: [
     {
-      reason: 'overlap_limit_required',
-      code: JsonRpcErrorCode.ValidationError,
-      when: 'overlapOffset is supplied without overlapLimit.',
-      retryable: false,
-      recovery: 'Supply overlapLimit to enable paging, or omit overlapOffset for full overlaps.',
-    },
-    {
       reason: 'overlaps_not_selected',
       code: JsonRpcErrorCode.ValidationError,
-      when: 'Overlap paging is requested but sections excludes overlaps_with.',
+      when: 'overlapLimit or overlapOffset is supplied but sections excludes overlaps_with.',
       retryable: false,
-      recovery: 'Include overlaps_with in sections or omit sections, then retry with overlapLimit.',
+      recovery:
+        'Include overlaps_with in sections or omit sections, then retry with the same overlapLimit or overlapOffset.',
     },
     {
       reason: 'database_mismatch',
@@ -189,6 +185,15 @@ export const interproGetEntry = tool('interpro_get_entry', {
       thrownBy: 'service',
     },
     {
+      reason: 'retry_deadline_exceeded',
+      code: JsonRpcErrorCode.Timeout,
+      when: 'The shared fifty-second budget expires while the entry request is retried.',
+      retryable: true,
+      recovery:
+        'Repeat interpro_get_entry after waiting; sections and overlap paging do not shorten the upstream read.',
+      thrownBy: 'service',
+    },
+    {
       reason: 'upstream_shape_invalid',
       code: JsonRpcErrorCode.ServiceUnavailable,
       when: 'Upstream JSON, structure, or continuation is incompatible.',
@@ -200,13 +205,8 @@ export const interproGetEntry = tool('interpro_get_entry', {
     ...UPSTREAM_ERRORS,
   ],
   async handler(input, ctx) {
-    if (input.overlapOffset !== undefined && input.overlapLimit === undefined)
-      throw ctx.fail('overlap_limit_required');
-    if (
-      input.overlapLimit !== undefined &&
-      input.sections &&
-      !input.sections.includes('overlaps_with')
-    )
+    const explicitPaging = input.overlapLimit !== undefined || input.overlapOffset !== undefined;
+    if (explicitPaging && input.sections && !input.sections.includes('overlaps_with'))
       throw ctx.fail('overlaps_not_selected');
     const target = resolveEntry(input.accession, input.sourceDatabase);
     const service = getInterproService();
@@ -238,9 +238,13 @@ export const interproGetEntry = tool('interpro_get_entry', {
         `Selected sections: ${JSON.stringify(selected)}; omitted source sections: ${JSON.stringify(omittedSections)}. Core and unknown metadata are retained.`,
       );
     let overlapsPage: z.infer<typeof OverlapsPageSchema> | undefined;
-    if (input.overlapLimit !== undefined) {
+    const overlaps = projected.overlaps_with;
+    // A call without paging input pages only an array longer than one page; any other section stays whole.
+    if (explicitPaging || (Array.isArray(overlaps) && overlaps.length > DEFAULT_OVERLAP_LIMIT)) {
       const offset = input.overlapOffset ?? 0;
-      const overlaps = projected.overlaps_with;
+      const limit = Math.min(input.overlapLimit ?? DEFAULT_OVERLAP_LIMIT, MAX_OVERLAP_LIMIT);
+      if (input.overlapLimit !== undefined && input.overlapLimit > limit)
+        notices.push(`Requested overlapLimit ${input.overlapLimit} was clamped to ${limit}.`);
       if (overlaps === undefined || overlaps === null) {
         overlapsPage = { available: false, offset };
         notices.push(
@@ -249,10 +253,7 @@ export const interproGetEntry = tool('interpro_get_entry', {
       } else {
         if (!Array.isArray(overlaps))
           throw ctx.fail('upstream_shape_invalid', 'Entry overlaps_with is not an array.');
-        const slice = overlaps.slice(
-          offset,
-          offset + Math.min(input.overlapLimit, overlaps.length),
-        );
+        const slice = overlaps.slice(offset, offset + limit);
         projected.overlaps_with = slice;
         const nextOffset = offset + slice.length;
         const hasMore = nextOffset < overlaps.length;
@@ -268,9 +269,13 @@ export const interproGetEntry = tool('interpro_get_entry', {
         notices.push(
           `Overlap page returned ${slice.length} of ${overlaps.length} records at offset ${offset}.`,
         );
+        if (hasMore && input.overlapLimit === undefined)
+          notices.push(
+            `Pages hold ${DEFAULT_OVERLAP_LIMIT} records unless overlapLimit is set; overlapLimit may rise to ${MAX_OVERLAP_LIMIT.toLocaleString('en-US')} for larger pages.`,
+          );
         if (hasMore)
           notices.push(
-            `Continue with interpro_get_entry ${JSON.stringify({ ...target, includeThumbnail: input.includeThumbnail, ...(selected ? { sections: selected } : {}), overlapLimit: input.overlapLimit, overlapOffset: nextOffset })}.`,
+            `Continue with interpro_get_entry ${JSON.stringify({ ...target, includeThumbnail: input.includeThumbnail, ...(selected ? { sections: selected } : {}), ...(input.overlapLimit === undefined ? {} : { overlapLimit: limit }), overlapOffset: nextOffset })}.`,
           );
       }
     }

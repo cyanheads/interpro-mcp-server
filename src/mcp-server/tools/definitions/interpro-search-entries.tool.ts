@@ -142,6 +142,15 @@ export const interproSearchEntries = tool('interpro_search_entries', {
       thrownBy: 'service',
     },
     {
+      reason: 'retry_deadline_exceeded',
+      code: JsonRpcErrorCode.Timeout,
+      when: 'The shared fifty-second budget expires while the search page request is retried.',
+      retryable: true,
+      recovery:
+        'Retry interpro_search_entries after waiting, with a smaller limit for a lighter page.',
+      thrownBy: 'service',
+    },
+    {
       reason: 'upstream_shape_invalid',
       code: JsonRpcErrorCode.ServiceUnavailable,
       when: 'Upstream JSON, structure, or continuation is incompatible.',

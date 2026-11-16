@@ -19,6 +19,15 @@ export async function settle<T>(promise: Promise<T>): Promise<T> {
   return result.value;
 }
 
+/** A fetch double that answers each call with the next queued response and fails once none remain. */
+export function queuedFetch(responses: Response[]) {
+  return vi.fn(async (_url: string) => {
+    const response = responses.shift();
+    if (!response) throw new Error('Unexpected upstream call');
+    return response;
+  });
+}
+
 /** The text blocks of a result, joined. */
 export function text(result: ToolResult): string {
   return result.content

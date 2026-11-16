@@ -1,6 +1,7 @@
 /**
  * @fileoverview Sequence scan service at the fetch seam: lookup, submission, dedupe, in-flight cap,
- * polling cadence, status mapping, the single call deadline, cancellation, and address redaction.
+ * polling cadence, status mapping, the single call deadline, cancellation, address redaction, and
+ * the finished-result cache with its shared in-flight loads.
  * @module tests/services/sequence-scan-service
  */
 import { createMockContext } from '@cyanheads/mcp-ts-core/testing';
@@ -9,6 +10,7 @@ import { parseSequence } from '@/services/sequence-scan/sequence.js';
 import {
   IN_FLIGHT_TTL_MS,
   MAX_IN_FLIGHT,
+  MAX_RETAINED_BYTES,
   POLL_INTERVAL_MS,
   SequenceScanService,
 } from '@/services/sequence-scan/sequence-scan-service.js';
@@ -284,6 +286,66 @@ describe('submission and polling', () => {
     expect(error).toMatchObject({ code: -32004, data: { jobId: jobIdFor(variant.md5) } });
     expect(net.of('result')).not.toHaveLength(0);
     for (const call of net.calls) expect(call.signal.aborted || call.kind !== 'result').toBe(true);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  /** What a caller receives when the call's 50-second budget runs out, wherever it ran out. */
+  const budgetExhausted = (jobId?: string) => ({
+    code: -32004,
+    message: `InterProScan call exhausted its 50-second budget.${jobId ? ` InterProScan job ${jobId} was submitted; read it with interpro_get_scan_result.` : ''}`,
+    data: {
+      reason: 'retry_deadline_exceeded',
+      retryable: true,
+      deadlineMs: 50_000,
+      ...(jobId ? { jobId } : {}),
+    },
+  });
+  const expectBudgetExhausted = (error: unknown, jobId?: string) => {
+    const { data, ...rest } = budgetExhausted(jobId);
+    expect(error).toMatchObject(rest);
+    expect((error as { data?: unknown }).data).toEqual(data);
+  };
+
+  it('reports the call budget when the last poll of the window stalls into the deadline', async () => {
+    const jobId = jobIdFor(variant.md5);
+    const net = upstream({
+      status: ({ signal }) =>
+        performance.now() >= 35_000 ? hang(signal) : Promise.resolve(text('RUNNING')),
+    });
+    const service = new SequenceScanService(EMAIL, net.fetch);
+    const { error, at } = await settle(
+      service.result(service.begin(createMockContext()), jobId, 35_000),
+    );
+    // The poll at 35 s holds the 15 s the result reserve keeps back; its bound and the call end together.
+    expect(net.of('status').map((call) => call.at)).toEqual([
+      0, 5_000, 10_000, 15_000, 20_000, 25_000, 30_000, 35_000,
+    ]);
+    expect(at).toBe(50_000);
+    expectBudgetExhausted(error);
+    expect((error as Error).cause).toMatchObject({
+      data: { reason: 'retry_deadline_exceeded', deadlineMs: 15_000 },
+    });
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('reports the call budget when a poll times out with less left than its retry backoff', async () => {
+    const jobId = jobIdFor(variant.md5);
+    const net = upstream({
+      // A 4.5-second lookup puts the polls at 9.5 s, 14.5 s, ... 34.5 s.
+      matches: ({ body, signal }) => later(4_500, () => lookup(JSON.parse(body).md5[0]), signal),
+      status: ({ signal }) =>
+        performance.now() >= 34_000 ? hang(signal) : Promise.resolve(text('RUNNING')),
+    });
+    const service = new SequenceScanService(EMAIL, net.fetch);
+    const { error, at } = await settle(
+      service.scan(service.begin(createMockContext()), variant, 35_000),
+    );
+    const polls = net.of('status');
+    expect(polls.at(-1)?.at).toBe(34_500);
+    // Its 15-second bound ends it at 49.5 s, with too little left for the one retry.
+    expect(at).toBe(49_500);
+    expect(polls).toHaveLength(6);
+    expectBudgetExhausted(error, jobId);
     expect(vi.getTimerCount()).toBe(0);
   });
 
@@ -590,4 +652,258 @@ describe('submission address', () => {
 
 it('polls each job no more often than the documented interval', () => {
   expect(POLL_INTERVAL_MS).toBeGreaterThanOrEqual(5_000);
+});
+
+describe('finished-result cache', () => {
+  const akt1 = residuesOf(sequences.akt1);
+  const jobId = 'iprscan6-R20261028-131532-0930-13189043-p1m';
+  /** The retained entries and the byte count the cap is measured on. */
+  const internals = (service: SequenceScanService) =>
+    service as unknown as { retained: Map<string, { body: Uint8Array }>; retainedBytes: number };
+  const resume = (service: SequenceScanService, md5: string, ctx = createMockContext()) =>
+    settle(service.resume(service.begin(ctx), md5));
+
+  it('walks a result with one lookup, reuses it for ten minutes from storage, then fetches again', async () => {
+    const net = upstream({});
+    const service = new SequenceScanService(EMAIL, net.fetch);
+    const first = await settle(service.scan(service.begin(createMockContext()), calmodulin, 0));
+    expect(first.value?.source).toBe('precalculated');
+    for (let segment = 1; segment < 8; segment++)
+      expect((await resume(service, calmodulin.md5)).value).toEqual(first.value);
+    expect(net.of('matches')).toHaveLength(1);
+    // A literal ten minutes from storage, so any other TTL fails here.
+    await vi.advanceTimersByTimeAsync(599_999);
+    expect((await resume(service, calmodulin.md5)).value).toEqual(first.value);
+    expect(net.of('matches')).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect((await resume(service, calmodulin.md5)).value).toEqual(first.value);
+    expect(net.of('matches')).toHaveLength(2);
+  });
+
+  it('retains nothing for a sequence UniParc lacks or a pending job', async () => {
+    const net = upstream({ status: () => text('RUNNING') });
+    const service = new SequenceScanService(undefined, net.fetch);
+    for (let call = 0; call < 2; call++) {
+      const { error } = await settle(service.scan(service.begin(createMockContext()), variant, 0));
+      expect(error).toMatchObject({ data: { reason: 'scan_not_configured' } });
+      const { value } = await settle(service.result(service.begin(createMockContext()), jobId, 0));
+      expect(value).toMatchObject({ status: 'RUNNING' });
+    }
+    expect(net.calls.map((call) => call.kind)).toEqual(['matches', 'status', 'matches', 'status']);
+    expect(internals(service).retained.size).toBe(0);
+  });
+
+  it.each([
+    ['an exhausted retry', () => text('busy', 503), 2],
+    ['a malformed body', () => new Response('{"results":'), 1],
+  ])('retains nothing after %s, so the next call fetches again', async (_name, fail, sent) => {
+    let failing = true;
+    const net = upstream({
+      matches: ({ body }) => (failing ? fail() : lookup(JSON.parse(body).md5[0])),
+    });
+    const service = new SequenceScanService(undefined, net.fetch);
+    expect((await resume(service, calmodulin.md5)).error).toBeDefined();
+    expect(net.of('matches')).toHaveLength(sent);
+    expect(internals(service).retained.size).toBe(0);
+    failing = false;
+    expect((await resume(service, calmodulin.md5)).value?.source).toBe('precalculated');
+    expect((await resume(service, calmodulin.md5)).value?.source).toBe('precalculated');
+    expect(net.of('matches')).toHaveLength(sent + 1);
+  });
+
+  it('answers a finished job from its retained result with no status or result request', async () => {
+    const net = upstream({
+      status: () => text('FINISHED'),
+      result: () => Response.json(calmodulinResult),
+    });
+    const service = new SequenceScanService(EMAIL, net.fetch);
+    const scanned = await settle(service.scan(service.begin(createMockContext()), variant, 10_000));
+    expect(scanned.value).toMatchObject({ status: 'FINISHED' });
+    const sent = net.calls.map((call) => call.kind);
+    expect(sent).toEqual(['matches', 'run', 'status', 'result']);
+    for (const waitMs of [0, 30_000]) {
+      const { value } = await settle(
+        service.result(service.begin(createMockContext()), jobIdFor(variant.md5), waitMs),
+      );
+      expect(value).toEqual({
+        status: 'FINISHED',
+        result:
+          scanned.value?.source === 'interproscan' &&
+          'result' in scanned.value &&
+          scanned.value.result,
+        sourceUrl: `https://www.ebi.ac.uk/Tools/services/rest/iprscan6/result/${jobIdFor(variant.md5)}/json`,
+      });
+    }
+    expect(net.calls.map((call) => call.kind)).toEqual(sent);
+  });
+
+  it('reads a finished job once for calls that ask together', async () => {
+    const net = upstream({
+      status: () => text('FINISHED'),
+      result: ({ signal }) => later(2_000, () => Response.json(akt1Result), signal),
+    });
+    const service = new SequenceScanService(undefined, net.fetch);
+    const reads = [0, 1].map(() => service.result(service.begin(createMockContext()), jobId, 0));
+    await vi.runAllTimersAsync();
+    const [a, b] = await Promise.all(reads);
+    expect(a).toEqual(b);
+    expect(a?.status === 'FINISHED' && a.result.matches).toHaveLength(96);
+    expect(net.of('status')).toHaveLength(2);
+    expect(net.of('result')).toHaveLength(1);
+  });
+
+  it('keeps inputs apart: A, then A beside B, then B alone, and a job never answers a lookup', async () => {
+    const net = upstream({
+      status: () => text('FINISHED'),
+      result: () => Response.json(akt1Result),
+    });
+    const service = new SequenceScanService(undefined, net.fetch);
+    const scanOf = (sequence: { md5: string; residues: string }) =>
+      settle(service.scan(service.begin(createMockContext()), sequence, 0));
+    const a = await scanOf(calmodulin);
+    const [aAgain, b] = [await scanOf(calmodulin), await scanOf(akt1)];
+    const bAgain = await scanOf(akt1);
+    expect(aAgain.value).toEqual(a.value);
+    expect(bAgain.value).toEqual(b.value);
+    const matchesOf = (md5: string) => matchesBatch.results.find((entry) => entry.md5 === md5);
+    expect(a.value?.source === 'precalculated' && a.value.matches).toEqual(
+      matchesOf(calmodulin.md5)?.matches,
+    );
+    expect(b.value?.source === 'precalculated' && b.value.matches).toEqual(
+      matchesOf(akt1.md5)?.matches,
+    );
+    expect(net.of('matches').map((call) => JSON.parse(call.body).md5[0])).toEqual([
+      calmodulin.md5,
+      akt1.md5,
+    ]);
+    await settle(service.result(service.begin(createMockContext()), jobId, 0));
+    expect((await resume(service, calmodulin.md5)).value).toEqual(a.value);
+    expect(net.calls.map((call) => call.kind)).toEqual(['matches', 'matches', 'status', 'result']);
+  });
+
+  it('caps retained body bytes as received, evicting the least recently used', async () => {
+    const size = 4_000_000;
+    const md5s = Array.from({ length: 9 }, (_, index) =>
+      (index + 1).toString(16).toUpperCase().padStart(32, '0'),
+    );
+    const record = matchesBatch.results.find((entry) => entry.found)?.matches[0];
+    const net = upstream({
+      matches: ({ body }) => {
+        const json = JSON.stringify({
+          results: [{ md5: JSON.parse(body).md5[0], found: true, matches: [record] }],
+        });
+        // Whitespace the parser discards still counts: the cache keeps the body as received.
+        return new Response(json + ' '.repeat(size - Buffer.byteLength(json)));
+      },
+    });
+    const service = new SequenceScanService(undefined, net.fetch);
+    for (const md5 of md5s.slice(0, 8)) await resume(service, md5);
+    expect(8 * size).toBeLessThanOrEqual(MAX_RETAINED_BYTES);
+    expect(internals(service).retainedBytes).toBe(8 * size);
+    await resume(service, md5s[0] ?? '');
+    expect(net.of('matches')).toHaveLength(8);
+    expect(9 * size).toBeGreaterThan(MAX_RETAINED_BYTES);
+    await resume(service, md5s[8] ?? '');
+    expect(internals(service).retainedBytes).toBe(8 * size);
+    await resume(service, md5s[0] ?? '');
+    expect(net.of('matches')).toHaveLength(9);
+    await resume(service, md5s[1] ?? '');
+    expect(net.of('matches')).toHaveLength(10);
+  });
+
+  it('retains each body as an exactly sized copy, never a view into a larger buffer', async () => {
+    const record = matchesBatch.results.find((entry) => entry.found)?.matches[0];
+    const net = upstream({
+      matches: ({ body }) =>
+        Response.json({
+          results: [{ md5: JSON.parse(body).md5[0], found: true, matches: [record] }],
+        }),
+    });
+    const service = new SequenceScanService(undefined, net.fetch);
+    await resume(service, calmodulin.md5);
+    const [entry] = internals(service).retained.values();
+    expect(entry?.body.byteLength).toBeGreaterThan(0);
+    expect(entry?.body.buffer.byteLength).toBe(entry?.body.byteLength);
+  });
+
+  it.each([0, 1])(
+    'sends one lookup for two concurrent calls; caller %i leaving leaves the other to succeed',
+    async (leaving) => {
+      const net = upstream({
+        matches: ({ body, signal }) => later(3_000, () => lookup(JSON.parse(body).md5[0]), signal),
+      });
+      const service = new SequenceScanService(EMAIL, net.fetch);
+      const controllers = [new AbortController(), new AbortController()];
+      const calls = controllers.map((controller) =>
+        service
+          .scan(service.begin(createMockContext({ signal: controller.signal })), calmodulin, 0)
+          .catch((error: unknown) => error),
+      );
+      await vi.advanceTimersByTimeAsync(1_000);
+      controllers[leaving]?.abort(new Error('caller left'));
+      await vi.advanceTimersByTimeAsync(2_000);
+      const outcomes = await Promise.all(calls);
+      expect(outcomes[leaving]).toMatchObject({ message: 'caller left' });
+      expect(outcomes[1 - leaving]).toMatchObject({ source: 'precalculated' });
+      expect(net.of('matches')).toHaveLength(1);
+      expect(net.of('matches')[0]?.signal.aborted).toBe(false);
+    },
+  );
+
+  it('aborts a shared lookup once both callers leave, retaining nothing', async () => {
+    const net = upstream({
+      matches: ({ body, signal }) => later(3_000, () => lookup(JSON.parse(body).md5[0]), signal),
+    });
+    const service = new SequenceScanService(EMAIL, net.fetch);
+    const controllers = [new AbortController(), new AbortController()];
+    const calls = controllers.map((controller) =>
+      service
+        .resume(service.begin(createMockContext({ signal: controller.signal })), calmodulin.md5)
+        .catch((error: unknown) => error),
+    );
+    await vi.advanceTimersByTimeAsync(1_000);
+    for (const controller of controllers) controller.abort(new Error('caller left'));
+    expect(await Promise.all(calls)).toMatchObject([
+      { message: 'caller left' },
+      { message: 'caller left' },
+    ]);
+    expect(net.of('matches')[0]?.signal.aborted).toBe(true);
+    await vi.runAllTimersAsync();
+    expect(internals(service).retained.size).toBe(0);
+    expect((await resume(service, calmodulin.md5)).value?.source).toBe('precalculated');
+    expect(net.of('matches')).toHaveLength(2);
+  });
+
+  it("finishes a shared lookup under its own deadline when the first caller's runs out", async () => {
+    const net = upstream({
+      matches: ({ body, signal }) => later(10_000, () => lookup(JSON.parse(body).md5[0]), signal),
+    });
+    const service = new SequenceScanService(EMAIL, net.fetch);
+    const early = service.begin(createMockContext());
+    await vi.advanceTimersByTimeAsync(45_000);
+    const timed = (promise: Promise<unknown>) =>
+      promise.then(
+        (value) => ({ value, at: performance.now() }),
+        (error: unknown) => ({ error, at: performance.now() }),
+      );
+    const first = timed(service.resume(early, calmodulin.md5));
+    const second = timed(service.resume(service.begin(createMockContext()), calmodulin.md5));
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(await first).toMatchObject({
+      at: 50_000,
+      error: { data: { reason: 'retry_deadline_exceeded' } },
+    });
+    expect(await second).toMatchObject({ at: 55_000, value: { source: 'precalculated' } });
+    expect(net.of('matches')).toHaveLength(1);
+    expect(net.of('matches')[0]?.signal.aborted).toBe(false);
+  });
+
+  it('resumes without ever submitting, even when the lookup misses', async () => {
+    const net = upstream({});
+    const service = new SequenceScanService(EMAIL, net.fetch);
+    expect((await resume(service, variant.md5)).error).toMatchObject({
+      data: { reason: 'invalid_cursor' },
+    });
+    expect(net.calls.map((call) => call.kind)).toEqual(['matches']);
+  });
 });

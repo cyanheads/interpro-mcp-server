@@ -8,8 +8,9 @@ import { formatInterpro } from '@/services/interpro/format.js';
 import { optionalString } from '@/services/interpro/schemas.js';
 import {
   buildScanOutput,
-  decodeScanCursor,
+  decodePrecalculatedCursor,
   ScanEnrichment,
+  ScanLimitSchema,
   ScanOutputSchema,
 } from '@/services/sequence-scan/scan-output.js';
 import {
@@ -34,12 +35,9 @@ export const interproScanSequence = tool('interpro_scan_sequence', {
   },
   auth: ['tool:interpro_scan_sequence:write'],
   input: z.object({
-    sequence: z
-      .string()
-      .max(MAX_SEQUENCE_CHARS)
-      .describe(
-        'One protein sequence as residue letters, optionally preceded by a single FASTA header line. Case, spaces, and line breaks are ignored; digits, gaps, and stop symbols (*) are rejected.',
-      ),
+    sequence: optionalString(z.string().max(MAX_SEQUENCE_CHARS)).describe(
+      'One protein sequence as residue letters, optionally preceded by a single FASTA header line. Case, spaces, and line breaks are ignored; digits, gaps, and stop symbols (*) are rejected. Required unless cursor is given.',
+    ),
     waitSeconds: z
       .number()
       .int()
@@ -49,8 +47,9 @@ export const interproScanSequence = tool('interpro_scan_sequence', {
       .describe(
         'Seconds to wait for a newly started job to finish before returning its jobId; 0 starts the job and returns at once.',
       ),
+    limit: ScanLimitSchema,
     cursor: optionalString(z.string().trim().max(4096)).describe(
-      'Opaque coverage.nextCursor from an earlier call with this same sequence, to read the next segment of precalculated matches.',
+      'Opaque coverage.nextCursor from an earlier interpro_scan_sequence call, to read the next segment of precalculated matches. sequence may be omitted; when given, it must be the same sequence.',
     ),
   }),
   output: ScanOutputSchema,
@@ -59,7 +58,7 @@ export const interproScanSequence = tool('interpro_scan_sequence', {
     {
       reason: 'empty_sequence',
       code: JsonRpcErrorCode.ValidationError,
-      when: 'The sequence holds no residue letters.',
+      when: 'The sequence is missing without a cursor, or holds no residue letters.',
       recovery: 'Pass the protein residues as letters, optionally after one FASTA header line.',
     },
     {
@@ -79,7 +78,7 @@ export const interproScanSequence = tool('interpro_scan_sequence', {
       reason: 'invalid_cursor',
       code: JsonRpcErrorCode.ValidationError,
       when: 'The cursor is malformed, belongs to another sequence or result, or the result changed.',
-      recovery: 'Repeat interpro_scan_sequence with the same sequence and no cursor.',
+      recovery: 'Repeat interpro_scan_sequence with the sequence and no cursor.',
       thrownBy: 'service',
     },
     {
@@ -185,8 +184,8 @@ export const interproScanSequence = tool('interpro_scan_sequence', {
   ],
 
   async handler(input, ctx) {
-    const parsed = parseSequence(input.sequence);
-    if (!parsed.ok)
+    const parsed = input.sequence === undefined ? undefined : parseSequence(input.sequence);
+    if (parsed && !parsed.ok)
       switch (parsed.reason) {
         case 'empty_sequence':
           throw ctx.fail('empty_sequence', 'The sequence holds no residue letters.');
@@ -201,24 +200,30 @@ export const interproScanSequence = tool('interpro_scan_sequence', {
             `Character ${codePointLabel(parsed.codePoint)} at position ${parsed.position} is not a protein residue letter.`,
           );
       }
-    const { md5, residues } = parsed;
-    const start = decodeScanCursor(input.cursor, { md5 });
     const service = getSequenceScanService();
+    if (input.cursor !== undefined) {
+      // A continuation only ever reads the precalculated result its cursor names.
+      const { md5, start } = decodePrecalculatedCursor(input.cursor, parsed?.md5);
+      const length = parsed?.residues.length ?? start.length;
+      return buildScanOutput(ctx.enrich, await service.resume(service.begin(ctx), md5), {
+        md5,
+        ...(length ? { length } : {}),
+        start,
+        limit: input.limit,
+      });
+    }
+    if (!parsed)
+      throw ctx.fail('empty_sequence', 'Pass the sequence, or the cursor of an earlier call.');
+    const { md5, residues } = parsed;
     const outcome = await service.scan(
       service.begin(ctx),
       { md5, residues },
       input.waitSeconds * 1000,
-      start !== undefined,
     );
     return buildScanOutput(ctx.enrich, outcome, {
       md5,
       length: residues.length,
-      ...(start ? { start } : {}),
-      // The sequence is not echoed (titin is 34 kB), so the precalculated call is named, not printed.
-      continuation: (cursor) =>
-        outcome.source === 'precalculated'
-          ? 'interpro_scan_sequence, passing the same sequence and cursor set to coverage.nextCursor,'
-          : `interpro_get_scan_result ${JSON.stringify({ jobId: outcome.jobId, cursor })}`,
+      limit: input.limit,
     });
   },
 

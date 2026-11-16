@@ -84,5 +84,7 @@ describe('description fragment text', () => {
       expect(measurements.at(-1) as number).toBeLessThan((measurements[0] as number) * 256);
       expect(measure(1_048_576)).toBeLessThan(4_000_000);
     },
+    // Bounded by thread CPU time above; wall-clock time under a loaded suite is not the measure.
+    0,
   );
 });

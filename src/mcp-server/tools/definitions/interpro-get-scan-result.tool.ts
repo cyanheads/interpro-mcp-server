@@ -8,8 +8,9 @@ import { formatInterpro } from '@/services/interpro/format.js';
 import { optionalString } from '@/services/interpro/schemas.js';
 import {
   buildScanOutput,
-  decodeScanCursor,
+  decodeJobCursor,
   ScanEnrichment,
+  ScanLimitSchema,
   ScanOutputSchema,
 } from '@/services/sequence-scan/scan-output.js';
 import { JOB_ID_PATTERN, MAX_JOB_ID_CHARS } from '@/services/sequence-scan/scan-schemas.js';
@@ -45,6 +46,7 @@ export const interproGetScanResult = tool('interpro_get_scan_result', {
       .describe(
         'Seconds to wait for a pending job to finish; 0 checks its status once and returns.',
       ),
+    limit: ScanLimitSchema,
     cursor: optionalString(z.string().trim().max(4096)).describe(
       'Opaque coverage.nextCursor from an earlier result for this same jobId, to read the next segment.',
     ),
@@ -137,16 +139,13 @@ export const interproGetScanResult = tool('interpro_get_scan_result', {
 
   async handler(input, ctx) {
     const { jobId } = input;
-    const start = decodeScanCursor(input.cursor, { jobId });
+    const start = decodeJobCursor(input.cursor, jobId);
     const service = getSequenceScanService();
     const state = await service.result(service.begin(ctx), jobId, input.waitSeconds * 1000);
     return buildScanOutput(
       ctx.enrich,
       { source: 'interproscan', jobId, ...state },
-      {
-        ...(start ? { start } : {}),
-        continuation: (cursor) => `interpro_get_scan_result ${JSON.stringify({ jobId, cursor })}`,
-      },
+      { ...(start ? { start } : {}), limit: input.limit },
     );
   },
 

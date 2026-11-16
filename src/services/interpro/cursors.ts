@@ -23,6 +23,7 @@ const CursorSchema = z
     (cursor) => (cursor.upstreamCursor === undefined) !== (cursor.position === undefined),
     'A cursor carries exactly one continuation.',
   );
+type Cursor = z.infer<typeof CursorSchema>;
 type Resumption = { upstreamCursor: string } | { position: unknown };
 /** Deterministic canonical scope, independent of object key insertion order. */
 export function cursorScope(value: unknown): string {
@@ -45,19 +46,13 @@ function seal(operation: string, scope: unknown, resumption: Resumption): string
     });
   return token;
 }
-function open<T>(
-  token: string | undefined,
-  operation: string,
-  scope: unknown,
-  read: (cursor: z.infer<typeof CursorSchema>) => T,
-): T | undefined {
-  if (token === undefined) return undefined;
+/** Parse a token minted for `operation`, then `read` it; every failure is `invalid_cursor`. */
+function open<T>(token: string, operation: string, read: (cursor: Cursor) => T): T {
   try {
     if (token.length > 4096 || !/^[A-Za-z0-9_-]+$/.test(token))
       throw new Error('Invalid cursor encoding.');
     const parsed = CursorSchema.parse(JSON.parse(Buffer.from(token, 'base64url').toString('utf8')));
-    if (parsed.operation !== operation || parsed.scope !== cursorScope(scope))
-      throw new Error('Cursor scope differs.');
+    if (parsed.operation !== operation) throw new Error('Cursor belongs to another operation.');
     return read(parsed);
   } catch (cause) {
     throw validationError(
@@ -66,6 +61,19 @@ function open<T>(
       { cause },
     );
   }
+}
+/** Open a token whose scope must equal the caller's target and filters. */
+function openScoped<T>(
+  token: string | undefined,
+  operation: string,
+  scope: unknown,
+  read: (cursor: Cursor) => T,
+): T | undefined {
+  if (token === undefined) return undefined;
+  return open(token, operation, (cursor) => {
+    if (cursor.scope !== cursorScope(scope)) throw new Error('Cursor scope differs.');
+    return read(cursor);
+  });
 }
 /** Encode only the continuation value, never an upstream request URL. */
 export function encodeCursor(operation: string, scope: unknown, upstreamCursor: string): string {
@@ -77,7 +85,7 @@ export function decodeCursor(
   operation: string,
   scope: unknown,
 ): string | undefined {
-  return open(token, operation, scope, ({ upstreamCursor }) => {
+  return openScoped(token, operation, scope, ({ upstreamCursor }) => {
     if (upstreamCursor === undefined) throw new Error('Cursor carries no upstream continuation.');
     return upstreamCursor;
   });
@@ -93,7 +101,22 @@ export function decodePositionCursor<T extends z.ZodType>(
   scope: unknown,
   schema: T,
 ): z.output<T> | undefined {
-  return open(token, operation, scope, ({ position }) => schema.parse(position));
+  return openScoped(token, operation, scope, ({ position }) => schema.parse(position));
+}
+/**
+ * Decode a resumption point for a continuation that names its target only through the token:
+ * `scope` validates the scope the token carries in place of comparing it with the caller's.
+ */
+export function decodeScopedPositionCursor<S extends z.ZodType, P extends z.ZodType>(
+  token: string,
+  operation: string,
+  scope: S,
+  position: P,
+): { scope: z.output<S>; position: z.output<P> } {
+  return open(token, operation, (cursor) => ({
+    scope: scope.parse(JSON.parse(cursor.scope)),
+    position: position.parse(cursor.position),
+  }));
 }
 /**
  * Truncation guidance for a capped cursor page: the call that continues it, plus a larger

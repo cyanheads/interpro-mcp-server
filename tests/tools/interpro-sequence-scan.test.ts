@@ -7,9 +7,7 @@ import { runToolContract } from '@cyanheads/mcp-ts-core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { interproGetScanResult } from '@/mcp-server/tools/definitions/interpro-get-scan-result.tool.js';
 import { interproScanSequence } from '@/mcp-server/tools/definitions/interpro-scan-sequence.tool.js';
-import { jsonByteLength, RESPONSE_BYTE_BUDGET } from '@/services/interpro/budget.js';
 import { cursorScope, encodePositionCursor } from '@/services/interpro/cursors.js';
-import { parseSequence } from '@/services/sequence-scan/sequence.js';
 import { initSequenceScanService } from '@/services/sequence-scan/sequence-scan-service.js';
 import akt1Result from '../services/fixtures/sequence-scan/iprscan6-akt1-variant.json' with {
   type: 'json',
@@ -32,7 +30,7 @@ type Match = (typeof matchesBatch.results)[number]['matches'][number];
 
 const precalculated = (md5: string) =>
   matchesBatch.results.find((entry) => entry.md5 === md5 && entry.found)?.matches as Match[];
-/** Copies of real records under distinct accessions, enough to overflow the response budget. */
+/** Copies of real records under distinct accessions, for results past the segment cap. */
 const inflate = (matches: readonly Match[], copies: number) =>
   Array.from({ length: copies }, (_, copy) =>
     matches.map((match) => ({
@@ -44,6 +42,17 @@ const plain = (body: string, status = 200) =>
   new Response(body, { status, headers: { 'content-type': 'text/plain' } });
 const notice = (result: { structuredContent?: unknown }) =>
   (result.structuredContent as { notice?: string } | undefined)?.notice;
+/** The arguments of the continuation call a notice prints, parsed exactly as printed. */
+const continuationOf = (result: { structuredContent?: unknown }, tool: string) => {
+  const printed = new RegExp(`Continue with ${tool} (\\{[^}]*\\}) before`).exec(
+    notice(result) ?? '',
+  );
+  expect(printed, `notice names a runnable ${tool} call`).not.toBeNull();
+  return JSON.parse(printed?.[1] ?? '{}');
+};
+/** A 0.2.0 cursor: a record position of `{ offset, total }` only. */
+const legacyCursor = (operation: string, scope: object, offset: number, total: number) =>
+  encodePositionCursor(operation, scope, { offset, total });
 
 interface Routes {
   matches?: (md5: string) => { found: boolean; matches: unknown[] };
@@ -98,7 +107,7 @@ describe('interpro_scan_sequence precalculated path', () => {
     'returns calmodulin P0DP23 matches on both surfaces with no Job Dispatcher request (address %s)',
     async (email) => {
       const net = network({}, email);
-      const result = await scan({ sequence: sequences.calmodulinFasta });
+      const result = await scan({ sequence: sequences.calmodulinFasta, limit: 23 });
       const output = twin(result);
       expect(output).toMatchObject({
         source: 'precalculated',
@@ -115,67 +124,153 @@ describe('interpro_scan_sequence precalculated path', () => {
       );
       expect(starts).toEqual([...starts].sort((a, b) => a - b));
       expect(result.structuredContent).toMatchObject({ totalCount: 23 });
+      expect(result.structuredContent).not.toHaveProperty('truncated');
       serverLines(text(result));
       expect(net.kinds()).toEqual(['matches']);
     },
   );
 
-  it('returns all 113 AKT1 P31749 matches in one segment under the budget', async () => {
-    network();
-    const result = await scan({ sequence: sequences.akt1 });
-    const output = twin(result);
-    expect(output.coverage).toEqual({
-      totalMatches: 113,
-      offset: 0,
-      returnedMatches: 113,
-      hasMore: false,
-    });
-    expect(jsonByteLength(output)).toBeLessThan(RESPONSE_BYTE_BUDGET);
-  });
-
-  it('splits an over-budget result into whole-match segments that a cursor walk reassembles', async () => {
-    const big = inflate(precalculated(AKT1_MD5), 4);
-    const net = network({ matches: () => ({ found: true, matches: big }) });
+  it("walks AKT1's 113 matches in six segments of 20 through printed continuations, with one lookup", async () => {
+    const net = network();
     const seen: Match[] = [];
-    let cursor: string | undefined;
-    let segments = 0;
-    do {
-      const result = await scan({ sequence: sequences.akt1, ...(cursor ? { cursor } : {}) });
+    let args: Record<string, unknown> = { sequence: sequences.akt1 };
+    for (let segment = 0; segment < 6; segment++) {
+      const result = await scan(args);
       const output = twin(result);
-      expect(jsonByteLength(output)).toBeLessThanOrEqual(RESPONSE_BYTE_BUDGET);
-      expect(output.coverage.offset).toBe(seen.length);
-      expect(output.coverage.totalMatches).toBe(big.length);
+      const expected = Math.min(20, 113 - seen.length);
+      expect(output.coverage).toMatchObject({
+        totalMatches: 113,
+        offset: seen.length,
+        returnedMatches: expected,
+      });
+      expect(output.matches).toHaveLength(expected);
+      expect(output.length).toBe(480);
       seen.push(...output.matches);
-      cursor = output.coverage.nextCursor;
-      expect(output.coverage.hasMore).toBe(cursor !== undefined);
-      if (cursor) {
-        expect(result.structuredContent).toMatchObject({
-          truncated: true,
-          shown: output.matches.length,
-        });
-        expect(notice(result)).toContain('interpro_scan_sequence');
-        serverLines(text(result));
+      serverLines(text(result));
+      if (segment < 5) {
+        expect(output.coverage.hasMore).toBe(true);
+        expect(result.structuredContent).toMatchObject({ truncated: true, shown: 20, cap: 20 });
+        expect(notice(result)).toContain(`matches ${seen.length - 19}–${seen.length} of 113`);
+        expect(notice(result)).toContain('limit may rise to 200');
+        args = continuationOf(result, 'interpro_scan_sequence');
+        expect(Object.keys(args)).toEqual(['cursor']);
+        expect(args.cursor).toBe(output.coverage.nextCursor);
+      } else {
+        expect(output.coverage).toMatchObject({ hasMore: false });
+        expect(output.coverage).not.toHaveProperty('nextCursor');
+        expect(result.structuredContent).not.toHaveProperty('truncated');
       }
-      segments++;
-    } while (cursor);
-    expect(segments).toBeGreaterThanOrEqual(3);
-    expect(seen).toHaveLength(big.length);
+    }
+    expect(seen).toHaveLength(113);
     // Key order may differ after validation; records compare as canonical JSON.
-    expect(new Set(seen.map(cursorScope))).toEqual(new Set(big.map(cursorScope)));
-    expect(net.kinds().every((kind) => kind === 'matches')).toBe(true);
+    expect(new Set(seen.map(cursorScope))).toEqual(
+      new Set(precalculated(AKT1_MD5).map(cursorScope)),
+    );
+    expect(net.kinds()).toEqual(['matches']);
   });
 
-  it('names a continuation an agent can run as printed, with no placeholder argument', async () => {
-    network({ matches: () => ({ found: true, matches: inflate(precalculated(AKT1_MD5), 4) }) });
-    const result = await scan({ sequence: sequences.akt1 });
-    expect(twin(result).coverage.nextCursor).toBeDefined();
-    const printed = notice(result) ?? '';
-    // Any JSON arguments the notice prints must be a call that runs as written.
-    for (const [, json] of printed.matchAll(/interpro_scan_sequence (\{.*?\})(?= before)/g))
-      expect(parseSequence(JSON.parse(json ?? '{}').sequence ?? '').ok).toBe(true);
-    expect(printed).toContain(
-      'interpro_scan_sequence, passing the same sequence and cursor set to coverage.nextCursor,',
+  it('clamps a limit above 200 with a notice, prints the clamped limit, and finishes the rest', async () => {
+    const big = inflate(precalculated(AKT1_MD5), 2);
+    const net = network({ matches: () => ({ found: true, matches: big }) });
+    const first = await scan({ sequence: sequences.akt1, limit: 500 });
+    expect(twin(first).coverage).toMatchObject({
+      totalMatches: 226,
+      offset: 0,
+      returnedMatches: 200,
+      hasMore: true,
+    });
+    expect(first.structuredContent).toMatchObject({ truncated: true, shown: 200, cap: 200 });
+    expect(notice(first)).toContain('Requested limit 500 was clamped to 200.');
+    expect(notice(first)).not.toContain('limit may rise');
+    const args = continuationOf(first, 'interpro_scan_sequence');
+    expect(args).toMatchObject({ limit: 200 });
+    const rest = await scan(args);
+    expect(twin(rest).coverage).toMatchObject({ offset: 200, returnedMatches: 26, hasMore: false });
+    expect(notice(rest) ?? '').not.toContain('clamped');
+    expect(net.kinds()).toEqual(['matches']);
+  });
+
+  it('holds exactly limit records at the smallest limit and prints that limit to continue', async () => {
+    network();
+    const first = await scan({ sequence: sequences.calmodulin, limit: 1 });
+    expect(twin(first).coverage).toMatchObject({ returnedMatches: 1, hasMore: true });
+    expect(first.structuredContent).toMatchObject({ shown: 1, cap: 1 });
+    const args = continuationOf(first, 'interpro_scan_sequence');
+    expect(args).toMatchObject({ limit: 1 });
+    expect(twin(await scan(args)).coverage).toMatchObject({ offset: 1, returnedMatches: 1 });
+  });
+
+  it.each([0, -1, 1.5])('rejects limit %d at the schema before any request', async (limit) => {
+    const net = network();
+    const result = await scan({ sequence: sequences.calmodulin, limit });
+    expect(result.structuredContent).toMatchObject({ error: { code: -32602 } });
+    expect(net.calls).toHaveLength(0);
+  });
+
+  it('resumes from the cursor alone, reporting the length the cursor carries', async () => {
+    const net = network();
+    const first = await scan({ sequence: sequences.calmodulin });
+    const { cursor } = continuationOf(first, 'interpro_scan_sequence');
+    for (const args of [{ cursor }, { cursor, sequence: '' }, { cursor, sequence: '  \n' }]) {
+      const output = twin(await scan(args));
+      expect(output).toMatchObject({
+        source: 'precalculated',
+        md5: CALMODULIN_MD5,
+        length: 149,
+        coverage: { totalMatches: 23, offset: 20, returnedMatches: 3, hasMore: false },
+      });
+    }
+    expect(net.kinds()).toEqual(['matches']);
+  });
+
+  it.each([
+    ['with its sequence', true],
+    ['alone', false],
+  ])('resumes a 0.2.0 cursor %s at its record', async (_name, withSequence) => {
+    const net = network();
+    const cursor = legacyCursor(
+      'interpro_scan_sequence.precalculated',
+      { md5: CALMODULIN_MD5 },
+      6,
+      23,
     );
+    const output = twin(
+      await scan({ cursor, limit: 5, ...(withSequence ? { sequence: sequences.calmodulin } : {}) }),
+    );
+    expect(output.coverage).toMatchObject({ totalMatches: 23, offset: 6, returnedMatches: 5 });
+    if (withSequence) expect(output.length).toBe(149);
+    else expect(output).not.toHaveProperty('length');
+    // Records 6–10 of the order 0.2.0 minted the offset against: start, then accession, then source.
+    expect(output.matches.map((match: Match) => [match.signature.accession, match.source])).toEqual(
+      [
+        ['SSF47473', 'SUPERFAMILY'],
+        ['PR00450', 'InterPro-N'],
+        ['PR00450', 'PRINTS'],
+        ['PIRSR608080-1', 'PIRSR'],
+        ['PS50222', 'InterPro-N'],
+      ],
+    );
+    const sorted = twin(await scan({ sequence: sequences.calmodulin, limit: 23 })).matches;
+    expect(output.matches).toEqual(sorted.slice(6, 11));
+    expect(net.kinds()).toEqual(['matches']);
+  });
+
+  it('fails a call with neither sequence nor cursor as empty_sequence before any request', async () => {
+    const net = network();
+    for (const args of [{}, { sequence: '' }, { sequence: ' \t' }]) {
+      const result = await scan(args);
+      failure(result, 'empty_sequence', interproScanSequence);
+      expect(text(result)).toContain('Pass the sequence, or the cursor of an earlier call.');
+    }
+    expect(net.calls).toHaveLength(0);
+  });
+
+  it('rejects a job cursor here before any request', async () => {
+    const net = network();
+    const cursor = legacyCursor('interpro_get_scan_result.job', { jobId: JOB }, 1, 13);
+    for (const args of [{ cursor }, { cursor, sequence: sequences.calmodulin }])
+      failure(await scan(args), 'invalid_cursor', interproScanSequence);
+    expect(net.calls).toHaveLength(0);
   });
 
   it('reports a precalculated result with no matches as an empty, complete result', async () => {
@@ -190,31 +285,38 @@ describe('interpro_scan_sequence precalculated path', () => {
   });
 
   it.each([
-    ['a cursor for another sequence', () => ({ md5: AKT1_MD5 }), { offset: 1, total: 23 }],
-    ['a cursor past the end', () => ({ md5: CALMODULIN_MD5 }), { offset: 23, total: 23 }],
-    ['a cursor for a changed result', () => ({ md5: CALMODULIN_MD5 }), { offset: 1, total: 24 }],
-  ])('rejects %s before submitting anything', async (_name, scope, position) => {
+    ['a cursor for another sequence', { md5: AKT1_MD5 }, { offset: 1, total: 23 }, []],
+    ['a cursor past the end', { md5: CALMODULIN_MD5 }, { offset: 23, total: 23 }, ['matches']],
+    [
+      'a cursor for a changed result',
+      { md5: CALMODULIN_MD5 },
+      { offset: 1, total: 24, length: 149 },
+      ['matches'],
+    ],
+  ])('rejects %s before submitting anything', async (_name, scope, position, sent) => {
     const net = network();
-    const cursor = encodePositionCursor('interpro_scan_sequence.precalculated', scope(), position);
+    const cursor = encodePositionCursor('interpro_scan_sequence.precalculated', scope, position);
     const result = await scan({ sequence: sequences.calmodulin, cursor });
     failure(result, 'invalid_cursor', interproScanSequence);
-    expect(net.kinds()).not.toContain('run');
+    expect(net.kinds()).toEqual(sent);
   });
 
-  it('rejects a precalculated cursor once the lookup misses, without submitting', async () => {
-    const net = network({ matches: () => ({ found: false, matches: [] }) });
-    const cursor = encodePositionCursor(
-      'interpro_scan_sequence.precalculated',
-      { md5: CALMODULIN_MD5 },
-      { offset: 1, total: 23 },
-    );
-    failure(
-      await scan({ sequence: sequences.calmodulin, cursor }),
-      'invalid_cursor',
-      interproScanSequence,
-    );
-    expect(net.kinds()).toEqual(['matches']);
-  });
+  it.each([
+    ['with its sequence', { sequence: sequences.calmodulin }],
+    ['alone', {}],
+  ])(
+    'rejects a precalculated cursor %s once the lookup misses, never submitting',
+    async (_name, extra) => {
+      const net = network({ matches: () => ({ found: false, matches: [] }) });
+      const cursor = encodePositionCursor(
+        'interpro_scan_sequence.precalculated',
+        { md5: CALMODULIN_MD5 },
+        { offset: 1, total: 23 },
+      );
+      failure(await scan({ cursor, ...extra }), 'invalid_cursor', interproScanSequence);
+      expect(net.kinds()).toEqual(['matches']);
+    },
+  );
 });
 
 describe('interpro_scan_sequence job path', () => {
@@ -332,36 +434,46 @@ describe('interpro_get_scan_result', () => {
     serverLines(text(result));
   });
 
-  it('returns the matches of a finished job', async () => {
+  it('returns the matches of a finished job, clamping a limit above 200 with a notice', async () => {
     network({ status: () => 'FINISHED', result: () => Response.json(akt1Result) });
-    const output = twin(await read({ jobId: JOB }));
-    expect(output).toMatchObject({
+    const result = await read({ jobId: JOB, limit: 500 });
+    expect(twin(result)).toMatchObject({
       status: 'finished',
       md5: 'CBBF4B5F4FB746E5B01D6F31F9ADAE55',
       length: 480,
       coverage: { totalMatches: 96, offset: 0, returnedMatches: 96, hasMore: false },
       sourceUrl: `https://www.ebi.ac.uk/Tools/services/rest/iprscan6/result/${JOB}/json`,
     });
+    expect(notice(result)).toBe('Requested limit 500 was clamped to 200.');
+    expect(result.structuredContent).not.toHaveProperty('truncated');
   });
 
-  it('walks an over-budget job result in whole-match segments scoped to the job ID', async () => {
-    const results = akt1Result.results[0] as (typeof akt1Result.results)[number];
-    const big = inflate(results.matches as unknown as Match[], 4);
-    const body = { ...akt1Result, results: [{ ...results, matches: big }] };
-    network({ status: () => 'FINISHED', result: () => Response.json(body) });
+  it('walks a job result in segments of 20 through printed continuations, reading the job once', async () => {
+    const net = network({ status: () => 'FINISHED', result: () => Response.json(akt1Result) });
     const seen: unknown[] = [];
-    let cursor: string | undefined;
-    let segments = 0;
-    do {
-      const output = twin(await read({ jobId: JOB, ...(cursor ? { cursor } : {}) }));
-      expect(jsonByteLength(output)).toBeLessThanOrEqual(RESPONSE_BYTE_BUDGET);
-      expect(output.coverage.offset).toBe(seen.length);
+    let args: { jobId: string; cursor?: string } = { jobId: JOB };
+    for (let segment = 0; segment < 5; segment++) {
+      const result = await read(args);
+      const output = twin(result);
+      expect(output.coverage).toMatchObject({
+        totalMatches: 96,
+        offset: seen.length,
+        returnedMatches: Math.min(20, 96 - seen.length),
+        hasMore: segment < 4,
+      });
       seen.push(...output.matches);
-      cursor = output.coverage.nextCursor;
-      segments++;
-    } while (cursor);
-    expect(segments).toBeGreaterThanOrEqual(3);
-    expect(seen).toHaveLength(big.length);
+      if (segment < 4) {
+        expect(result.structuredContent).toMatchObject({ truncated: true, shown: 20, cap: 20 });
+        args = continuationOf(result, 'interpro_get_scan_result');
+        expect(args).toEqual({ jobId: JOB, cursor: output.coverage.nextCursor });
+      }
+    }
+    expect(seen).toHaveLength(96);
+    expect(new Set(seen.map(cursorScope))).toEqual(
+      new Set((akt1Result.results[0]?.matches ?? []).map(cursorScope)),
+    );
+    // Continuations come from the retained result: no further status poll or result read.
+    expect(net.kinds()).toEqual(['status', 'result']);
 
     const first = twin(await read({ jobId: JOB }));
     const other = await read({
@@ -369,6 +481,14 @@ describe('interpro_get_scan_result', () => {
       cursor: first.coverage.nextCursor,
     });
     failure(other, 'invalid_cursor', interproGetScanResult);
+    expect(net.kinds()).toEqual(['status', 'result']);
+  });
+
+  it('resumes a 0.2.0 job cursor at its record under any limit', async () => {
+    network({ status: () => 'FINISHED', result: () => Response.json(akt1Result) });
+    const cursor = legacyCursor('interpro_get_scan_result.job', { jobId: JOB }, 6, 96);
+    const output = twin(await read({ jobId: JOB, cursor, limit: 50 }));
+    expect(output.coverage).toMatchObject({ offset: 6, returnedMatches: 50, hasMore: true });
   });
 
   it.each(['ERROR', 'FAILURE'])('fails %s as scan_failed', async (status) => {

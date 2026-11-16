@@ -3,8 +3,14 @@
  * @module tests/services/interpro-http-adapter
  */
 import { EventEmitter } from 'node:events';
+import { z } from '@cyanheads/mcp-ts-core';
+import { createMockContext } from '@cyanheads/mcp-ts-core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { interproHttpFetch, MAX_RESPONSE_BYTES } from '@/services/interpro/http-adapter.js';
+import { InterproService } from '@/services/interpro/interpro-service.js';
+import { SequenceScanService } from '@/services/sequence-scan/sequence-scan-service.js';
 
+// Hoisted above the imports, so the adapter loads once, at collection, against this stub.
 const native = vi.hoisted(() => ({ request: vi.fn() }));
 vi.mock('node:https', () => ({ request: native.request }));
 
@@ -23,7 +29,6 @@ describe('InterPro HTTP adapter', () => {
   afterEach(() => vi.useRealTimers());
 
   it('settles malformed 204 at headers and safely observes teardown errors', async () => {
-    const { interproHttpFetch } = await import('@/services/interpro/http-adapter.js');
     const pending = interproHttpFetch('https://www.ebi.ac.uk/interpro/api/entry/', {});
     const incoming = response(204, { 'content-length': '99', 'interpro-version': '110.0' });
     req.emit('response', incoming);
@@ -44,7 +49,6 @@ describe('InterPro HTTP adapter', () => {
   });
 
   it('issues a bodiless GET with fixed JSON headers for an InterPro API read', async () => {
-    const { interproHttpFetch } = await import('@/services/interpro/http-adapter.js');
     const pending = interproHttpFetch('https://www.ebi.ac.uk/interpro/api/entry/?page_size=1', {
       headers: { Accept: 'application/json', 'Accept-Encoding': 'identity' },
       redirect: 'manual',
@@ -66,7 +70,6 @@ describe('InterPro HTTP adapter', () => {
   });
 
   it('collects a complete normal response and preserves headers', async () => {
-    const { interproHttpFetch } = await import('@/services/interpro/http-adapter.js');
     const pending = interproHttpFetch('https://www.ebi.ac.uk/interpro/api/entry/', {});
     const incoming = response(200, { 'retry-after': '3' });
     req.emit('response', incoming);
@@ -80,48 +83,65 @@ describe('InterPro HTTP adapter', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('retains the attempt deadline while a response body stalls', async () => {
-    const { interproHttpFetch } = await import('@/services/interpro/http-adapter.js');
+  it('ends a stalled response only at its fifty-second whole-response backstop', async () => {
     const pending = interproHttpFetch('https://www.ebi.ac.uk/interpro/api/entry/', {}).catch(
       (error: unknown) => error,
     );
     const incoming = response(200);
     req.emit('response', incoming);
     incoming.emit('data', Buffer.from('{'));
-    await vi.advanceTimersByTimeAsync(15_000);
-    expect(await pending).toMatchObject({ data: { reason: 'upstream_timeout', retryable: true } });
+    await vi.advanceTimersByTimeAsync(49_999);
+    expect(incoming.destroy).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(await pending).toMatchObject({
+      message: 'InterPro response exceeded its attempt deadline.',
+      data: { reason: 'upstream_timeout', retryable: true },
+    });
     expect(incoming.destroy).toHaveBeenCalledOnce();
     expect(req.destroy).toHaveBeenCalledOnce();
   });
 
-  it('applies a longer whole-response backstop from the factory to a slow body', async () => {
-    const { createInterproHttpFetch } = await import('@/services/interpro/http-adapter.js');
-    const slow = createInterproHttpFetch(50_000);
-    const pending = slow('https://www.ebi.ac.uk/interpro/matches/api/matches', {
+  it('lets a slow body finish well past thirty seconds', async () => {
+    const pending = interproHttpFetch('https://www.ebi.ac.uk/interpro/matches/api/matches', {
       body: '{"md5":["EBD0AA0BC77B635530A6938487B7099B"]}',
     }).catch((error: unknown) => error);
     const incoming = response(200);
     req.emit('response', incoming);
     incoming.emit('data', Buffer.from('{"results":'));
-    await vi.advanceTimersByTimeAsync(30_000);
+    await vi.advanceTimersByTimeAsync(45_000);
     incoming.emit('data', Buffer.from('[]}'));
     incoming.complete = true;
     incoming.emit('end');
     expect(await ((await pending) as Response).json()).toEqual({ results: [] });
+    expect(vi.getTimerCount()).toBe(0);
+  });
 
-    const stalled = slow('https://www.ebi.ac.uk/interpro/matches/api/matches', {
-      body: '{}',
-    }).catch((error: unknown) => error);
-    req.emit('response', response(200));
-    await vi.advanceTimersByTimeAsync(50_000);
-    expect(await stalled).toMatchObject({ data: { reason: 'upstream_timeout' } });
+  it("ends a stalled InterPro read at the service's 32-second bound, before the backstop", async () => {
+    const service = new InterproService();
+    const pending = service
+      .request(service.begin(createMockContext()), ['entry'], {}, z.object({}))
+      .then(
+        () => ({ at: performance.now() }),
+        (error: unknown) => ({ error, at: performance.now() }),
+      );
+    await vi.advanceTimersByTimeAsync(0);
+    const incoming = response(200);
+    req.emit('response', incoming);
+    incoming.emit('data', Buffer.from('{"count":'));
+    await vi.advanceTimersByTimeAsync(60_000);
+    const outcome = await pending;
+    expect(outcome.at).toBe(32_000);
+    expect(outcome).toMatchObject({
+      error: {
+        message: 'InterPro attempt deadline elapsed.',
+        data: { reason: 'upstream_timeout', retryable: true },
+      },
+    });
+    expect(incoming.destroy).toHaveBeenCalledOnce();
+    expect(native.request).toHaveBeenCalledOnce();
   });
 
   it('gives the scan service a native transport that outlasts a slow precalculated lookup', async () => {
-    const { createMockContext } = await import('@cyanheads/mcp-ts-core/testing');
-    const { SequenceScanService } = await import(
-      '@/services/sequence-scan/sequence-scan-service.js'
-    );
     const md5 = 'EBD0AA0BC77B635530A6938487B7099B';
     const service = new SequenceScanService(undefined);
     const pending = service
@@ -131,7 +151,7 @@ describe('InterPro HTTP adapter', () => {
     const incoming = response(200);
     req.emit('response', incoming);
     incoming.emit('data', Buffer.from(`{"results":[{"md5":"${md5}",`));
-    // A 0.7 MB lookup has taken 20-34 seconds; the 15-second API backstop would abort it.
+    // A 0.7 MB lookup has taken 20-34 seconds, inside the 40-second body attempt bound and the 50-second transport backstop.
     await vi.advanceTimersByTimeAsync(25_000);
     incoming.emit('data', Buffer.from('"found":false,"matches":[]}]}'));
     incoming.complete = true;
@@ -144,7 +164,6 @@ describe('InterPro HTTP adapter', () => {
   it.each(['aborted', 'close', 'error'] as const)(
     'rejects premature non-204 response %s',
     async (event) => {
-      const { interproHttpFetch } = await import('@/services/interpro/http-adapter.js');
       const pending = interproHttpFetch('https://www.ebi.ac.uk/interpro/api/entry/', {}).catch(
         (error: unknown) => error,
       );
@@ -157,7 +176,6 @@ describe('InterPro HTTP adapter', () => {
   );
 
   it('cancels exactly its own request and preserves caller reason', async () => {
-    const { interproHttpFetch } = await import('@/services/interpro/http-adapter.js');
     const controller = new AbortController();
     const reason = new Error('cancelled');
     const pending = interproHttpFetch('https://www.ebi.ac.uk/interpro/api/entry/', {
@@ -170,7 +188,6 @@ describe('InterPro HTTP adapter', () => {
   });
 
   it('rejects unexpected encoding at headers and tears down the request', async () => {
-    const { interproHttpFetch } = await import('@/services/interpro/http-adapter.js');
     const pending = interproHttpFetch('https://www.ebi.ac.uk/interpro/api/entry/', {}).catch(
       (error: unknown) => error,
     );
@@ -185,9 +202,6 @@ describe('InterPro HTTP adapter', () => {
   });
 
   it('rejects a body crossing four MiB and observes late teardown errors safely', async () => {
-    const { interproHttpFetch, MAX_RESPONSE_BYTES } = await import(
-      '@/services/interpro/http-adapter.js'
-    );
     const pending = interproHttpFetch('https://www.ebi.ac.uk/interpro/api/entry/', {}).catch(
       (error: unknown) => error,
     );
@@ -219,7 +233,6 @@ describe('InterPro HTTP adapter', () => {
       'text/plain',
     ],
   ])('POSTs a string body with its length to %s', async (url, body, contentType, accept) => {
-    const { interproHttpFetch } = await import('@/services/interpro/http-adapter.js');
     const pending = interproHttpFetch(url, {
       method: 'POST',
       body,
@@ -243,7 +256,6 @@ describe('InterPro HTTP adapter', () => {
   });
 
   it('GETs a Job Dispatcher status path inside the iprscan6 prefix', async () => {
-    const { interproHttpFetch } = await import('@/services/interpro/http-adapter.js');
     const pending = interproHttpFetch(
       'https://www.ebi.ac.uk/Tools/services/rest/iprscan6/status/iprscan6-R20261028-131532-0930-13189043-p1m',
       { headers: { Accept: 'text/plain' } },
@@ -270,7 +282,6 @@ describe('InterPro HTTP adapter', () => {
     'http://www.ebi.ac.uk/interpro/matches/api/matches',
     'https://www.ebi.ac.uk:8443/interpro/matches/api/matches',
   ])('rejects out-of-scope URL %s before I/O', async (url) => {
-    const { interproHttpFetch } = await import('@/services/interpro/http-adapter.js');
     await expect(interproHttpFetch(url, {})).rejects.toMatchObject({
       data: { reason: 'upstream_rejected' },
     });

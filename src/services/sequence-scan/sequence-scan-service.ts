@@ -1,7 +1,8 @@
 /**
  * @fileoverview Sequence scanning: precalculated lookup in the InterPro Matches API, then
  * submission to the EBI Job Dispatcher iprscan6 service with a bounded, cancellable wait. The
- * process-wide in-flight cap and the per-MD5 submission dedupe live on the service instance.
+ * process-wide in-flight cap, the per-MD5 submission dedupe, and the cache of finished results
+ * live on the service instance.
  * @module services/sequence-scan/sequence-scan-service
  */
 import type { Context } from '@cyanheads/mcp-ts-core';
@@ -16,9 +17,11 @@ import {
 } from '@cyanheads/mcp-ts-core/errors';
 import { withRetry } from '@cyanheads/mcp-ts-core/utils';
 import {
-  createInterproHttpFetch,
+  CALL_BUDGET_MS,
   type InterproFetch,
+  interproHttpFetch,
   MAX_RESPONSE_BYTES,
+  toCallBudget,
   upstreamStatusError,
 } from '@/services/interpro/http-adapter.js';
 import {
@@ -31,8 +34,6 @@ import {
   ScanResultSchema,
 } from './scan-schemas.js';
 
-/** One budget per tool call, below the 60-second default MCP client request timeout. */
-export const CALL_BUDGET_MS = 50_000;
 /**
  * Most one attempt of each request may take, further bounded by what remains of the call budget.
  * Bodies get the longest bound: EBI throughput varies, and a 0.7 MB lookup or a 1.5 MB result
@@ -49,6 +50,13 @@ export const MAX_WAIT_SECONDS = (CALL_BUDGET_MS - RESULT_RESERVE_MS) / 1000;
 export const MAX_IN_FLIGHT = 25;
 /** A tracked job nobody observed finishing frees its slot after this long (runs take ~10 min). */
 export const IN_FLIGHT_TTL_MS = 20 * 60_000;
+/**
+ * How long a finished result is reused after it is stored. A cursor walk finishes well inside it;
+ * precalculated results change only between InterPro releases, and a finished job never changes.
+ */
+export const RESULT_TTL_MS = 10 * 60_000;
+/** Most response-body bytes the result cache retains; the least recently used go first. */
+export const MAX_RETAINED_BYTES = 32 * 1024 * 1024;
 
 export const MATCHES_URL = 'https://www.ebi.ac.uk/interpro/matches/api/matches';
 export const JOB_DISPATCHER_BASE = 'https://www.ebi.ac.uk/Tools/services/rest/iprscan6/';
@@ -84,27 +92,34 @@ type Outcome<T> =
   | { readonly ok: true; readonly value: T }
   | { readonly ok: false; readonly error: unknown };
 interface Submitting {
-  readonly controller: AbortController;
   readonly kind: 'submitting';
-  readonly md5: string;
-  outcome: Promise<Outcome<string>>;
-  settled: boolean;
+  readonly shared: Shared<string>;
   readonly since: number;
-  waiters: number;
 }
 interface Tracked {
   readonly jobId: string;
   readonly kind: 'job';
   readonly since: number;
 }
+/** A validated response body kept for reuse, an exactly sized copy so its bytes are what it holds. */
+interface Retained {
+  readonly body: Uint8Array;
+  readonly storedAt: number;
+}
+/** A fetched value, with the body to retain when the result is finished. */
+interface Fetched<T> {
+  readonly retain?: Uint8Array;
+  readonly value: T;
+}
 
 const now = () => performance.now();
-const deadlineError = () =>
-  timeout('InterProScan call exhausted its 50-second budget.', {
-    reason: 'retry_deadline_exceeded',
-    retryable: true,
-    deadlineMs: CALL_BUDGET_MS,
-  });
+const resultKey = (jobId: string) => `result ${jobId}`;
+const deadlineError = (options?: ErrorOptions) =>
+  timeout(
+    'InterProScan call exhausted its 50-second budget.',
+    { reason: 'retry_deadline_exceeded', retryable: true, deadlineMs: CALL_BUDGET_MS },
+    options,
+  );
 
 /**
  * Resolve with `promise`, or reject with the caller's abort reason or the call's deadline error,
@@ -161,8 +176,53 @@ function delay(ms: number, signal: AbortSignal): Promise<void> {
   });
 }
 
-async function readText(response: Response, signal: AbortSignal): Promise<string> {
-  if (!response.body) return '';
+/**
+ * One upstream operation that several tool calls await together. It runs under its own call
+ * budget, never a waiter's; each waiter bounds its own wait by its signal and deadline, so one
+ * caller leaving never fails another, and the operation is aborted only when its last waiter
+ * leaves before it settles.
+ */
+class Shared<T> {
+  private readonly controller = new AbortController();
+  private readonly abandon: () => void;
+  private readonly outcome: Promise<Outcome<T>>;
+  private settled = false;
+  private waiters = 0;
+
+  /** Start `work` at once; `abandon` runs when the last waiter leaves before it settles. */
+  constructor(work: (signal: AbortSignal) => Promise<T>, abandon: () => void) {
+    this.abandon = abandon;
+    this.outcome = work(this.controller.signal)
+      .then(
+        (value): Outcome<T> => ({ ok: true, value }),
+        (error: unknown): Outcome<T> => ({ ok: false, error }),
+      )
+      .finally(() => {
+        this.settled = true;
+      });
+  }
+
+  /** The operation's value, within `call`'s own signal and deadline. */
+  async join(call: ScanCall): Promise<T> {
+    this.waiters++;
+    try {
+      const outcome = await bounded(this.outcome, call.ctx.signal, call.deadline);
+      if (!outcome.ok) throw outcome.error;
+      return outcome.value;
+    } finally {
+      this.waiters--;
+      if (!this.waiters && !this.settled) {
+        // Abandoned: a later call for this key must start afresh, not inherit this abort.
+        this.abandon();
+        this.controller.abort(call.ctx.signal.aborted ? call.ctx.signal.reason : deadlineError());
+      }
+    }
+  }
+}
+
+/** The whole body as one exactly sized copy, so retaining it holds no larger buffer. */
+async function readBytes(response: Response, signal: AbortSignal): Promise<Uint8Array> {
+  if (!response.body) return new Uint8Array(0);
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
   let bytes = 0;
@@ -181,15 +241,24 @@ async function readText(response: Response, signal: AbortSignal): Promise<string
       }
       chunks.push(value);
     }
-    return Buffer.concat(chunks).toString('utf8');
   } finally {
     reader.releaseLock();
   }
+  const body = new Uint8Array(bytes);
+  let at = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, at);
+    at += chunk.byteLength;
+  }
+  return body;
 }
 
-function parseJson(body: string): unknown {
+const decode = (body: Uint8Array) =>
+  Buffer.from(body.buffer, body.byteOffset, body.byteLength).toString('utf8');
+
+function parseJson(body: Uint8Array): unknown {
   try {
-    return JSON.parse(body);
+    return JSON.parse(decode(body));
   } catch (cause) {
     throw serviceUnavailable(
       'InterProScan service returned malformed JSON.',
@@ -205,16 +274,40 @@ const shapeInvalid = (what: string) =>
     retryable: false,
   });
 
-/** The native transport, its backstop no tighter than the per-operation attempt bounds. */
-const scanHttpFetch = createInterproHttpFetch(CALL_BUDGET_MS);
+/** Precalculated matches for `md5`, or undefined when UniParc holds no result for it. */
+function parseLookup(body: Uint8Array, md5: string): ScanMatch[] | undefined {
+  const parsed = MatchesLookupSchema.safeParse(parseJson(body));
+  if (!parsed.success) throw shapeInvalid('InterPro Matches API JSON');
+  const [entry] = parsed.data.results;
+  if (entry?.md5.toUpperCase() !== md5) throw shapeInvalid('InterPro Matches API result');
+  return entry.found ? entry.matches : undefined;
+}
+
+function parseResult(body: Uint8Array): JobResult {
+  const parsed = ScanResultSchema.safeParse(parseJson(body));
+  if (!parsed.success) throw shapeInvalid('InterProScan result JSON');
+  const [result] = parsed.data.results as [(typeof parsed.data.results)[number]];
+  return {
+    md5: result.md5.toUpperCase(),
+    length: result.sequence.length,
+    interproVersion: parsed.data['interpro-version'],
+    interproscanVersion: parsed.data['interproscan-version'],
+    matches: result.matches,
+  };
+}
 
 /** Lookup, submission, polling, and result reads for one configured submission address. */
 export class SequenceScanService {
   private readonly inFlight = new Map<string, Submitting | Tracked>();
+  /** Finished results by key, in least-to-most recently used order. */
+  private readonly retained = new Map<string, Retained>();
+  private retainedBytes = 0;
+  private readonly lookups = new Map<string, Shared<ScanMatch[] | undefined>>();
+  private readonly reads = new Map<string, Shared<JobResult>>();
 
   constructor(
     private readonly email: string | undefined,
-    private readonly fetch: InterproFetch = scanHttpFetch,
+    private readonly fetch: InterproFetch = interproHttpFetch,
   ) {}
 
   /** Start the call's single deadline. */
@@ -225,22 +318,15 @@ export class SequenceScanService {
 
   /**
    * Look the MD5 up in the Matches API; on a miss, submit (or join the submission already in
-   * flight for this MD5) and wait up to `waitMs`. `lookupOnly` resumes a precalculated walk and
-   * never submits.
+   * flight for this MD5) and wait up to `waitMs`.
    */
   async scan(
     call: ScanCall,
     sequence: { readonly md5: string; readonly residues: string },
     waitMs: number,
-    lookupOnly = false,
   ): Promise<ScanOutcome> {
     const hit = await this.lookup(call, sequence.md5);
     if (hit) return { source: 'precalculated', matches: hit, sourceUrl: MATCHES_URL };
-    if (lookupOnly)
-      throw validationError(
-        'The precalculated result this cursor continues is no longer available.',
-        { reason: 'invalid_cursor', retryable: false },
-      );
     const { jobId, submittedAt } = await this.submit(call, sequence);
     const state = await this.withJob(jobId, () =>
       this.awaitJob(
@@ -255,13 +341,30 @@ export class SequenceScanService {
     return { source: 'interproscan', jobId, sourceUrl: this.jobUrl(jobId, state.status), ...state };
   }
 
-  /** Read a job's state, waiting up to `waitMs` for it to finish; polls at least once. */
+  /** Precalculated matches that a cursor continues: a lookup that never submits a job. */
+  async resume(call: ScanCall, md5: string): Promise<ScanOutcome> {
+    const hit = await this.lookup(call, md5);
+    if (!hit)
+      throw validationError(
+        'The precalculated result this cursor continues is no longer available.',
+        { reason: 'invalid_cursor', retryable: false },
+      );
+    return { source: 'precalculated', matches: hit, sourceUrl: MATCHES_URL };
+  }
+
+  /**
+   * Read a job's state, waiting up to `waitMs` for it to finish; polls at least once unless the
+   * finished result is already retained.
+   */
   async result(
     call: ScanCall,
     jobId: string,
     waitMs: number,
   ): Promise<JobState & { sourceUrl: string }> {
-    const state = await this.awaitJob(call, jobId, call.started, waitMs);
+    const retained = this.recall(resultKey(jobId));
+    const state: JobState = retained
+      ? { status: 'FINISHED', result: parseResult(retained) }
+      : await this.awaitJob(call, jobId, call.started, waitMs);
     return { ...state, sourceUrl: this.jobUrl(jobId, state.status) };
   }
 
@@ -286,29 +389,98 @@ export class SequenceScanService {
     }
   }
 
+  /** A retained body still inside its TTL, now the most recently used; an expired one is dropped. */
+  private recall(key: string): Uint8Array | undefined {
+    const entry = this.retained.get(key);
+    if (!entry) return undefined;
+    this.retained.delete(key);
+    if (now() - entry.storedAt >= RESULT_TTL_MS) {
+      this.retainedBytes -= entry.body.byteLength;
+      return undefined;
+    }
+    this.retained.set(key, entry);
+    return entry.body;
+  }
+
+  /** Retain a validated body, then evict least recently used entries past the byte cap. */
+  private retain(key: string, body: Uint8Array): void {
+    const previous = this.retained.get(key);
+    if (previous) {
+      this.retained.delete(key);
+      this.retainedBytes -= previous.body.byteLength;
+    }
+    this.retained.set(key, { body, storedAt: now() });
+    this.retainedBytes += body.byteLength;
+    for (const [oldest, entry] of this.retained) {
+      if (this.retainedBytes <= MAX_RETAINED_BYTES) break;
+      this.retained.delete(oldest);
+      this.retainedBytes -= entry.body.byteLength;
+    }
+  }
+
+  /**
+   * A finished value: re-parsed from a retained body, or fetched once for every call that misses
+   * on `key` together, retaining the body when `fetch` returns one.
+   */
+  private async load<T>(
+    call: ScanCall,
+    pending: Map<string, Shared<T>>,
+    key: string,
+    parse: (body: Uint8Array) => T,
+    fetch: (own: ScanCall, signal: AbortSignal) => Promise<Fetched<T>>,
+  ): Promise<T> {
+    const retained = this.recall(key);
+    if (retained) return parse(retained);
+    let shared = pending.get(key);
+    if (!shared) {
+      const started: Shared<T> = new Shared(
+        async (signal) => {
+          try {
+            const { value, retain } = await fetch(this.begin(call.ctx), signal);
+            if (retain) this.retain(key, retain);
+            return value;
+          } finally {
+            if (pending.get(key) === started) pending.delete(key);
+          }
+        },
+        () => {
+          if (pending.get(key) === started) pending.delete(key);
+        },
+      );
+      pending.set(key, started);
+      shared = started;
+    }
+    return await shared.join(call);
+  }
+
   /** Precalculated matches, or undefined when UniParc holds no result for the MD5. */
   private async lookup(call: ScanCall, md5: string): Promise<ScanMatch[] | undefined> {
-    const parsed = await this.send(
+    return await this.load(
       call,
-      call.ctx.signal,
-      'interpro.matches.lookup',
-      MATCHES_URL,
-      {
-        method: 'POST',
-        body: JSON.stringify({ md5: [md5] }),
-        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      },
-      'body',
-      async (response, signal) => {
-        if (!response.ok) throw await upstreamStatusError(response, 'InterPro Matches API');
-        const result = MatchesLookupSchema.safeParse(parseJson(await readText(response, signal)));
-        if (!result.success) throw shapeInvalid('InterPro Matches API JSON');
-        return result.data;
-      },
+      this.lookups,
+      `lookup ${md5}`,
+      (body) => parseLookup(body, md5),
+      (own, signal) =>
+        this.send(
+          own,
+          signal,
+          'interpro.matches.lookup',
+          MATCHES_URL,
+          {
+            method: 'POST',
+            body: JSON.stringify({ md5: [md5] }),
+            headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+          },
+          'body',
+          async (response, attemptSignal) => {
+            if (!response.ok) throw await upstreamStatusError(response, 'InterPro Matches API');
+            const body = await readBytes(response, attemptSignal);
+            const matches = parseLookup(body, md5);
+            // A sequence UniParc lacks is followed by a job, never retained.
+            return { value: matches, ...(matches ? { retain: body } : {}) };
+          },
+        ),
     );
-    const [entry] = parsed.results;
-    if (entry?.md5.toUpperCase() !== md5) throw shapeInvalid('InterPro Matches API result');
-    return entry.found ? entry.matches : undefined;
   }
 
   /** Expire tracked jobs nobody saw finish, so the map stays bounded without a timer. */
@@ -333,9 +505,10 @@ export class SequenceScanService {
     sequence: { readonly md5: string; readonly residues: string },
   ): Promise<{ jobId: string; submittedAt?: number }> {
     this.sweep();
-    const existing = this.inFlight.get(sequence.md5);
+    const { md5 } = sequence;
+    const existing = this.inFlight.get(md5);
     if (existing?.kind === 'job') return { jobId: existing.jobId };
-    if (existing) return { jobId: await this.join(existing, call), submittedAt: existing.since };
+    if (existing) return { jobId: await existing.shared.join(call), submittedAt: existing.since };
     const { email } = this;
     if (!email)
       throw configurationError(
@@ -359,49 +532,27 @@ export class SequenceScanService {
     }
     const slot: Submitting = {
       kind: 'submitting',
-      md5: sequence.md5,
       since: now(),
-      controller: new AbortController(),
-      outcome: Promise.resolve({ ok: false, error: undefined }),
-      waiters: 0,
-      settled: false,
+      shared: new Shared(
+        async (signal) => {
+          try {
+            const jobId = await this.run(this.begin(call.ctx), signal, email, sequence);
+            const current = this.inFlight.get(md5);
+            if (current === slot || current === undefined)
+              this.inFlight.set(md5, { kind: 'job', since: now(), jobId });
+            return jobId;
+          } catch (error) {
+            if (this.inFlight.get(md5) === slot) this.inFlight.delete(md5);
+            throw error;
+          }
+        },
+        () => {
+          if (this.inFlight.get(md5) === slot) this.inFlight.delete(md5);
+        },
+      ),
     };
-    this.inFlight.set(sequence.md5, slot);
-    slot.outcome = (async (): Promise<Outcome<string>> => {
-      try {
-        const jobId = await this.run(call, slot.controller.signal, email, sequence);
-        const current = this.inFlight.get(sequence.md5);
-        if (current === slot || current === undefined)
-          this.inFlight.set(sequence.md5, { kind: 'job', since: now(), jobId });
-        return { ok: true, value: jobId };
-      } catch (error) {
-        if (this.inFlight.get(sequence.md5) === slot) this.inFlight.delete(sequence.md5);
-        return { ok: false, error };
-      } finally {
-        slot.settled = true;
-      }
-    })();
-    return { jobId: await this.join(slot, call), submittedAt: slot.since };
-  }
-
-  /**
-   * Await a shared submission. A caller leaving early detaches only itself; the request is
-   * aborted when the last waiting caller leaves before it settles.
-   */
-  private async join(slot: Submitting, call: ScanCall): Promise<string> {
-    slot.waiters++;
-    try {
-      const outcome = await bounded(slot.outcome, call.ctx.signal, call.deadline);
-      if (!outcome.ok) throw outcome.error;
-      return outcome.value;
-    } finally {
-      slot.waiters--;
-      if (!slot.waiters && !slot.settled) {
-        // Abandoned: a later call for this MD5 must start afresh, not inherit this abort.
-        if (this.inFlight.get(slot.md5) === slot) this.inFlight.delete(slot.md5);
-        slot.controller.abort(call.ctx.signal.aborted ? call.ctx.signal.reason : deadlineError());
-      }
-    }
+    this.inFlight.set(md5, slot);
+    return { jobId: await slot.shared.join(call), submittedAt: slot.since };
   }
 
   /** One `run` request, never retried: a lost response may still have created a job. */
@@ -430,7 +581,7 @@ export class SequenceScanService {
       },
       'run',
       async (response, attemptSignal) => {
-        const text = await readText(response, attemptSignal);
+        const text = decode(await readBytes(response, attemptSignal));
         if (response.status === 400) {
           const description = this.describeRejection(text);
           throw serviceUnavailable(
@@ -522,42 +673,37 @@ export class SequenceScanService {
       'status',
       async (response, signal) => {
         if (!response.ok) throw await upstreamStatusError(response, 'Job Dispatcher');
-        const parsed = JobStatusSchema.safeParse((await readText(response, signal)).trim());
+        const parsed = JobStatusSchema.safeParse(decode(await readBytes(response, signal)).trim());
         if (!parsed.success) throw shapeInvalid('Job Dispatcher status');
         return parsed.data;
       },
     );
   }
 
+  /** A FINISHED job's result, read once for every call that asks for it together. */
   private async read(call: ScanCall, jobId: string): Promise<JobResult> {
-    return await this.send(
-      call,
-      call.ctx.signal,
-      'interpro.scan.result',
-      `${JOB_DISPATCHER_BASE}result/${jobId}/json`,
-      { headers: { Accept: 'application/json' } },
-      'body',
-      async (response, signal) => {
-        if (response.status === 400 || response.status === 404) {
-          this.release(jobId);
-          throw notFound(`Job Dispatcher has no result for InterProScan job ${jobId}.`, {
-            reason: 'scan_not_found',
-            retryable: false,
-            jobId,
-          });
-        }
-        if (!response.ok) throw await upstreamStatusError(response, 'Job Dispatcher');
-        const parsed = ScanResultSchema.safeParse(parseJson(await readText(response, signal)));
-        if (!parsed.success) throw shapeInvalid('InterProScan result JSON');
-        const [result] = parsed.data.results as [(typeof parsed.data.results)[number]];
-        return {
-          md5: result.md5.toUpperCase(),
-          length: result.sequence.length,
-          interproVersion: parsed.data['interpro-version'],
-          interproscanVersion: parsed.data['interproscan-version'],
-          matches: result.matches,
-        };
-      },
+    return await this.load(call, this.reads, resultKey(jobId), parseResult, (own, signal) =>
+      this.send(
+        own,
+        signal,
+        'interpro.scan.result',
+        `${JOB_DISPATCHER_BASE}result/${jobId}/json`,
+        { headers: { Accept: 'application/json' } },
+        'body',
+        async (response, attemptSignal) => {
+          if (response.status === 400 || response.status === 404) {
+            this.release(jobId);
+            throw notFound(`Job Dispatcher has no result for InterProScan job ${jobId}.`, {
+              reason: 'scan_not_found',
+              retryable: false,
+              jobId,
+            });
+          }
+          if (!response.ok) throw await upstreamStatusError(response, 'Job Dispatcher');
+          const body = await readBytes(response, attemptSignal);
+          return { value: parseResult(body), retain: body };
+        },
+      ),
     );
   }
 
@@ -624,7 +770,7 @@ export class SequenceScanService {
         baseDelayMs: 1000,
         maxDelayMs: 3000,
       },
-    );
+    ).catch((error) => toCallBudget(error, deadlineError));
   }
 }
 
@@ -632,7 +778,7 @@ let service: SequenceScanService | undefined;
 /** Initialize the process service in createApp.setup with the configured submission address. */
 export function initSequenceScanService(
   email: string | undefined,
-  fetch: InterproFetch = scanHttpFetch,
+  fetch: InterproFetch = interproHttpFetch,
 ): void {
   service = new SequenceScanService(email, fetch);
 }

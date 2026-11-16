@@ -90,6 +90,14 @@ const taxa = [
   ['3702', 'Arabidopsis'],
   ['562', 'Escherichia coli'],
 ] as const;
+/** The taxonomy root, listed ahead of the common examples under taxa. */
+const allOrganisms: ReferenceItem = {
+  id: '1',
+  label: 'All organisms',
+  taxonId: '1',
+  description:
+    'NCBI taxonomy root, the ancestor of every organism; passed as interpro_find_proteins_by_domain taxonId, it selects all organisms.',
+};
 /** Structure identifiers, listed after the entry routes under accession_patterns. */
 const structureIdentifiers: ReferenceItem[] = [
   {
@@ -121,12 +129,15 @@ export function staticReference(topic: Exclude<z.infer<typeof ReferenceTopicSche
     };
   if (topic === 'taxa')
     return {
-      items: taxa.map(([taxonId, label]) => ({
-        id: taxonId,
-        label,
-        taxonId,
-        description: 'Common taxonomy example; this is not an exhaustive taxonomy.',
-      })),
+      items: [
+        allOrganisms,
+        ...taxa.map(([taxonId, label]) => ({
+          id: taxonId,
+          label,
+          taxonId,
+          description: 'Common taxonomy example; this is not an exhaustive taxonomy.',
+        })),
+      ],
       sourceUrls: [DOCUMENTATION_URL, 'https://www.ncbi.nlm.nih.gov/taxonomy'],
     };
   return {

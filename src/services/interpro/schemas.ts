@@ -71,12 +71,35 @@ export const AccessionSchema = z
  */
 export const isAccession = (value: unknown): value is string =>
   typeof value === 'string' && AccessionSchema.safeParse(value).data === value;
+/**
+ * UniProt's canonical accession grammar, shared by the canonical and isoform schemas. Both letter
+ * cases are spelled out: an advertised JSON Schema pattern carries no `i` flag, so a flag here
+ * would advertise uppercase only while the server accepts any case.
+ */
+const UNIPROT_CANONICAL =
+  '(?:[OPQopq][0-9][A-Za-z0-9]{3}[0-9]|[A-NR-Za-nr-z][0-9](?:[A-Za-z][A-Za-z0-9]{2}[0-9]){1,2})';
 /** Canonical UniProt accessions exclude isoform suffixes. */
 export const ProteinAccessionSchema = z
   .string()
   .trim()
-  .regex(/^(?:[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9](?:[A-Z][A-Z0-9]{2}[0-9]){1,2})$/i)
+  .regex(new RegExp(`^${UNIPROT_CANONICAL}$`))
   .describe('Canonical six- or ten-character UniProt accession, without an isoform suffix.');
+const PROTEIN_OR_ISOFORM_MESSAGE =
+  'Expected a UniProt accession such as P04637, or an isoform such as P04637-2.';
+/**
+ * A canonical UniProt accession, or an isoform of one: the canonical accession, a hyphen, and a
+ * positive isoform number without a leading zero. Bounded, so the anchored pattern stays linear.
+ */
+export const ProteinOrIsoformAccessionSchema = z
+  .string()
+  .trim()
+  .max(100, { error: PROTEIN_OR_ISOFORM_MESSAGE, abort: true })
+  .regex(new RegExp(`^${UNIPROT_CANONICAL}(?:-[1-9][0-9]*)?$`), {
+    error: PROTEIN_OR_ISOFORM_MESSAGE,
+  })
+  .describe(
+    'UniProt accession: canonical, such as P04637, or an isoform, the canonical accession and a positive isoform number, such as P04637-2.',
+  );
 /** GO annotation returned by InterPro. */
 export const GoTermSchema = z
   .object({
@@ -161,6 +184,7 @@ export const ProteinMetadataSchema = z
   .object({
     accession: z.string().describe('Protein accession.'),
     length: z.number().int().positive().describe('Sequence length in residues.'),
+    sequence: z.string().optional().describe('Amino-acid sequence, one letter per residue.'),
     source_database: z.string().describe('Protein source database.'),
     name: z.string().nullable().optional().describe('Protein name.'),
     gene: z.string().nullable().optional().describe('Gene name.'),
@@ -183,7 +207,7 @@ export const ProteinMetadataSchema = z
       .nullable()
       .optional()
       .describe(
-        'UniProt proteome accession, such as UP000000625; pass it as interpro_find_proteins_by_domain proteomeId with taxonId set to source_organism.taxId or an ancestor. Null when the protein belongs to no proteome.',
+        'UniProt proteome accession, such as UP000000625; pass it as interpro_find_proteins_by_domain proteomeId with taxonId set to source_organism.taxId or an ancestor, such as 1 for all organisms. Null when the protein belongs to no proteome.',
       ),
   })
   .catchall(JsonValueSchema);
@@ -230,6 +254,40 @@ export const ResidueAnnotationsSchema = z.record(
     })
     .catchall(JsonValueSchema),
 );
+/** One isoform from `/protein/uniprot/<canonical>/?isoforms=<isoform>`, every upstream field kept. */
+export const IsoformSchema = z
+  .object({
+    accession: z.string().describe('Isoform accession.'),
+    protein_acc: z.string().describe('Canonical accession the isoform belongs to.'),
+    length: z.number().int().positive().describe('Isoform length in residues.'),
+    sequence: z
+      .string()
+      .optional()
+      .describe(
+        'Isoform amino-acid sequence; interpro_get_protein_domains returns it only with includeSequence true.',
+      ),
+    features: z
+      .record(
+        z.string(),
+        EntrySummarySchema.extend({
+          locations: z
+            .array(LocationSchema)
+            .min(1)
+            .describe('Complete match locations on the isoform.'),
+        }),
+      )
+      .describe('Signature matches keyed by signature accession.'),
+  })
+  .catchall(JsonValueSchema);
+/** The isoform record a map's first segment carries: every field but its features. */
+export const IsoformMetadataSchema = IsoformSchema.omit({ features: true });
+/** The isoform accessions InterPro lists for a canonical protein under `?isoforms`. */
+export const IsoformListSchema = z
+  .object({
+    results: z.array(z.string()).describe('Isoform accessions, in upstream order.'),
+    count: z.number().int().nonnegative().describe('Number of isoforms.'),
+  })
+  .catchall(JsonValueSchema);
 /** Standard list envelope; callers select the operation-specific row schema. */
 export const listSchema = <T extends z.ZodType>(row: T) =>
   z

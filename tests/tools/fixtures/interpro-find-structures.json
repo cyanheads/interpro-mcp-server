@@ -1,0 +1,6069 @@
+{
+  "proteinP04637Page1": {
+    "count": 321,
+    "next": "https://www.ebi.ac.uk/interpro/api/structure/pdb/protein/uniprot/P04637/?cursor=source%7Cs%7C1tup&page_size=20",
+    "previous": null,
+    "results": [
+      {
+        "metadata": {
+          "accession": "1a1u",
+          "name": "SOLUTION STRUCTURE DETERMINATION OF A P53 MUTANT DIMERIZATION DOMAIN, NMR, MINIMIZED AVERAGE STRUCTURE",
+          "source_database": "pdb",
+          "experiment_type": "nmr",
+          "resolution": null
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 35,
+                    "protein_start": 324,
+                    "protein_end": 358
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "C",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 35,
+                    "protein_start": 324,
+                    "protein_end": 358
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1aie",
+          "name": "P53 TETRAMERIZATION DOMAIN CRYSTAL STRUCTURE",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 1.5
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 31,
+                    "protein_start": 326,
+                    "protein_end": 356
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1c26",
+          "name": "CRYSTAL STRUCTURE OF P53 TETRAMERIZATION DOMAIN",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 1.7
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 32,
+                    "protein_start": 325,
+                    "protein_end": 356
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1dt7",
+          "name": "SOLUTION STRUCTURE OF THE C-TERMINAL NEGATIVE REGULATORY DOMAIN OF P53 IN A COMPLEX WITH CA2+-BOUND S100B(BB)",
+          "source_database": "pdb",
+          "experiment_type": "nmr",
+          "resolution": null
+        },
+        "proteins": [
+          {
+            "accession": null,
+            "protein_length": 393,
+            "source_database": null,
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "X",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 22,
+                    "protein_start": 367,
+                    "protein_end": 388
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": null,
+            "protein_length": 393,
+            "source_database": null,
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "Y",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 22,
+                    "protein_start": 367,
+                    "protein_end": 388
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1gzh",
+          "name": "Crystal structure of the BRCT domains of human 53BP1 bound to the p53 tumor supressor",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 2.6
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 198,
+                    "protein_start": 95,
+                    "protein_end": 292
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "C",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 198,
+                    "protein_start": 95,
+                    "protein_end": 292
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1h26",
+          "name": "CDK2/CyclinA in complex with an 11-residue recruitment peptide from p53",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 2.24
+        },
+        "proteins": [
+          {
+            "accession": null,
+            "protein_length": 393,
+            "source_database": null,
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "E",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 11,
+                    "protein_start": 376,
+                    "protein_end": 386
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1hs5",
+          "name": "NMR SOLUTION STRUCTURE OF DESIGNED P53 DIMER",
+          "source_database": "pdb",
+          "experiment_type": "nmr",
+          "resolution": null
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 34,
+                    "protein_start": 324,
+                    "protein_end": 357
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 34,
+                    "protein_start": 324,
+                    "protein_end": 357
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1jsp",
+          "name": "NMR Structure of CBP Bromodomain in complex with p53 peptide",
+          "source_database": "pdb",
+          "experiment_type": "nmr",
+          "resolution": null
+        },
+        "proteins": [
+          {
+            "accession": null,
+            "protein_length": 393,
+            "source_database": null,
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 20,
+                    "protein_start": 367,
+                    "protein_end": 386
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1kzy",
+          "name": "Crystal Structure of the 53bp1 BRCT Region Complexed to Tumor Suppressor P53",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 2.5
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 195,
+                    "protein_start": 95,
+                    "protein_end": 289
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 195,
+                    "protein_start": 95,
+                    "protein_end": 289
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1ma3",
+          "name": "Structure of a Sir2 enzyme bound to an acetylated p53 peptide",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 2
+        },
+        "proteins": [
+          {
+            "accession": null,
+            "protein_length": 393,
+            "source_database": null,
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 18,
+                    "protein_start": 372,
+                    "protein_end": 389
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1olg",
+          "name": "HIGH-RESOLUTION SOLUTION STRUCTURE OF THE OLIGOMERIZATION DOMAIN OF P53 BY MULTI-DIMENSIONAL NMR",
+          "source_database": "pdb",
+          "experiment_type": "nmr",
+          "resolution": null
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 42,
+                    "protein_start": 319,
+                    "protein_end": 360
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 42,
+                    "protein_start": 319,
+                    "protein_end": 360
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "C",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 42,
+                    "protein_start": 319,
+                    "protein_end": 360
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "D",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 42,
+                    "protein_start": 319,
+                    "protein_end": 360
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1olh",
+          "name": "HIGH-RESOLUTION SOLUTION STRUCTURE OF THE OLIGOMERIZATION DOMAIN OF P53 BY MULTI-DIMENSIONAL NMR",
+          "source_database": "pdb",
+          "experiment_type": "nmr",
+          "resolution": null
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 42,
+                    "protein_start": 319,
+                    "protein_end": 360
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 42,
+                    "protein_start": 319,
+                    "protein_end": 360
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "C",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 42,
+                    "protein_start": 319,
+                    "protein_end": 360
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "D",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 42,
+                    "protein_start": 319,
+                    "protein_end": 360
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1pes",
+          "name": "NMR SOLUTION STRUCTURE OF THE TETRAMERIC MINIMUM TRANSFORMING DOMAIN OF P53",
+          "source_database": "pdb",
+          "experiment_type": "nmr",
+          "resolution": null
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 31,
+                    "protein_start": 325,
+                    "protein_end": 355
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 31,
+                    "protein_start": 325,
+                    "protein_end": 355
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "C",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 31,
+                    "protein_start": 325,
+                    "protein_end": 355
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "D",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 31,
+                    "protein_start": 325,
+                    "protein_end": 355
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1pet",
+          "name": "NMR SOLUTION STRUCTURE OF THE TETRAMERIC MINIMUM TRANSFORMING DOMAIN OF P53",
+          "source_database": "pdb",
+          "experiment_type": "nmr",
+          "resolution": null
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 31,
+                    "protein_start": 325,
+                    "protein_end": 355
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 31,
+                    "protein_start": 325,
+                    "protein_end": 355
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "C",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 31,
+                    "protein_start": 325,
+                    "protein_end": 355
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "D",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 31,
+                    "protein_start": 325,
+                    "protein_end": 355
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1sae",
+          "name": "HIGH RESOLUTION SOLUTION NMR STRUCTURE OF THE OLIGOMERIZATION DOMAIN OF P53 BY MULTI-DIMENSIONAL NMR (SAC STRUCTURES)",
+          "source_database": "pdb",
+          "experiment_type": "nmr",
+          "resolution": null
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 42,
+                    "protein_start": 319,
+                    "protein_end": 360
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 42,
+                    "protein_start": 319,
+                    "protein_end": 360
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "C",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 42,
+                    "protein_start": 319,
+                    "protein_end": 360
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "D",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 42,
+                    "protein_start": 319,
+                    "protein_end": 360
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1saf",
+          "name": "HIGH RESOLUTION SOLUTION NMR STRUCTURE OF THE OLIGOMERIZATION DOMAIN OF P53 BY MULTI-DIMENSIONAL NMR (SAD STRUCTURES)",
+          "source_database": "pdb",
+          "experiment_type": "nmr",
+          "resolution": null
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 42,
+                    "protein_start": 319,
+                    "protein_end": 360
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 42,
+                    "protein_start": 319,
+                    "protein_end": 360
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "C",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 42,
+                    "protein_start": 319,
+                    "protein_end": 360
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "D",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 42,
+                    "protein_start": 319,
+                    "protein_end": 360
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1sak",
+          "name": "HIGH RESOLUTION SOLUTION NMR STRUCTURE OF THE OLIGOMERIZATION DOMAIN OF P53 BY MULTI-DIMENSIONAL NMR (SAC STRUCTURES)",
+          "source_database": "pdb",
+          "experiment_type": "nmr",
+          "resolution": null
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 42,
+                    "protein_start": 319,
+                    "protein_end": 360
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 42,
+                    "protein_start": 319,
+                    "protein_end": 360
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "C",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 42,
+                    "protein_start": 319,
+                    "protein_end": 360
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "D",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 42,
+                    "protein_start": 319,
+                    "protein_end": 360
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1sal",
+          "name": "HIGH RESOLUTION SOLUTION NMR STRUCTURE OF THE OLIGOMERIZATION DOMAIN OF P53 BY MULTI-DIMENSIONAL NMR (SAD STRUCTURES)",
+          "source_database": "pdb",
+          "experiment_type": "nmr",
+          "resolution": null
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 42,
+                    "protein_start": 319,
+                    "protein_end": 360
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 42,
+                    "protein_start": 319,
+                    "protein_end": 360
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "C",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 42,
+                    "protein_start": 319,
+                    "protein_end": 360
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "D",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 42,
+                    "protein_start": 319,
+                    "protein_end": 360
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1tsr",
+          "name": "P53 CORE DOMAIN IN COMPLEX WITH DNA",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 2.2
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 219,
+                    "protein_start": 94,
+                    "protein_end": 312
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 219,
+                    "protein_start": 94,
+                    "protein_end": 312
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "C",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 219,
+                    "protein_start": 94,
+                    "protein_end": 312
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1tup",
+          "name": "TUMOR SUPPRESSOR P53 COMPLEXED WITH DNA",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 2.2
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 219,
+                    "protein_start": 94,
+                    "protein_end": 312
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 219,
+                    "protein_start": 94,
+                    "protein_end": 312
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "C",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 219,
+                    "protein_start": 94,
+                    "protein_end": 312
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "proteinP04637Page2": {
+    "count": 321,
+    "next": "https://www.ebi.ac.uk/interpro/api/structure/pdb/protein/uniprot/P04637/?cursor=source%7Cs%7C2foo&page_size=20",
+    "previous": "https://www.ebi.ac.uk/interpro/api/structure/pdb/protein/uniprot/P04637/?cursor=-source%7Cs%7C1uol&page_size=20",
+    "results": [
+      {
+        "metadata": {
+          "accession": "1uol",
+          "name": "Crystal structure of the human p53 core domain mutant M133L/V203A/N239Y/N268D at 1.9 A resolution.",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 1.9
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 219,
+                    "protein_start": 94,
+                    "protein_end": 312
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 219,
+                    "protein_start": 94,
+                    "protein_end": 312
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1xqh",
+          "name": "Crystal structure of a ternary complex of the methyltransferase SET9 (also known as SET7/9) with a P53 peptide and SAH",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 1.75
+        },
+        "proteins": [
+          {
+            "accession": null,
+            "protein_length": 393,
+            "source_database": null,
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 9,
+                    "protein_start": 369,
+                    "protein_end": 377
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": null,
+            "protein_length": 393,
+            "source_database": null,
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "F",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 9,
+                    "protein_start": 369,
+                    "protein_end": 377
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1yc5",
+          "name": "Sir2-p53 peptide-nicotinamide",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 1.4
+        },
+        "proteins": [
+          {
+            "accession": null,
+            "protein_length": 393,
+            "source_database": null,
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 18,
+                    "protein_start": 372,
+                    "protein_end": 389
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1ycq",
+          "name": "XENOPUS LAEVIS MDM2 BOUND TO THE TRANSACTIVATION DOMAIN OF HUMAN P53",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 2.3
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 17,
+                    "protein_start": 13,
+                    "protein_end": 29
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1ycr",
+          "name": "MDM2 BOUND TO THE TRANSACTIVATION DOMAIN OF P53",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 2.6
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 15,
+                    "protein_start": 15,
+                    "protein_end": 29
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1ycs",
+          "name": "P53-53BP2 COMPLEX",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 2.2
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 199,
+                    "protein_start": 94,
+                    "protein_end": 292
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "21ex",
+          "name": "Wild tipe p53WT-HLA-A2",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 2.021
+        },
+        "proteins": [
+          {
+            "accession": null,
+            "protein_length": 393,
+            "source_database": null,
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "C",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 9,
+                    "protein_start": 217,
+                    "protein_end": 225
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2ac0",
+          "name": "Structural Basis of DNA Recognition by p53 Tetramers (complex I)",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 1.8
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 200,
+                    "protein_start": 94,
+                    "protein_end": 293
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 200,
+                    "protein_start": 94,
+                    "protein_end": 293
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "C",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 200,
+                    "protein_start": 94,
+                    "protein_end": 293
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "D",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 200,
+                    "protein_start": 94,
+                    "protein_end": 293
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2ady",
+          "name": "Structural Basis of DNA Recognition by p53 Tetramers (complex IV)",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 2.5
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 200,
+                    "protein_start": 94,
+                    "protein_end": 293
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 200,
+                    "protein_start": 94,
+                    "protein_end": 293
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2ahi",
+          "name": "Structural Basis of DNA Recognition by p53 Tetramers (complex III)",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 1.85
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 200,
+                    "protein_start": 94,
+                    "protein_end": 293
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 200,
+                    "protein_start": 94,
+                    "protein_end": 293
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "C",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 200,
+                    "protein_start": 94,
+                    "protein_end": 293
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "D",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 200,
+                    "protein_start": 94,
+                    "protein_end": 293
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2ata",
+          "name": "Structural Basis of DNA Recognition by p53 Tetramers (complex II)",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 2.2
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 200,
+                    "protein_start": 94,
+                    "protein_end": 293
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 200,
+                    "protein_start": 94,
+                    "protein_end": 293
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "C",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 200,
+                    "protein_start": 94,
+                    "protein_end": 293
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "D",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 200,
+                    "protein_start": 94,
+                    "protein_end": 293
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2b3g",
+          "name": "p53N (fragment 33-60) bound to RPA70N",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 1.6
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 28,
+                    "protein_start": 33,
+                    "protein_end": 60
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2bim",
+          "name": "human p53 core domain mutant M133L-V203A-N239Y-N268D-R273H",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 1.98
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 219,
+                    "protein_start": 94,
+                    "protein_end": 312
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 219,
+                    "protein_start": 94,
+                    "protein_end": 312
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2bin",
+          "name": "human p53 core domain mutant M133L-H168R-V203A-N239Y-N268D",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 1.9
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 219,
+                    "protein_start": 94,
+                    "protein_end": 312
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2bio",
+          "name": "human p53 core domain mutant M133L-V203A-N239Y-R249S-N268D",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 1.9
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 219,
+                    "protein_start": 94,
+                    "protein_end": 312
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2bip",
+          "name": "human p53 core domain mutant M133L-H168R-V203A-N239Y-R249S-N268D",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 1.8
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 219,
+                    "protein_start": 94,
+                    "protein_end": 312
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2biq",
+          "name": "human p53 core domain mutant T123A-M133L-H168R-V203A-N239Y-R249S- N268D",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 1.8
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 219,
+                    "protein_start": 94,
+                    "protein_end": 312
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2fej",
+          "name": "Solution structure of human p53 DNA binding domain.",
+          "source_database": "pdb",
+          "experiment_type": "nmr",
+          "resolution": null
+        },
+        "proteins": [
+          {
+            "accession": "p04637",
+            "protein_length": 393,
+            "source_database": "reviewed",
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "A",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 204,
+                    "protein_start": 94,
+                    "protein_end": 297
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2foj",
+          "name": "The Crystal Structure of the N-terminal domain of HAUSP/USP7 complexed with p53 peptide 364-367",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 1.6
+        },
+        "proteins": [
+          {
+            "accession": null,
+            "protein_length": 393,
+            "source_database": null,
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 7,
+                    "protein_start": 361,
+                    "protein_end": 367
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2foo",
+          "name": "The Crystal Structure of the N-terminal domain of HAUSP/USP7 complexed with p53 peptide 359-362",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 2.2
+        },
+        "proteins": [
+          {
+            "accession": null,
+            "protein_length": 393,
+            "source_database": null,
+            "organism": "9606",
+            "in_alphafold": true,
+            "chain": "B",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 6,
+                    "protein_start": 358,
+                    "protein_end": 363
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "proteinQ79791With3j3q": {
+    "count": 5,
+    "next": "https://www.ebi.ac.uk/interpro/api/structure/pdb/protein/uniprot/q79791/?cursor=source%7Cs%7C3j3q&page_size=1",
+    "previous": "https://www.ebi.ac.uk/interpro/api/structure/pdb/protein/uniprot/q79791/?cursor=-source%7Cs%7C3j3q&page_size=1",
+    "results": [
+      {
+        "metadata": {
+          "accession": "3j3q",
+          "name": "Atomic-level structure of the entire HIV-1 capsid",
+          "source_database": "pdb",
+          "experiment_type": "em",
+          "resolution": null
+        },
+        "proteins": [
+          {
+            "accession": "q79791",
+            "protein_length": 500,
+            "source_database": "unreviewed",
+            "organism": "11698",
+            "in_alphafold": false,
+            "chain": "2Y",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 231,
+                    "protein_start": 133,
+                    "protein_end": 363
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "q79791",
+            "protein_length": 500,
+            "source_database": "unreviewed",
+            "organism": "11698",
+            "in_alphafold": false,
+            "chain": "1G",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 231,
+                    "protein_start": 133,
+                    "protein_end": 363
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "q79791",
+            "protein_length": 500,
+            "source_database": "unreviewed",
+            "organism": "11698",
+            "in_alphafold": false,
+            "chain": "1L",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 231,
+                    "protein_start": 133,
+                    "protein_end": 363
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "q79791",
+            "protein_length": 500,
+            "source_database": "unreviewed",
+            "organism": "11698",
+            "in_alphafold": false,
+            "chain": "1N",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 231,
+                    "protein_start": 133,
+                    "protein_end": 363
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "q79791",
+            "protein_length": 500,
+            "source_database": "unreviewed",
+            "organism": "11698",
+            "in_alphafold": false,
+            "chain": "1a",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 231,
+                    "protein_start": 133,
+                    "protein_end": 363
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "q79791",
+            "protein_length": 500,
+            "source_database": "unreviewed",
+            "organism": "11698",
+            "in_alphafold": false,
+            "chain": "1b",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 231,
+                    "protein_start": 133,
+                    "protein_end": 363
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "q79791",
+            "protein_length": 500,
+            "source_database": "unreviewed",
+            "organism": "11698",
+            "in_alphafold": false,
+            "chain": "1d",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 231,
+                    "protein_start": 133,
+                    "protein_end": 363
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "q79791",
+            "protein_length": 500,
+            "source_database": "unreviewed",
+            "organism": "11698",
+            "in_alphafold": false,
+            "chain": "1m",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 231,
+                    "protein_start": 133,
+                    "protein_end": 363
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "q79791",
+            "protein_length": 500,
+            "source_database": "unreviewed",
+            "organism": "11698",
+            "in_alphafold": false,
+            "chain": "29",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 231,
+                    "protein_start": 133,
+                    "protein_end": 363
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "q79791",
+            "protein_length": 500,
+            "source_database": "unreviewed",
+            "organism": "11698",
+            "in_alphafold": false,
+            "chain": "2E",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 231,
+                    "protein_start": 133,
+                    "protein_end": 363
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "q79791",
+            "protein_length": 500,
+            "source_database": "unreviewed",
+            "organism": "11698",
+            "in_alphafold": false,
+            "chain": "2L",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 231,
+                    "protein_start": 133,
+                    "protein_end": 363
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "q79791",
+            "protein_length": 500,
+            "source_database": "unreviewed",
+            "organism": "11698",
+            "in_alphafold": false,
+            "chain": "2T",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 231,
+                    "protein_start": 133,
+                    "protein_end": 363
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "q79791",
+            "protein_length": 500,
+            "source_database": "unreviewed",
+            "organism": "11698",
+            "in_alphafold": false,
+            "chain": "2X",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 231,
+                    "protein_start": 133,
+                    "protein_end": 363
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "q79791",
+            "protein_length": 500,
+            "source_database": "unreviewed",
+            "organism": "11698",
+            "in_alphafold": false,
+            "chain": "2Z",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 231,
+                    "protein_start": 133,
+                    "protein_end": 363
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "q79791",
+            "protein_length": 500,
+            "source_database": "unreviewed",
+            "organism": "11698",
+            "in_alphafold": false,
+            "chain": "2h",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 231,
+                    "protein_start": 133,
+                    "protein_end": 363
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "q79791",
+            "protein_length": 500,
+            "source_database": "unreviewed",
+            "organism": "11698",
+            "in_alphafold": false,
+            "chain": "2l",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 231,
+                    "protein_start": 133,
+                    "protein_end": 363
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "q79791",
+            "protein_length": 500,
+            "source_database": "unreviewed",
+            "organism": "11698",
+            "in_alphafold": false,
+            "chain": "33",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 231,
+                    "protein_start": 133,
+                    "protein_end": 363
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "q79791",
+            "protein_length": 500,
+            "source_database": "unreviewed",
+            "organism": "11698",
+            "in_alphafold": false,
+            "chain": "12",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 231,
+                    "protein_start": 133,
+                    "protein_end": 363
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "q79791",
+            "protein_length": 500,
+            "source_database": "unreviewed",
+            "organism": "11698",
+            "in_alphafold": false,
+            "chain": "15",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 231,
+                    "protein_start": 133,
+                    "protein_end": 363
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "accession": "q79791",
+            "protein_length": 500,
+            "source_database": "unreviewed",
+            "organism": "11698",
+            "in_alphafold": false,
+            "chain": "1f",
+            "structure_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 1,
+                    "end": 231,
+                    "protein_start": 133,
+                    "protein_end": 363
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "proteinQ6GZX4Detail": {
+    "metadata": {
+      "accession": "Q6GZX4",
+      "id": "001R_FRG3G",
+      "source_organism": {
+        "taxId": "654924",
+        "scientificName": "Frog virus 3 (isolate Goorha)",
+        "fullName": "Frog virus 3 (isolate Goorha) (FV-3)"
+      },
+      "name": "Putative transcription factor 001R",
+      "description": ["Transcription activation"],
+      "length": 256,
+      "sequence": "MAFSAEDVLKEYDRRRRMEALLLSLYYPNDRKLLDYKEWSPPRVQVECPKAPVEWNNPPSEKGLIVGHFSGIKYKGEKAQASEVDVNKMCCWVSKFKDAMRRYQGIQTCKIPGKVLSDLDAKIKAYNLTVEGVEGFVRYSRVTKQHVAAFLKELRHSKQYENVNLIHYILTDKRVDIQHLEKDLVKDFKALVESAHRMRQGHMINVKYILYQLLKKHGHGPDGPDILTVKTGSKGVLYDDSFRKIYTDLGWKFTPL",
+      "proteome": "UP000008770",
+      "gene": "FV3-001R",
+      "go_terms": [
+        {
+          "identifier": "GO:0046782",
+          "name": "regulation of viral transcription",
+          "category": {
+            "code": "P",
+            "name": "biological_process"
+          }
+        }
+      ],
+      "protein_evidence": 4,
+      "source_database": "reviewed",
+      "is_fragment": false,
+      "in_alphafold": true,
+      "ida_accession": "abfb62cda8eae55271c42371937f98bb60e2937b",
+      "counters": {
+        "domain_architectures": 143,
+        "entries": 2,
+        "isoforms": 0,
+        "proteomes": 1,
+        "sets": 0,
+        "structures": 0,
+        "taxa": 1,
+        "dbEntries": {
+          "pfam": 1,
+          "interpro": 1
+        },
+        "proteome": 1,
+        "taxonomy": 1,
+        "similar_proteins": 143
+      }
+    }
+  },
+  "entryPF00870Page1": {
+    "count": 233,
+    "next": "https://www.ebi.ac.uk/interpro/api/structure/pdb/entry/pfam/PF00870/?cursor=source%7Cs%7C2ioi&page_size=20",
+    "previous": null,
+    "results": [
+      {
+        "metadata": {
+          "accession": "1gzh",
+          "name": "Crystal structure of the BRCT domains of human 53BP1 bound to the p53 tumor supressor",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 2.6
+        },
+        "entries": [
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "A",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 6,
+                    "end": 194,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSVPSQKT",
+            "sequence_length": 198,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "C",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 6,
+                    "end": 194,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSVPSQKT",
+            "sequence_length": 198,
+            "protein": "p04637"
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1hu8",
+          "name": "CRYSTAL STRUCTURE OF THE MOUSE P53 CORE DNA-BINDING DOMAIN AT 2.7A RESOLUTION",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 2.7
+        },
+        "entries": [
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 97,
+                    "end": 285,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 5.4e-58
+              }
+            ],
+            "protein_length": 390,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "A",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 2,
+                    "end": 186,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 284
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "TYQGNYGF",
+            "sequence_length": 186,
+            "protein": "p02340"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 97,
+                    "end": 285,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 5.4e-58
+              }
+            ],
+            "protein_length": 390,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "B",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 2,
+                    "end": 186,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 284
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "TYQGNYGF",
+            "sequence_length": 186,
+            "protein": "p02340"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 97,
+                    "end": 285,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 5.4e-58
+              }
+            ],
+            "protein_length": 390,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "C",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 2,
+                    "end": 186,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 284
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "TYQGNYGF",
+            "sequence_length": 186,
+            "protein": "p02340"
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1kzy",
+          "name": "Crystal Structure of the 53bp1 BRCT Region Complexed to Tumor Suppressor P53",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 2.5
+        },
+        "entries": [
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "A",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 6,
+                    "end": 194,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSVPSQKT",
+            "sequence_length": 195,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "B",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 6,
+                    "end": 194,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSVPSQKT",
+            "sequence_length": 195,
+            "protein": "p04637"
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1tsr",
+          "name": "P53 CORE DOMAIN IN COMPLEX WITH DNA",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 2.2
+        },
+        "entries": [
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "A",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 219,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "B",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 219,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "C",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 219,
+            "protein": "p04637"
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1tup",
+          "name": "TUMOR SUPPRESSOR P53 COMPLEXED WITH DNA",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 2.2
+        },
+        "entries": [
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "A",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 219,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "B",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 219,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "C",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 219,
+            "protein": "p04637"
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1uol",
+          "name": "Crystal structure of the human p53 core domain mutant M133L/V203A/N239Y/N268D at 1.9 A resolution.",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 1.9
+        },
+        "entries": [
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "A",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 219,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "B",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 219,
+            "protein": "p04637"
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "1ycs",
+          "name": "P53-53BP2 COMPLEX",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 2.2
+        },
+        "entries": [
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "A",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": null,
+                    "auth_end": null
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 199,
+            "protein": "p04637"
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2ac0",
+          "name": "Structural Basis of DNA Recognition by p53 Tetramers (complex I)",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 1.8
+        },
+        "entries": [
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "A",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 200,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "B",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 200,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "C",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 200,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "D",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 200,
+            "protein": "p04637"
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2ady",
+          "name": "Structural Basis of DNA Recognition by p53 Tetramers (complex IV)",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 2.5
+        },
+        "entries": [
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "A",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 200,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "B",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 200,
+            "protein": "p04637"
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2ahi",
+          "name": "Structural Basis of DNA Recognition by p53 Tetramers (complex III)",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 1.85
+        },
+        "entries": [
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "A",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 200,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "B",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 200,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "C",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 200,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "D",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 200,
+            "protein": "p04637"
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2ata",
+          "name": "Structural Basis of DNA Recognition by p53 Tetramers (complex II)",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 2.2
+        },
+        "entries": [
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "A",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 200,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "B",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 200,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "C",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 200,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "D",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 200,
+            "protein": "p04637"
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2bim",
+          "name": "human p53 core domain mutant M133L-V203A-N239Y-N268D-R273H",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 1.98
+        },
+        "entries": [
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "A",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 219,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "B",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 219,
+            "protein": "p04637"
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2bin",
+          "name": "human p53 core domain mutant M133L-H168R-V203A-N239Y-N268D",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 1.9
+        },
+        "entries": [
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "A",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 219,
+            "protein": "p04637"
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2bio",
+          "name": "human p53 core domain mutant M133L-V203A-N239Y-R249S-N268D",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 1.9
+        },
+        "entries": [
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "A",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 219,
+            "protein": "p04637"
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2bip",
+          "name": "human p53 core domain mutant M133L-H168R-V203A-N239Y-R249S-N268D",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 1.8
+        },
+        "entries": [
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "A",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 219,
+            "protein": "p04637"
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2biq",
+          "name": "human p53 core domain mutant T123A-M133L-H168R-V203A-N239Y-R249S- N268D",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 1.8
+        },
+        "entries": [
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "A",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 219,
+            "protein": "p04637"
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2fej",
+          "name": "Solution structure of human p53 DNA binding domain.",
+          "source_database": "pdb",
+          "experiment_type": "nmr",
+          "resolution": null
+        },
+        "entries": [
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "A",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 7,
+                    "end": 195,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SSSVPSQK",
+            "sequence_length": 204,
+            "protein": "p04637"
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2geq",
+          "name": "Crystal Structure of a p53 Core Dimer Bound to DNA",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 2.3
+        },
+        "entries": [
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 97,
+                    "end": 285,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 5.4e-58
+              }
+            ],
+            "protein_length": 390,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "A",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 6,
+                    "end": 194,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 97,
+                    "auth_end": 285
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SFVPSQKT",
+            "sequence_length": 201,
+            "protein": "p02340"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 97,
+                    "end": 285,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 5.4e-58
+              }
+            ],
+            "protein_length": 390,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "B",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 6,
+                    "end": 194,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 97,
+                    "auth_end": 285
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SFVPSQKT",
+            "sequence_length": 201,
+            "protein": "p02340"
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2h1l",
+          "name": "The Structure of the Oncoprotein SV40 Large T Antigen and p53 Tumor Suppressor Complex",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 3.16
+        },
+        "entries": [
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "M",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 199,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "GSPLSSSV",
+            "sequence_length": 203,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "N",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 199,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "GSPLSSSV",
+            "sequence_length": 203,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "O",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 199,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "GSPLSSSV",
+            "sequence_length": 203,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "P",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 199,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "GSPLSSSV",
+            "sequence_length": 203,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "Q",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 199,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "GSPLSSSV",
+            "sequence_length": 203,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "R",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 199,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "GSPLSSSV",
+            "sequence_length": 203,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "S",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 199,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "GSPLSSSV",
+            "sequence_length": 203,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "T",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 199,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "GSPLSSSV",
+            "sequence_length": 203,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "U",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 199,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "GSPLSSSV",
+            "sequence_length": 203,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "V",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 199,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "GSPLSSSV",
+            "sequence_length": 203,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "W",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 199,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "GSPLSSSV",
+            "sequence_length": 203,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "X",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 199,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 100,
+                    "auth_end": 288
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "GSPLSSSV",
+            "sequence_length": 203,
+            "protein": "p04637"
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "accession": "2ioi",
+          "name": "Crystal structure of the mouse p53 core domain at 1.55 A",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 1.55
+        },
+        "entries": [
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 97,
+                    "end": 285,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 5.4e-58
+              }
+            ],
+            "protein_length": 390,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "A",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 6,
+                    "end": 194,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": null,
+                    "auth_end": null
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "SFVPSQKT",
+            "sequence_length": 201,
+            "protein": "p02340"
+          }
+        ]
+      }
+    ]
+  },
+  "entryPF00870With6lhd": {
+    "count": 233,
+    "next": null,
+    "previous": null,
+    "results": [
+      {
+        "metadata": {
+          "accession": "6lhd",
+          "name": "Crystal structure of p53/BCL-xL fusion complex",
+          "source_database": "pdb",
+          "experiment_type": "x-ray",
+          "resolution": 2.499
+        },
+        "entries": [
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 100,
+                    "end": 288,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": 6.8e-60
+              }
+            ],
+            "protein_length": 393,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "A",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 183,
+                    "end": 371,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 166,
+                    "auth_end": 354
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "GPSQSNRE",
+            "sequence_length": 375,
+            "protein": "p04637"
+          },
+          {
+            "accession": "PF00870",
+            "entry_protein_locations": null,
+            "protein_length": 233,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": "ipr011615",
+            "chain": "B",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 183,
+                    "end": 371,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 166,
+                    "auth_end": 354
+                  }
+                ],
+                "representative": false,
+                "model": "PF00870",
+                "score": null
+              }
+            ],
+            "sequence": "GPSQSNRE",
+            "sequence_length": 375,
+            "protein": "q07817"
+          }
+        ]
+      }
+    ]
+  },
+  "entryPF00607With3j3q": {
+    "count": 334,
+    "next": "https://www.ebi.ac.uk/interpro/api/structure/pdb/entry/pfam/PF00607/?cursor=source%7Cs%7C3j3q&page_size=1",
+    "previous": "https://www.ebi.ac.uk/interpro/api/structure/pdb/entry/pfam/PF00607/?cursor=-source%7Cs%7C3j3q&page_size=1",
+    "results": [
+      {
+        "metadata": {
+          "accession": "3j3q",
+          "name": "Atomic-level structure of the entire HIV-1 capsid",
+          "source_database": "pdb",
+          "experiment_type": "em",
+          "resolution": null
+        },
+        "entries": [
+          {
+            "accession": "PF00607",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 144,
+                    "end": 251,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": 3.8e-8
+              }
+            ],
+            "protein_length": 500,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": null,
+            "chain": "0",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 119,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 11,
+                    "auth_end": 119
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": null
+              }
+            ],
+            "sequence": "PIVQNLQG",
+            "sequence_length": 231,
+            "protein": "q79791"
+          },
+          {
+            "accession": "PF00607",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 144,
+                    "end": 251,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": 3.8e-8
+              }
+            ],
+            "protein_length": 500,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": null,
+            "chain": "1",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 119,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 11,
+                    "auth_end": 119
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": null
+              }
+            ],
+            "sequence": "PIVQNLQG",
+            "sequence_length": 231,
+            "protein": "q79791"
+          },
+          {
+            "accession": "PF00607",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 144,
+                    "end": 251,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": 3.8e-8
+              }
+            ],
+            "protein_length": 500,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": null,
+            "chain": "10",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 119,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 11,
+                    "auth_end": 119
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": null
+              }
+            ],
+            "sequence": "PIVQNLQG",
+            "sequence_length": 231,
+            "protein": "q79791"
+          },
+          {
+            "accession": "PF00607",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 144,
+                    "end": 251,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": 3.8e-8
+              }
+            ],
+            "protein_length": 500,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": null,
+            "chain": "11",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 119,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 11,
+                    "auth_end": 119
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": null
+              }
+            ],
+            "sequence": "PIVQNLQG",
+            "sequence_length": 231,
+            "protein": "q79791"
+          },
+          {
+            "accession": "PF00607",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 144,
+                    "end": 251,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": 3.8e-8
+              }
+            ],
+            "protein_length": 500,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": null,
+            "chain": "12",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 119,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 11,
+                    "auth_end": 119
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": null
+              }
+            ],
+            "sequence": "PIVQNLQG",
+            "sequence_length": 231,
+            "protein": "q79791"
+          },
+          {
+            "accession": "PF00607",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 144,
+                    "end": 251,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": 3.8e-8
+              }
+            ],
+            "protein_length": 500,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": null,
+            "chain": "13",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 119,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 11,
+                    "auth_end": 119
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": null
+              }
+            ],
+            "sequence": "PIVQNLQG",
+            "sequence_length": 231,
+            "protein": "q79791"
+          },
+          {
+            "accession": "PF00607",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 144,
+                    "end": 251,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": 3.8e-8
+              }
+            ],
+            "protein_length": 500,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": null,
+            "chain": "14",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 119,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 11,
+                    "auth_end": 119
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": null
+              }
+            ],
+            "sequence": "PIVQNLQG",
+            "sequence_length": 231,
+            "protein": "q79791"
+          },
+          {
+            "accession": "PF00607",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 144,
+                    "end": 251,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": 3.8e-8
+              }
+            ],
+            "protein_length": 500,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": null,
+            "chain": "15",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 119,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 11,
+                    "auth_end": 119
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": null
+              }
+            ],
+            "sequence": "PIVQNLQG",
+            "sequence_length": 231,
+            "protein": "q79791"
+          },
+          {
+            "accession": "PF00607",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 144,
+                    "end": 251,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": 3.8e-8
+              }
+            ],
+            "protein_length": 500,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": null,
+            "chain": "16",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 119,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 11,
+                    "auth_end": 119
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": null
+              }
+            ],
+            "sequence": "PIVQNLQG",
+            "sequence_length": 231,
+            "protein": "q79791"
+          },
+          {
+            "accession": "PF00607",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 144,
+                    "end": 251,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": 3.8e-8
+              }
+            ],
+            "protein_length": 500,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": null,
+            "chain": "17",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 119,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 11,
+                    "auth_end": 119
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": null
+              }
+            ],
+            "sequence": "PIVQNLQG",
+            "sequence_length": 231,
+            "protein": "q79791"
+          },
+          {
+            "accession": "PF00607",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 144,
+                    "end": 251,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": 3.8e-8
+              }
+            ],
+            "protein_length": 500,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": null,
+            "chain": "18",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 119,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 11,
+                    "auth_end": 119
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": null
+              }
+            ],
+            "sequence": "PIVQNLQG",
+            "sequence_length": 231,
+            "protein": "q79791"
+          },
+          {
+            "accession": "PF00607",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 144,
+                    "end": 251,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": 3.8e-8
+              }
+            ],
+            "protein_length": 500,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": null,
+            "chain": "19",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 119,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 11,
+                    "auth_end": 119
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": null
+              }
+            ],
+            "sequence": "PIVQNLQG",
+            "sequence_length": 231,
+            "protein": "q79791"
+          },
+          {
+            "accession": "PF00607",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 144,
+                    "end": 251,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": 3.8e-8
+              }
+            ],
+            "protein_length": 500,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": null,
+            "chain": "1A",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 119,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 11,
+                    "auth_end": 119
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": null
+              }
+            ],
+            "sequence": "PIVQNLQG",
+            "sequence_length": 231,
+            "protein": "q79791"
+          },
+          {
+            "accession": "PF00607",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 144,
+                    "end": 251,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": 3.8e-8
+              }
+            ],
+            "protein_length": 500,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": null,
+            "chain": "1B",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 119,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 11,
+                    "auth_end": 119
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": null
+              }
+            ],
+            "sequence": "PIVQNLQG",
+            "sequence_length": 231,
+            "protein": "q79791"
+          },
+          {
+            "accession": "PF00607",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 144,
+                    "end": 251,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": 3.8e-8
+              }
+            ],
+            "protein_length": 500,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": null,
+            "chain": "1C",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 119,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 11,
+                    "auth_end": 119
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": null
+              }
+            ],
+            "sequence": "PIVQNLQG",
+            "sequence_length": 231,
+            "protein": "q79791"
+          },
+          {
+            "accession": "PF00607",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 144,
+                    "end": 251,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": 3.8e-8
+              }
+            ],
+            "protein_length": 500,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": null,
+            "chain": "1D",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 119,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 11,
+                    "auth_end": 119
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": null
+              }
+            ],
+            "sequence": "PIVQNLQG",
+            "sequence_length": 231,
+            "protein": "q79791"
+          },
+          {
+            "accession": "PF00607",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 144,
+                    "end": 251,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": 3.8e-8
+              }
+            ],
+            "protein_length": 500,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": null,
+            "chain": "1E",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 119,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 11,
+                    "auth_end": 119
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": null
+              }
+            ],
+            "sequence": "PIVQNLQG",
+            "sequence_length": 231,
+            "protein": "q79791"
+          },
+          {
+            "accession": "PF00607",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 144,
+                    "end": 251,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": 3.8e-8
+              }
+            ],
+            "protein_length": 500,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": null,
+            "chain": "1F",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 119,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 11,
+                    "auth_end": 119
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": null
+              }
+            ],
+            "sequence": "PIVQNLQG",
+            "sequence_length": 231,
+            "protein": "q79791"
+          },
+          {
+            "accession": "PF00607",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 144,
+                    "end": 251,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": 3.8e-8
+              }
+            ],
+            "protein_length": 500,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": null,
+            "chain": "1G",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 119,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 11,
+                    "auth_end": 119
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": null
+              }
+            ],
+            "sequence": "PIVQNLQG",
+            "sequence_length": 231,
+            "protein": "q79791"
+          },
+          {
+            "accession": "PF00607",
+            "entry_protein_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 144,
+                    "end": 251,
+                    "dc-status": "CONTINUOUS"
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": 3.8e-8
+              }
+            ],
+            "protein_length": 500,
+            "source_database": "pfam",
+            "entry_type": "domain",
+            "entry_integrated": null,
+            "chain": "1H",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 11,
+                    "end": 119,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 11,
+                    "auth_end": 119
+                  }
+                ],
+                "representative": false,
+                "model": "PF00607",
+                "score": null
+              }
+            ],
+            "sequence": "PIVQNLQG",
+            "sequence_length": 231,
+            "protein": "q79791"
+          }
+        ]
+      }
+    ]
+  },
+  "entryCd00165With6zj3": {
+    "count": 2135,
+    "next": "https://www.ebi.ac.uk/interpro/api/structure/pdb/entry/cdd/cd00165/?cursor=source%7Cs%7C6zj3&page_size=1",
+    "previous": "https://www.ebi.ac.uk/interpro/api/structure/pdb/entry/cdd/cd00165/?cursor=-source%7Cs%7C6zj3&page_size=1",
+    "results": [
+      {
+        "metadata": {
+          "accession": "6zj3",
+          "name": "Cryo-EM structure of the highly atypical cytoplasmic ribosome of Euglena gracilis",
+          "source_database": "pdb",
+          "experiment_type": "em",
+          "resolution": 3.15
+        },
+        "entries": [
+          {
+            "accession": "cd00165",
+            "entry_protein_locations": [],
+            "protein_length": null,
+            "source_database": "cdd",
+            "entry_type": "domain",
+            "entry_integrated": null,
+            "chain": "SD",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 107,
+                    "end": 149,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 107,
+                    "auth_end": 149
+                  }
+                ],
+                "representative": false,
+                "model": "cd00165",
+                "score": null
+              }
+            ],
+            "sequence": "MVRKYRNF",
+            "sequence_length": 196,
+            "protein": null
+          },
+          {
+            "accession": "cd00165",
+            "entry_protein_locations": [],
+            "protein_length": null,
+            "source_database": "cdd",
+            "entry_type": "domain",
+            "entry_integrated": null,
+            "chain": "SE",
+            "entry_structure_locations": [
+              {
+                "fragments": [
+                  {
+                    "start": 51,
+                    "end": 112,
+                    "dc-status": "CONTINUOUS",
+                    "auth_start": 51,
+                    "auth_end": 112
+                  }
+                ],
+                "representative": false,
+                "model": "cd00165",
+                "score": null
+              }
+            ],
+            "sequence": "MARGPKKH",
+            "sequence_length": 271,
+            "protein": null
+          }
+        ]
+      }
+    ]
+  },
+  "entryPF17818Detail": {
+    "metadata": {
+      "accession": "PF17818",
+      "entry_id": null,
+      "type": "family",
+      "go_terms": null,
+      "source_database": "pfam",
+      "member_databases": null,
+      "integrated": null,
+      "hierarchy": null,
+      "name": {
+        "name": "Keratinocyte-associated gene product",
+        "short": "KCT2"
+      },
+      "description": [
+        {
+          "text": "<p>This entry includes Keratinocyte-associated transmembrane protein 2 found in humans. Functional studies show that KCP2 localises to the endoplasmic reticulum, consistent with a role in protein biosynthesis, and has a functional KKxx retrieval signal at its cytosolic C-terminus [[cite:PUB00138330]].</p>",
+          "llm": false,
+          "checked": false,
+          "updated": false
+        }
+      ],
+      "wikipedia": null,
+      "literature": {
+        "PUB00138330": {
+          "PMID": 22266900,
+          "ISBN": null,
+          "volume": "125",
+          "issue": "Pt 1",
+          "year": 2012,
+          "title": "Keratinocyte-associated protein 2 is a bona fide subunit of the mammalian oligosaccharyltransferase.",
+          "URL": null,
+          "raw_pages": "220-32",
+          "medline_journal": "J Cell Sci",
+          "ISO_journal": "J Cell Sci",
+          "authors": ["Roboti P", "High S."],
+          "DOI_URL": null
+        }
+      },
+      "set_info": null,
+      "overlaps_with": null,
+      "counters": {
+        "subfamilies": 0,
+        "domain_architectures": 15,
+        "interactions": 0,
+        "matches": 1844,
+        "pathways": 0,
+        "proteins": 1843,
+        "proteomes": 978,
+        "sets": 0,
+        "structural_models": {
+          "alphafold": 1595
+        },
+        "structures": 0,
+        "taxa": 3208
+      },
+      "entry_annotations": {
+        "hmm": 0,
+        "logo": 0,
+        "alignment:seed": 5,
+        "alignment:full": 1772
+      },
+      "cross_references": {},
+      "is_llm": false,
+      "is_reviewed_llm": false,
+      "is_updated_llm": false,
+      "representative_structure": null
+    }
+  }
+}

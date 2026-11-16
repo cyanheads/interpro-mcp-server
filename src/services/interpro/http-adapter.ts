@@ -9,7 +9,7 @@ import { request } from 'node:https';
 import type { ConnectionOptions } from 'node:tls';
 import {
   JsonRpcErrorCode,
-  type McpError,
+  McpError,
   serviceUnavailable,
   timeout,
 } from '@cyanheads/mcp-ts-core/errors';
@@ -18,6 +18,28 @@ import { API_BASE } from './routing.js';
 
 /** Maximum decoded response size, shared by native and injected transports. */
 export const MAX_RESPONSE_BYTES = 4 * 1024 * 1024;
+/**
+ * One tool call's wall-clock budget, below the 60-second default MCP client request timeout. It is
+ * also the transport's whole-response backstop, so each service's tighter attempt bound ends a
+ * request first.
+ */
+export const CALL_BUDGET_MS = 50_000;
+/**
+ * Rethrows withRetry's deadline (a `retry_deadline_exceeded` without `retryable`, which times one
+ * request) as `budgetError`, the call-budget error the caller sees; other errors pass through.
+ */
+export const toCallBudget = (
+  error: unknown,
+  budgetError: (options: ErrorOptions) => McpError,
+): never => {
+  if (
+    error instanceof McpError &&
+    error.data?.reason === 'retry_deadline_exceeded' &&
+    error.data.retryable !== true
+  )
+    throw budgetError({ cause: error });
+  throw error;
+};
 /** Fetch-compatible injection seam; callers supply the composed request signal. */
 export type InterproFetch = (url: string, init: RequestInit) => Promise<Response>;
 /**
@@ -31,10 +53,12 @@ const ALLOWED_PATH_PREFIXES = [
 ] as const;
 
 /**
- * Collect one response without following redirects or retaining malformed connections, failing
- * as `upstream_timeout` when the whole response outlasts `attemptMs`.
+ * The native transport for every request on the fixed origin. It collects one response without
+ * following redirects or retaining malformed connections, failing as `upstream_timeout` only when
+ * the whole response outlasts {@link CALL_BUDGET_MS}; callers bound each attempt more tightly
+ * through the request signal.
  */
-const collect = (url: string, init: RequestInit, attemptMs: number) =>
+export const interproHttpFetch: InterproFetch = (url, init) =>
   new Promise<Response>((resolve, reject) => {
     const target = new URL(url);
     if (
@@ -74,7 +98,7 @@ const collect = (url: string, init: RequestInit, attemptMs: number) =>
             retryable: true,
           }),
         ),
-      attemptMs,
+      CALL_BUDGET_MS,
     );
     const connectionOptions: ConnectionOptions = { ALPNProtocols: ['http/1.1'] };
     const body = typeof init.body === 'string' ? init.body : undefined;
@@ -239,12 +263,3 @@ export async function upstreamStatusError(response: Response, service: string): 
     },
   });
 }
-
-/** A transport whose whole-response backstop is `attemptMs`; callers bound attempts more tightly. */
-export const createInterproHttpFetch =
-  (attemptMs: number): InterproFetch =>
-  (url, init) =>
-    collect(url, init, attemptMs);
-
-/** The InterPro API transport: small JSON pages, so 15 seconds bounds each whole response. */
-export const interproHttpFetch: InterproFetch = createInterproHttpFetch(15_000);

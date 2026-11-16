@@ -3,9 +3,13 @@
  * @module tests/tools/interpro-list-reference.tool
  */
 import { runToolContract } from '@cyanheads/mcp-ts-core/testing';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('interpro_list_reference contract', () => {
+  // Load the module graph once, outside any test; each test still re-imports it after resetModules.
+  beforeAll(async () => {
+    await import('@/mcp-server/tools/definitions/interpro-list-reference.tool.js');
+  });
   beforeEach(() => {
     vi.resetModules();
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date', 'performance'] });
@@ -44,6 +48,47 @@ describe('interpro_list_reference contract', () => {
       if (topic === 'taxa') expect(text).toContain('9606');
     },
   );
+
+  it('lists the taxonomy root as all organisms ahead of the nine unchanged common examples', async () => {
+    const { definition, fetch } = await setup();
+    const result = await runToolContract(definition, { topic: 'taxa' });
+    const { items } = result.structuredContent as { items: Record<string, string>[] };
+    const root = {
+      id: '1',
+      label: 'All organisms',
+      taxonId: '1',
+      description:
+        'NCBI taxonomy root, the ancestor of every organism; passed as interpro_find_proteins_by_domain taxonId, it selects all organisms.',
+    };
+    expect(items[0]).toEqual(root);
+    expect(items.slice(1)).toEqual(
+      [
+        ['9606', 'Human'],
+        ['10090', 'Mouse'],
+        ['10116', 'Rat'],
+        ['7955', 'Zebrafish'],
+        ['7227', 'Fruit fly'],
+        ['6239', 'Nematode'],
+        ['559292', 'Budding yeast'],
+        ['3702', 'Arabidopsis'],
+        ['562', 'Escherichia coli'],
+      ].map(([taxonId, label]) => ({
+        id: taxonId,
+        label,
+        taxonId,
+        description: 'Common taxonomy example; this is not an exhaustive taxonomy.',
+      })),
+    );
+    const text = result.content
+      .filter((block) => block.type === 'text')
+      .map((block) => block.text)
+      .join('\n');
+    expect(JSON.parse(text.match(/`+json\n([\s\S]*?)\n`+/)?.[1] ?? '')).toEqual(
+      result.structuredContent,
+    );
+    expect(text).toContain(root.description);
+    expect(fetch).not.toHaveBeenCalled();
+  });
 
   it('lists every entry type the search filter accepts, including region', async () => {
     const { definition } = await setup();
@@ -151,14 +196,18 @@ describe('interpro_list_reference contract', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
+  /**
+   * An upstream timeout is not retried inside the call, since the query is still running upstream,
+   * yet stays retryable for the caller; other transient failures get one retry.
+   */
   it.each([
-    ['upstream_rejected', 403, false],
-    ['upstream_unavailable', 503, true],
-    ['upstream_timeout', 504, true],
-    ['upstream_rate_limited', 429, true],
+    ['upstream_rejected', 403, false, 1],
+    ['upstream_unavailable', 503, true, 2],
+    ['upstream_timeout', 504, true, 1],
+    ['upstream_rate_limited', 429, true, 2],
   ] as const)(
-    'renders declared %s recovery on both surfaces',
-    async (reason, status, retryable) => {
+    'renders declared %s recovery for HTTP %i on both surfaces',
+    async (reason, status, retryable, attempts) => {
       const { definition, fetch } = await setup([
         new Response(null, { status }),
         new Response(null, { status }),
@@ -178,7 +227,7 @@ describe('interpro_list_reference contract', () => {
         .join('\n');
       expect(text).toContain(reason);
       expect(text).toContain(recovery ?? 'missing recovery');
-      expect(fetch).toHaveBeenCalledTimes(retryable ? 2 : 1);
+      expect(fetch).toHaveBeenCalledTimes(attempts);
     },
   );
 

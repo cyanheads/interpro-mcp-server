@@ -325,24 +325,25 @@ describe('InterproService at the HTTP seam', () => {
   });
 
   it.each([
-    [400, 'upstream_rejected', false],
-    [401, 'upstream_rejected', false],
-    [403, 'upstream_rejected', false],
-    [425, 'upstream_rejected', false],
-    [501, 'upstream_unavailable', false],
-    [408, 'upstream_timeout', true],
-    [504, 'upstream_timeout', true],
-    [503, 'upstream_unavailable', true],
-    [429, 'upstream_rate_limited', true],
-  ] as const)('maps HTTP %i and bounds retries', async (status, reason, retryable) => {
+    [400, 'upstream_rejected', false, 1],
+    [401, 'upstream_rejected', false, 1],
+    [403, 'upstream_rejected', false, 1],
+    [425, 'upstream_rejected', false, 1],
+    [501, 'upstream_unavailable', false, 1],
+    // The query is still running upstream: retryable for the caller, never repeated in-call.
+    [408, 'upstream_timeout', true, 1],
+    [504, 'upstream_timeout', true, 1],
+    [503, 'upstream_unavailable', true, 2],
+    [429, 'upstream_rate_limited', true, 2],
+  ] as const)('maps HTTP %i and bounds retries', async (status, reason, retryable, requests) => {
     const { service, call, fetch } = await serviceFor([
       new Response('private upstream diagnostics', { status }),
       new Response(null, { status }),
     ]);
     await expect(settle(service.request(call, ['entry'], {}, z.object({})))).rejects.toMatchObject({
-      data: { reason, retryable },
+      data: { reason, retryable, status },
     });
-    expect(fetch).toHaveBeenCalledTimes(retryable ? 2 : 1);
+    expect(fetch).toHaveBeenCalledTimes(requests);
   });
 
   it.each(['{bad', '{"wrong":true}'])(
@@ -543,33 +544,232 @@ describe('InterproService at the HTTP seam', () => {
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 
+  /** What a caller receives when the call's 50-second budget runs out, wherever it ran out. */
+  const BUDGET_EXHAUSTED = {
+    code: -32004,
+    message: 'InterPro call exhausted its 50-second budget.',
+    data: { reason: 'retry_deadline_exceeded', retryable: true, deadlineMs: 50_000 },
+  };
+  const expectBudgetExhausted = (error: unknown) => {
+    expect(error).toMatchObject({ code: BUDGET_EXHAUSTED.code, message: BUDGET_EXHAUSTED.message });
+    expect((error as { data?: unknown }).data).toEqual(BUDGET_EXHAUSTED.data);
+  };
+
   it('rejects an already exhausted shared call budget before I/O', async () => {
     const { service, call, fetch } = await serviceFor([]);
     await vi.advanceTimersByTimeAsync(50_001);
-    await expect(service.request(call, ['entry'], {}, z.object({}))).rejects.toMatchObject({
-      data: { reason: 'retry_deadline_exceeded' },
-    });
+    expectBudgetExhausted(
+      await service.request(call, ['entry'], {}, z.object({})).catch((error: unknown) => error),
+    );
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  it('aborts each network attempt at fifteen seconds and retries only once', async () => {
-    const { service, call, fetch } = await serviceFor([]);
-    const attempts: number[] = [];
-    fetch.mockImplementation(
-      (_url?: string, init?: RequestInit) =>
-        new Promise<Response>((_resolve, reject) => {
-          attempts.push(performance.now());
-          init?.signal?.addEventListener('abort', () => reject(init.signal?.reason), {
-            once: true,
-          });
-        }),
-    );
-    await expect(settle(service.request(call, ['entry'], {}, z.object({})))).rejects.toMatchObject({
-      data: { reason: 'upstream_timeout', retryable: true },
+  /** A request that answers after `ms`, or rejects with its signal's reason once aborted. */
+  const answerAfter =
+    (ms: number, response: () => Response) => (_url?: string, init?: RequestInit) =>
+      new Promise<Response>((resolve, reject) => {
+        const timer = setTimeout(() => resolve(response()), ms);
+        init?.signal?.addEventListener(
+          'abort',
+          () => {
+            clearTimeout(timer);
+            reject(init.signal?.reason);
+          },
+          { once: true },
+        );
+      });
+  /** A request InterPro never answers; it settles only when its signal aborts. */
+  const hang = (_url?: string, init?: RequestInit) =>
+    new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(init.signal?.reason), { once: true });
     });
-    expect(fetch).toHaveBeenCalledTimes(2);
-    expect(performance.now()).toBeGreaterThanOrEqual((attempts[1] ?? 0) + 15_000);
+  /** When a promise settled on the fake clock, and how. */
+  const timed = <T>(promise: Promise<T>) =>
+    promise.then(
+      (value) => ({ value, at: performance.now() }),
+      (error: unknown) => ({ error, at: performance.now() }),
+    );
+  const signalOf = (fetch: { mock: { calls: unknown[][] } }, index: number) =>
+    (fetch.mock.calls[index]?.[1] as RequestInit | undefined)?.signal as AbortSignal;
+
+  it('returns a page InterPro answers at twenty-five seconds after exactly one request', async () => {
+    const { service, call, fetch } = await serviceFor([]);
+    fetch.mockImplementation(answerAfter(25_000, () => Response.json({ count: 41 })));
+    const pending = timed(service.request(call, ['entry'], {}, z.object({ count: z.number() })));
+    await vi.runAllTimersAsync();
+    expect(await pending).toMatchObject({ value: { data: { count: 41 } }, at: 25_000 });
+    expect(fetch).toHaveBeenCalledTimes(1);
     expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('ends a request still open at thirty-two seconds with its own bound, after one request', async () => {
+    const { service, call, fetch } = await serviceFor([]);
+    fetch.mockImplementation(hang);
+    const pending = timed(service.request(call, ['entry'], {}, z.object({})));
+    await vi.runAllTimersAsync();
+    const outcome = await pending;
+    // The 50-second call budget sits well above the bound, so only the attempt bound ends it here.
+    expect(outcome.at).toBe(32_000);
+    expect(outcome).toMatchObject({
+      error: {
+        message: 'InterPro attempt deadline elapsed.',
+        data: { reason: 'upstream_timeout', retryable: true },
+      },
+    });
+    expect(signalOf(fetch, 0).reason).toBe('error' in outcome && outcome.error);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('retries a network error once and returns the second answer', async () => {
+    const { service, call, fetch } = await serviceFor([]);
+    fetch
+      .mockRejectedValueOnce(new TypeError('fetch failed'))
+      .mockResolvedValueOnce(Response.json({ count: 0 }));
+    const response = await settle(
+      service.request(call, ['entry'], {}, z.object({ count: z.number() })),
+    );
+    expect(response.data).toEqual({ count: 0 });
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('ends a chained request with twenty seconds left by the call deadline alone, reporting the call budget', async () => {
+    const { service, call, fetch } = await serviceFor([]);
+    fetch
+      .mockImplementationOnce(answerAfter(30_000, () => Response.json({})))
+      .mockImplementationOnce(hang);
+    const pending = timed(
+      (async () => {
+        await service.request(call, ['set', 'pfam', 'CL0023'], {}, z.object({}));
+        return await service.request(
+          call,
+          ['entry', 'pfam', 'set', 'pfam', 'CL0023'],
+          {},
+          z.object({}),
+        );
+      })(),
+    );
+    await vi.advanceTimersByTimeAsync(31_000);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    /**
+     * One clock ends the attempt: the retry deadline. A second attempt timer armed for the same
+     * instant could fire first and label the expiry upstream_timeout.
+     */
+    expect(vi.getTimerCount()).toBe(1);
+    await vi.runAllTimersAsync();
+    const outcome = await pending;
+    expect(outcome.at).toBe(50_000);
+    expectBudgetExhausted('error' in outcome && outcome.error);
+    // The retry ladder's own diagnostics stay on the cause: it began with 20 seconds left.
+    expect('error' in outcome && (outcome.error as Error).cause).toMatchObject({
+      data: { reason: 'retry_deadline_exceeded', deadlineMs: 20_000, retryAttempts: 1 },
+    });
+    // The member read is never restarted.
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(signalOf(fetch, 1).reason).toMatchObject({ name: 'TimeoutError' });
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('lets caller cancellation win over the attempt bound and every retry timer', async () => {
+    const controller = new AbortController();
+    const { service, fetch } = await serviceFor([]);
+    fetch.mockImplementation(hang);
+    const ctx = createMockContext({ signal: controller.signal });
+    const pending = timed(service.request(service.begin(ctx), ['entry'], {}, z.object({})));
+    await vi.advanceTimersByTimeAsync(31_999);
+    controller.abort(new Error('caller cancelled'));
+    const outcome = await pending;
+    expect(outcome.at).toBe(31_999);
+    expect(outcome).toMatchObject({ error: { message: 'caller cancelled' } });
+    expect(signalOf(fetch, 0).aborted).toBe(true);
+    expect(signalOf(fetch, 0).reason).toMatchObject({ message: 'caller cancelled' });
+    await vi.runAllTimersAsync();
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('lets caller cancellation win when it lands in the same tick as the attempt bound', async () => {
+    const controller = new AbortController();
+    const { service, fetch } = await serviceFor([]);
+    fetch.mockImplementation(hang);
+    const ctx = createMockContext({ signal: controller.signal });
+    const pending = timed(service.request(service.begin(ctx), ['entry'], {}, z.object({})));
+    await vi.advanceTimersByTimeAsync(31_999);
+    // The bound fires synchronously at 32 s; the caller aborts before the fetch rejection settles.
+    vi.advanceTimersByTime(1);
+    const reason = new Error('caller cancelled');
+    controller.abort(reason);
+    const outcome = await pending;
+    expect(outcome.at).toBe(32_000);
+    expect('error' in outcome && outcome.error).toBe(reason);
+    // The attempt saw the bound first, so both had fired when the request settled.
+    expect(signalOf(fetch, 0).reason).toMatchObject({ data: { reason: 'upstream_timeout' } });
+    await vi.runAllTimersAsync();
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('starts a second and third request beside a slow one, one start per second', async () => {
+    const { service, fetch } = await serviceFor([]);
+    const starts: number[] = [];
+    fetch.mockImplementation((url?: string, init?: RequestInit) => {
+      starts.push(performance.now());
+      return starts.length === 1
+        ? answerAfter(30_000, () => Response.json({}))(url, init)
+        : Promise.resolve(Response.json({}));
+    });
+    const ctx = createMockContext();
+    const calls = Array.from({ length: 3 }, () =>
+      timed(service.request(service.begin(ctx), ['entry'], {}, z.object({}))),
+    );
+    await vi.runAllTimersAsync();
+    const [slow, second, third] = await Promise.all(calls);
+    expect(starts).toEqual([0, 1_000, 2_000]);
+    expect([second?.at, third?.at]).toEqual([1_000, 2_000]);
+    expect(slow).toMatchObject({ at: 30_000, value: { data: {} } });
+    for (const outcome of [slow, second, third]) expect(outcome).not.toHaveProperty('error');
+  });
+
+  it('holds a fourth request while three are in flight, shedding it at its wait budget', async () => {
+    const { service, fetch } = await serviceFor([]);
+    const starts: number[] = [];
+    fetch.mockImplementation((url?: string, init?: RequestInit) => {
+      starts.push(performance.now());
+      return answerAfter(30_000, () => Response.json({}))(url, init);
+    });
+    const ctx = createMockContext();
+    const held = Array.from({ length: 3 }, () =>
+      timed(service.request(service.begin(ctx), ['entry'], {}, z.object({}))),
+    );
+    await vi.advanceTimersByTimeAsync(2_500);
+    const fourth = timed(service.request(service.begin(ctx), ['entry'], {}, z.object({})));
+    await vi.runAllTimersAsync();
+    expect(await fourth).toMatchObject({
+      at: 7_500,
+      error: { data: { reason: 'pacer_shed', shedKind: 'wait_elapsed' } },
+    });
+    expect(starts).toEqual([0, 1_000, 2_000]);
+    for (const outcome of await Promise.all(held)) expect(outcome).not.toHaveProperty('error');
+  });
+
+  it('sends nothing for a request whose slot opens at its call deadline', async () => {
+    const { service, fetch } = await serviceFor([]);
+    fetch.mockImplementation(hang);
+    const ctx = createMockContext();
+    const late = service.begin(ctx);
+    await vi.advanceTimersByTimeAsync(18_000);
+    // Reads dispatched at 18, 19, and 20 s hold every slot until their bounds end at 50, 51, 52 s.
+    const held = Array.from({ length: 3 }, () =>
+      timed(service.request(service.begin(ctx), ['entry'], {}, z.object({}))),
+    );
+    await vi.advanceTimersByTimeAsync(27_500);
+    const pending = timed(service.request(late, ['entry'], {}, z.object({})));
+    await vi.runAllTimersAsync();
+    const outcome = await pending;
+    expect(outcome.at).toBe(50_000);
+    expectBudgetExhausted('error' in outcome && outcome.error);
+    expect(fetch).toHaveBeenCalledTimes(3);
+    await Promise.all(held);
   });
 
   it('sheds saturated queued demand at its five-second wait budget before network I/O', async () => {

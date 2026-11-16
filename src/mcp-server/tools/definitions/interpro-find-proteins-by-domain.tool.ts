@@ -27,6 +27,8 @@ import {
 import { UPSTREAM_ERRORS } from '@/services/interpro/upstream-errors.js';
 
 const MAX_LIMIT = 50;
+/** NCBI taxonomy root, the ancestor of every organism: as taxonId it selects all organisms. */
+const ROOT_TAXON = '1';
 const QuerySchema = z.object({
   accession: z.string().describe('Canonical entry accession.'),
   sourceDatabase: SourceDatabaseSchema,
@@ -125,7 +127,7 @@ const ArchitectureOutputSchema = ArchitectureResultSchema.extend({
 export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_domain', {
   title: 'Find proteins by domain',
   description:
-    'Find UniProt proteins carrying an InterPro or member signature. Defaults to reviewed human proteins; reviewedOnly=false includes all review statuses in the chosen taxon. Optional isFragment filters fragment annotations; false does not prove sequence completeness. architectureId intersects the provider Pfam grouping with these selections, without implying functional equivalence; metadata-only hits disclose unavailable entry and taxon details without per-protein requests. proteomeId intersects one UniProt proteome, such as protein.proteome from interpro_get_protein_domains, with every selection including taxonId.',
+    'Find UniProt proteins carrying an InterPro or member signature. Defaults to reviewed human proteins; taxonId 1 selects all organisms, and reviewedOnly=false includes all review statuses in the chosen taxon. Optional isFragment filters fragment annotations; false does not prove sequence completeness. architectureId intersects the provider Pfam grouping with these selections, without implying functional equivalence; metadata-only hits disclose unavailable entry and taxon details without per-protein requests. proteomeId intersects one UniProt proteome, such as protein.proteome from interpro_get_protein_domains, with every selection including taxonId.',
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
   auth: ['tool:interpro_find_proteins_by_domain:read'],
   input: z.object({
@@ -140,9 +142,14 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
         .string()
         .trim()
         .max(10)
-        .regex(/^[1-9][0-9]*$/)
+        .regex(/^[1-9][0-9]*$/, {
+          error:
+            'Expected a positive NCBI taxonomy identifier such as 9606, or 1 for all organisms.',
+        })
         .default('9606'),
-    ).describe('Positive NCBI taxonomy identifier of at most 10 digits; defaults to human 9606.'),
+    ).describe(
+      'Positive NCBI taxonomy identifier of at most 10 digits; defaults to human 9606, and 1, the taxonomy root, selects all organisms.',
+    ),
     reviewedOnly: z
       .boolean()
       .default(true)
@@ -170,7 +177,7 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
         .regex(/^[Uu][Pp][0-9]{9}$/)
         .toUpperCase(),
     ).describe(
-      'Optional UniProt proteome accession, UP followed by 9 digits, such as protein.proteome from interpro_get_protein_domains. taxonId still applies, including its 9606 default: set taxonId to the mapped protein.source_organism.taxId or an ancestor, or no proteins match.',
+      'Optional UniProt proteome accession, UP followed by 9 digits, such as protein.proteome from interpro_get_protein_domains. taxonId still applies, including its 9606 default: set taxonId to the mapped protein.source_organism.taxId or an ancestor, such as 1 for all organisms, or no proteins match.',
     ),
     limit: z
       .number()
@@ -234,6 +241,15 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
       retryable: false,
       recovery:
         'Call interpro_search_entries for a current replacement; consult interpro_list_reference with topic databases for source names.',
+      thrownBy: 'service',
+    },
+    {
+      reason: 'retry_deadline_exceeded',
+      code: JsonRpcErrorCode.Timeout,
+      when: 'The shared fifty-second budget expires while the protein page request is retried.',
+      retryable: true,
+      recovery:
+        'Retry interpro_find_proteins_by_domain after waiting, with a smaller limit for a lighter page.',
       thrownBy: 'service',
     },
     {
@@ -349,10 +365,33 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
     };
     ctx.enrich.total(page.total);
     ctx.enrich.echo(JSON.stringify(query));
-    if (!proteins.length)
+    if (!proteins.length) {
+      // Offer only the selections that can still widen this call.
+      const levers = [
+        ...(query.reviewedOnly ? ['with reviewedOnly=false'] : []),
+        ...(query.taxonId !== ROOT_TAXON
+          ? ['with taxonId 1 for all organisms or another taxonId']
+          : []),
+        ...(query.isFragment !== undefined
+          ? ['without isFragment to include both fragment annotation groups']
+          : []),
+      ];
       notices.push(
-        `No proteins matched the applied entry and selection. Retry interpro_find_proteins_by_domain with reviewedOnly=false or another taxonId${input.isFragment !== undefined ? ', or omit isFragment to include both fragment annotation groups' : ''}; use interpro_get_entry to verify the accession.${query.proteomeId ? ` taxonId ${query.taxonId} still applies with proteomeId ${query.proteomeId}: set taxonId to protein.source_organism.taxId from interpro_get_protein_domains for a protein in that proteome, or an ancestor taxon, and confirm proteomeId against its protein.proteome.` : ''}`,
+        levers.length
+          ? `No proteins matched the applied entry and selection. Retry interpro_find_proteins_by_domain ${levers.join(', or ')}; use interpro_get_entry to verify the accession.`
+          : 'No proteins matched the applied entry and selection. Use interpro_get_entry to verify the accession.',
       );
+      if (query.architectureId)
+        notices.push(
+          'The architectureId grouping may not include this entry: omit architectureId, or take protein.ida_accession from interpro_get_protein_domains for a protein that carries the entry.',
+        );
+      if (query.proteomeId)
+        notices.push(
+          query.taxonId === ROOT_TAXON
+            ? `taxonId 1 covers every proteome's organism, so confirm proteomeId ${query.proteomeId} against protein.proteome from interpro_get_protein_domains for a protein in that proteome.`
+            : `taxonId ${query.taxonId} still applies with proteomeId ${query.proteomeId}: set taxonId to protein.source_organism.taxId from interpro_get_protein_domains for a protein in that proteome, or an ancestor taxon such as 1, and confirm proteomeId against its protein.proteome.`,
+        );
+    }
     if (next) {
       notices.push(pageGuidance('interpro_find_proteins_by_domain', 'proteins', limit, MAX_LIMIT));
       ctx.enrich.truncated({ shown: proteins.length, cap: limit, guidance: notices.join(' ') });

@@ -13,20 +13,46 @@ import {
 } from '@cyanheads/mcp-ts-core/errors';
 import { createPacer, defaultIsTransient, withRetry } from '@cyanheads/mcp-ts-core/utils';
 import {
+  CALL_BUDGET_MS,
   type InterproFetch,
   interproHttpFetch,
   MAX_RESPONSE_BYTES,
+  toCallBudget,
   upstreamStatusError,
 } from './http-adapter.js';
 import { apiUrl } from './routing.js';
 import { isAccession, JsonObjectSchema, JsonValueSchema } from './schemas.js';
 
+/**
+ * One request start per second toward EBI. Up to three run at once, so an uncached page that holds
+ * its slot for half a minute does not shed every other call queued behind it.
+ */
 const pacer = createPacer({
   name: 'interpro',
   minStartGapMs: 1000,
-  maxConcurrent: 1,
+  maxConcurrent: 3,
   maxQueueDepth: 20,
 });
+/**
+ * Most one attempt may wait, further bounded by what remains of the call. InterPro computes an
+ * uncached query against its own 30-second timeout and answers 408 when it expires; this lets that
+ * answer arrive first.
+ */
+const ATTEMPT_MS = 32_000;
+/**
+ * The retry policy, minus `upstream_timeout` (this attempt bound, HTTP 408, or HTTP 504): the query
+ * is still running upstream, and an identical request starts a separate computation that cannot
+ * finish sooner. The error stays `retryable: true` for the caller, whose later call can succeed.
+ */
+const isTransient = (error: unknown) =>
+  !(error instanceof McpError && error.data?.reason === 'upstream_timeout') &&
+  defaultIsTransient(error);
+const budgetExhausted = (options?: ErrorOptions) =>
+  timeout(
+    'InterPro call exhausted its 50-second budget.',
+    { reason: 'retry_deadline_exceeded', retryable: true, deadlineMs: CALL_BUDGET_MS },
+    options,
+  );
 /** One deadline shared by every distinct operation of a tool invocation. */
 export interface InterproCall {
   readonly ctx: Context;
@@ -41,7 +67,8 @@ export interface MissingRecord {
     | 'entry_not_found'
     | 'protein_not_found'
     | 'clan_not_found'
-    | 'structure_not_found';
+    | 'structure_not_found'
+    | 'isoform_not_found';
   readonly sourceDatabase: string;
 }
 /** Upstream fields of a 410 body that are echoed in the withdrawal error. */
@@ -63,6 +90,7 @@ const RECORD_NOUNS = {
   clan_not_found: 'set',
   protein_not_found: 'protein',
   structure_not_found: 'structure',
+  isoform_not_found: 'isoform',
 } as const;
 /** Name a record in a caller-facing message, e.g. `entry PF00870 in pfam`. */
 const describeRecord = ({ reason, accession, sourceDatabase }: MissingRecord) =>
@@ -85,7 +113,7 @@ export class InterproService {
 
   /** Start a 50-second call budget, once per handler invocation. */
   begin(ctx: Context): InterproCall {
-    return { ctx, deadline: performance.now() + 50_000 };
+    return { ctx, deadline: performance.now() + CALL_BUDGET_MS };
   }
 
   /** Fetch, classify, parse and validate one fixed-origin operation within a shared call. */
@@ -98,29 +126,34 @@ export class InterproService {
   ): Promise<InterproResponse<z.output<T>>> {
     call.ctx.signal.throwIfAborted();
     const remaining = call.deadline - performance.now();
-    if (remaining <= 0)
-      throw timeout('InterPro call exhausted its 50-second budget.', {
-        reason: 'retry_deadline_exceeded',
-        retryable: true,
-        deadlineMs: 50_000,
-      });
+    if (remaining <= 0) throw budgetExhausted();
     const sourceUrl = apiUrl(segments, query);
     return await withRetry(
       async ({ signal }) =>
         pacer.run(
           async () => {
-            const attemptMs = Math.min(15_000, call.deadline - performance.now());
+            const remainingMs = call.deadline - performance.now();
+            // A slot that opens at the deadline sends nothing.
+            if (remainingMs <= 0) throw budgetExhausted();
             const controller = new AbortController();
-            const timer = setTimeout(
-              () =>
-                controller.abort(
-                  timeout('InterPro attempt deadline elapsed.', {
-                    reason: 'upstream_timeout',
-                    retryable: true,
-                  }),
-                ),
-              Math.max(0, attemptMs),
-            );
+            /**
+             * The attempt bound is armed only when it ends before the call does. Otherwise the
+             * retry deadline alone ends the attempt, so an expiry at the call deadline is always
+             * retry_deadline_exceeded, never a same-instant upstream_timeout.
+             */
+            const timer =
+              remainingMs > ATTEMPT_MS
+                ? setTimeout(
+                    () =>
+                      controller.abort(
+                        timeout('InterPro attempt deadline elapsed.', {
+                          reason: 'upstream_timeout',
+                          retryable: true,
+                        }),
+                      ),
+                    ATTEMPT_MS,
+                  )
+                : undefined;
             const attemptSignal = AbortSignal.any([signal, controller.signal, call.ctx.signal]);
             try {
               const response = await this.fetch(sourceUrl, {
@@ -216,11 +249,7 @@ export class InterproService {
                   { reason: 'upstream_shape_invalid', retryable: false },
                 );
               attemptSignal.throwIfAborted();
-              if (performance.now() > call.deadline)
-                throw timeout('InterPro call exhausted its total budget.', {
-                  reason: 'retry_deadline_exceeded',
-                  retryable: true,
-                });
+              if (performance.now() > call.deadline) throw budgetExhausted();
               return { data: parsed.data, sourceUrl, headers: response.headers };
             } catch (cause) {
               if (call.ctx.signal.aborted) throw call.ctx.signal.reason;
@@ -246,9 +275,9 @@ export class InterproService {
         maxRetries: 1,
         baseDelayMs: 1000,
         maxDelayMs: 3000,
-        isTransient: defaultIsTransient,
+        isTransient,
       },
-    );
+    ).catch((error) => toCallBudget(error, budgetExhausted));
   }
 
   /** Retrieve a coherent current release and its complete database-count object. */
