@@ -42,7 +42,7 @@ const RowSchema = z
 export const interproSearchEntries = tool('interpro_search_entries', {
   title: 'Search InterPro entries',
   description:
-    'Search InterPro entries or member signatures by text or entry type. GO filters require sourceDatabase interpro; integratedInto selects member signatures for an InterPro accession. Results are cursor-paged; use interpro_get_entry for full metadata.',
+    'Search InterPro entries and member signatures by a case-insensitive substring of the full name, short name, or accession, preserving word order and punctuation. Filter by entry type or GO annotation. GO filters require sourceDatabase interpro; integratedInto selects member signatures for an InterPro accession. Results are cursor-paged; use interpro_get_entry for full metadata.',
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
   auth: ['tool:interpro_search_entries:read'],
   input: z.object({
@@ -50,7 +50,7 @@ export const interproSearchEntries = tool('interpro_search_entries', {
       'Database to search; defaults to interpro.',
     ),
     query: optionalString(z.string().trim().min(1).max(300)).describe(
-      'Text to search; omit all filters to browse the database.',
+      'Case-insensitive substring of the full name, short name, or accession. Word order and punctuation matter. Descriptions are outside the search. Omit all filters to browse the database.',
     ),
     entryType: optionalString(EntryTypeSchema).describe('Entry annotation type.'),
     goTerm: optionalString(
@@ -223,6 +223,10 @@ export const interproSearchEntries = tool('interpro_search_entries', {
             ? ' Use interpro_get_entry with the accession to infer its member database.'
             : ''),
       );
+      if (page.total === 0 && query.query && /\s/.test(query.query))
+        notices.push(
+          'Retry with one distinctive word, such as p53, or match the entry name’s word order and punctuation.',
+        );
     }
     if (next) {
       notices.push(pageGuidance('interpro_search_entries', 'entries', limit, MAX_LIMIT));

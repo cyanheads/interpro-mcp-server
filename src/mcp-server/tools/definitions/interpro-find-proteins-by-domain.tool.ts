@@ -16,6 +16,8 @@ import { resolveEntry } from '@/services/interpro/routing.js';
 import {
   AccessionSchema,
   defaultedString,
+  detailSchema,
+  JsonObjectSchema,
   JsonValueSchema,
   LocationSchema,
   listSchema,
@@ -29,6 +31,7 @@ import { UPSTREAM_ERRORS } from '@/services/interpro/upstream-errors.js';
 const MAX_LIMIT = 50;
 /** NCBI taxonomy root, the ancestor of every organism: as taxonId it selects all organisms. */
 const ROOT_TAXON = '1';
+const SelectorDetailSchema = detailSchema(JsonObjectSchema);
 const QuerySchema = z.object({
   accession: z.string().describe('Canonical entry accession.'),
   sourceDatabase: SourceDatabaseSchema,
@@ -167,7 +170,7 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
         .regex(/^[a-fA-F0-9]{40}$/)
         .toLowerCase(),
     ).describe(
-      'Optional 40-character hexadecimal Pfam architecture grouping ID from protein.ida_accession; grouping does not establish functional equivalence.',
+      'Optional 40-character hexadecimal Pfam architecture grouping ID from interpro_find_architectures ida_id or interpro_get_protein_domains protein.ida_accession. Grouping does not establish functional equivalence.',
     ),
     proteomeId: optionalString(
       z
@@ -228,10 +231,28 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
     {
       reason: 'entry_not_found',
       code: JsonRpcErrorCode.NotFound,
-      when: 'The accession is a set accession, or InterPro rejects it for its database with HTTP 404.',
+      when: 'The accession is a set accession, InterPro rejects it for its database with HTTP 404, or an empty first page leads to entry detail returning HTTP 204 or 404.',
       retryable: false,
       recovery:
         'Call interpro_search_entries in the correct database, or interpro_list_reference with topic accession_patterns.',
+      thrownBy: 'service',
+    },
+    {
+      reason: 'taxon_not_found',
+      code: JsonRpcErrorCode.NotFound,
+      when: 'An empty first page leads to taxonomy detail returning HTTP 204 or 404.',
+      retryable: false,
+      recovery:
+        'Use a valid NCBI taxonomy identifier, such as 9606 for humans or 1 for all organisms.',
+      thrownBy: 'service',
+    },
+    {
+      reason: 'proteome_not_found',
+      code: JsonRpcErrorCode.NotFound,
+      when: 'An empty first page leads to proteome detail returning HTTP 204 or 404.',
+      retryable: false,
+      recovery:
+        'Use a UniProt proteome identifier from protein.proteome in interpro_get_protein_domains.',
       thrownBy: 'service',
     },
     {
@@ -246,7 +267,7 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
     {
       reason: 'retry_deadline_exceeded',
       code: JsonRpcErrorCode.Timeout,
-      when: 'The shared fifty-second budget expires while the protein page request is retried.',
+      when: 'The shared fifty-second budget expires during the protein page or selector detail requests.',
       retryable: true,
       recovery:
         'Retry interpro_find_proteins_by_domain after waiting, with a smaller limit for a lighter page.',
@@ -295,6 +316,7 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
     };
     const cursor = decodeCursor(input.cursor, 'interpro_find_proteins_by_domain', query);
     const service = getInterproService();
+    const call = service.begin(ctx);
     const rowSchema = input.architectureId
       ? ArchitectureResultSchema.refine((row) => {
           const fields = row.extra_fields;
@@ -322,7 +344,7 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
         ? ProteomeResultSchema
         : ProteinResultSchema;
     const response = await service.request(
-      service.begin(ctx),
+      call,
       [
         'protein',
         query.reviewedOnly ? 'reviewed' : 'uniprot',
@@ -353,6 +375,49 @@ export const interproFindProteinsByDomain = tool('interpro_find_proteins_by_doma
       },
     );
     const proteins = normalizeImages(response.data?.results ?? []);
+    if (cursor === undefined && proteins.length === 0) {
+      await service.request(
+        call,
+        ['entry', query.sourceDatabase, query.accession],
+        {},
+        SelectorDetailSchema,
+        {
+          missing: {
+            reason: 'entry_not_found',
+            accession: query.accession,
+            sourceDatabase: query.sourceDatabase,
+          },
+        },
+      );
+      if (query.taxonId !== ROOT_TAXON)
+        await service.request(
+          call,
+          ['taxonomy', 'uniprot', query.taxonId],
+          {},
+          SelectorDetailSchema,
+          {
+            missing: {
+              reason: 'taxon_not_found',
+              accession: query.taxonId,
+              sourceDatabase: 'uniprot',
+            },
+          },
+        );
+      if (query.proteomeId)
+        await service.request(
+          call,
+          ['proteome', 'uniprot', query.proteomeId],
+          {},
+          SelectorDetailSchema,
+          {
+            missing: {
+              reason: 'proteome_not_found',
+              accession: query.proteomeId,
+              sourceDatabase: 'uniprot',
+            },
+          },
+        );
+    }
     const next = continuation(response.data?.next ?? null, new Set(cursor ? [cursor] : []));
     const page = {
       total: response.data?.count ?? 0,

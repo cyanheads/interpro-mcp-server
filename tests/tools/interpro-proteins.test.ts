@@ -53,6 +53,8 @@ const extra = {
   },
 };
 const detail = () => Response.json({ metadata: protein });
+const selectorDetails = (...accessions: string[]) =>
+  accessions.map((accession) => Response.json({ metadata: { accession } }));
 /** A protein record as a first map segment carries it by default: every field but the sequence. */
 function withoutSequence<T extends { sequence?: string }>(record: T): Omit<T, 'sequence'> {
   const { sequence, ...rest } = record;
@@ -2713,7 +2715,7 @@ describe('entry-scoped protein discovery', () => {
     [51, 50],
     [1000000, 50],
   ])('uses the effective discovery limit for %s', async (requested, expected) => {
-    const fetch = network([page([])]);
+    const fetch = network([page([]), ...selectorDetails('PF00870', '9606')]);
     const result = await settle(
       runToolContract(discovery, {
         accession: 'PF00870',
@@ -2824,7 +2826,7 @@ describe('entry-scoped protein discovery', () => {
   it.each([false, true])(
     'composes fragment empty selection %s with clamping and continuation',
     async (isFragment) => {
-      network([page([], '?cursor=next', 3)]);
+      network([page([], '?cursor=next', 3), ...selectorDetails('PF00870', '9606')]);
       const result = await settle(
         runToolContract(discovery, { accession: 'PF00870', isFragment, limit: 99 }),
       );
@@ -3296,7 +3298,7 @@ describe('proteome discovery selection', () => {
     expect(fetch).not.toHaveBeenCalled();
   });
   it.each(['', '   '])('treats a blank proteomeId %j as omitted', async (proteomeId) => {
-    const fetch = network([page([ordinary]), page([])]);
+    const fetch = network([page([ordinary]), page([]), ...selectorDetails('PF00005', '562')]);
     const output = twin(
       await settle(
         runToolContract(discovery, { accession: 'PF00005', taxonId: '562', proteomeId }),
@@ -3309,9 +3311,12 @@ describe('proteome discovery selection', () => {
     );
     expect(text(empty)).toContain('No proteins matched');
     expect(text(empty)).not.toContain('source_organism');
-    expect(fetch.mock.calls.map(([url]) => new URL(url).pathname)).toEqual(
-      Array(2).fill('/interpro/api/protein/reviewed/entry/pfam/PF00005/taxonomy/uniprot/562/'),
-    );
+    expect(fetch.mock.calls.map(([url]) => new URL(url).pathname)).toEqual([
+      '/interpro/api/protein/reviewed/entry/pfam/PF00005/taxonomy/uniprot/562/',
+      '/interpro/api/protein/reviewed/entry/pfam/PF00005/taxonomy/uniprot/562/',
+      '/interpro/api/entry/pfam/PF00005/',
+      '/interpro/api/taxonomy/uniprot/562/',
+    ]);
   });
   it.each([
     ['omits proteome records', { ...ordinary }],
@@ -3357,7 +3362,10 @@ describe('proteome discovery selection', () => {
     expect(url.searchParams.get('extra_fields')).toBe('is_fragment');
   });
   it('names taxonId and the mapped source organism when the default taxon empties a proteome', async () => {
-    const fetch = network([new Response(null, { status: 204 })]);
+    const fetch = network([
+      new Response(null, { status: 204 }),
+      ...selectorDetails('PF00005', '9606', 'UP000000625'),
+    ]);
     const result = await settle(
       runToolContract(discovery, { accession: 'PF00005', proteomeId: 'UP000000625' }),
     );
@@ -3379,7 +3387,7 @@ describe('proteome discovery selection', () => {
     );
   });
   it('composes the proteome notice with fragment guidance, clamping, and continuation', async () => {
-    network([page([], '?cursor=next', 3)]);
+    network([page([], '?cursor=next', 3), ...selectorDetails('PF00005', '562', 'UP000000625')]);
     const result = await settle(
       runToolContract(discovery, {
         accession: 'PF00005',
@@ -3550,14 +3558,166 @@ describe('all-organism discovery and empty-result guidance', () => {
   const architectureId = '84c528dbbdaa1270d084df5d0895299a8e09904b';
   const architectureClause =
     'The architectureId grouping may not include this entry: omit architectureId, or take protein.ida_accession from interpro_get_protein_domains for a protein that carries the entry.';
+  it('keeps an empty intersection with valid selectors empty on both surfaces', async () => {
+    const fetch = network([
+      new Response(null, { status: 204 }),
+      ...selectorDetails('PF00870', '9606', 'UP000005640'),
+    ]);
+    const result = await settle(
+      runToolContract(discovery, {
+        accession: 'PF00870',
+        proteomeId: 'UP000005640',
+        isFragment: true,
+      }),
+    );
+    expect(twin(result)).toMatchObject({
+      proteins: [],
+      page: { total: 0, returned: 0, limit: 20, hasMore: false },
+    });
+    expect(text(result)).toContain('No proteins matched the applied entry and selection.');
+    expect(text(result)).toContain('without isFragment');
+    expect(fetch.mock.calls.map(([url]) => new URL(url).pathname)).toEqual([
+      '/interpro/api/protein/reviewed/entry/pfam/PF00870/taxonomy/uniprot/9606/proteome/uniprot/UP000005640/',
+      '/interpro/api/entry/pfam/PF00870/',
+      '/interpro/api/taxonomy/uniprot/9606/',
+      '/interpro/api/proteome/uniprot/UP000005640/',
+    ]);
+  });
+  it.each([
+    [{ accession: 'PF99999' }, [], 204, 'entry_not_found', '/entry/pfam/PF99999/'],
+    [
+      { accession: 'PF00870', taxonId: '999999999' },
+      ['PF00870'],
+      404,
+      'taxon_not_found',
+      '/taxonomy/uniprot/999999999/',
+    ],
+    [
+      { accession: 'PF00870', proteomeId: 'UP999999999' },
+      ['PF00870', '9606'],
+      204,
+      'proteome_not_found',
+      '/proteome/uniprot/UP999999999/',
+    ],
+  ])('fails for the first unknown selector in %j', async (input, known, status, reason, path) => {
+    const fetch = network([
+      new Response(null, { status: 204 }),
+      ...selectorDetails(...known),
+      new Response(null, { status }),
+    ]);
+    const result = await settle(runToolContract(discovery, input));
+    failure(result, reason, discovery);
+    expect(fetch).toHaveBeenCalledTimes(known.length + 2);
+    expect(new URL(fetch.mock.calls.at(-1)?.[0] ?? '').pathname).toBe(`/interpro/api${path}`);
+  });
+  it('keeps the withdrawal reason when resolving an empty list', async () => {
+    const fetch = network([
+      new Response(null, { status: 204 }),
+      Response.json({ accession: 'PF00870' }, { status: 410 }),
+    ]);
+    const result = await settle(runToolContract(discovery, { accession: 'PF00870' }));
+    failure(result, 'entry_withdrawn', discovery);
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+  it('shares the original deadline across all selector checks', async () => {
+    const answers = [new Response(null, { status: 204 }), ...selectorDetails('PF00870')];
+    const starts: number[] = [];
+    const fetch = vi.fn((_url: string, options?: RequestInit) => {
+      starts.push(performance.now());
+      const response = answers.shift();
+      return new Promise<Response>((resolve, reject) => {
+        const timer = response ? setTimeout(() => resolve(response), 24_000) : undefined;
+        options?.signal?.addEventListener(
+          'abort',
+          () => {
+            clearTimeout(timer);
+            reject(options.signal?.reason);
+          },
+          { once: true },
+        );
+      });
+    });
+    init(fetch);
+    const pending = runToolContract(discovery, {
+      accession: 'PF00870',
+      proteomeId: 'UP000005640',
+    });
+    await vi.advanceTimersByTimeAsync(50_000);
+    failure(await pending, 'retry_deadline_exceeded', discovery);
+    expect(starts).toEqual([0, 24_000, 48_000]);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it('cancels active selector verification without reading later selectors', async () => {
+    const controller = new AbortController();
+    const fetch = vi.fn((url: string, options?: RequestInit) =>
+      new URL(url).pathname.startsWith('/interpro/api/protein/')
+        ? Promise.resolve(new Response(null, { status: 204 }))
+        : new Promise<Response>((_resolve, reject) => {
+            options?.signal?.addEventListener('abort', () => reject(options.signal?.reason), {
+              once: true,
+            });
+          }),
+    );
+    init(fetch);
+    const pending = runToolContract(
+      discovery,
+      { accession: 'PF00870', proteomeId: 'UP000005640' },
+      { context: { signal: controller.signal } },
+    );
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    controller.abort(new Error('caller cancelled'));
+    const result = await pending;
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent).toMatchObject({ error: { code: -32011 } });
+    expect(text(result)).toMatch(/cancel/i);
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+  it('gives the parent family URL for a missing PANTHER subfamily in both tools', async () => {
+    const { interproGetEntry } = await import(
+      '@/mcp-server/tools/definitions/interpro-get-entry.tool.js'
+    );
+    const accession = 'PTHR11447:SF6';
+    const parentUrl = 'https://www.ebi.ac.uk/interpro/api/entry/panther/PTHR11447/?subfamilies';
+    for (const definition of [discovery, interproGetEntry]) {
+      network(
+        Array.from(
+          { length: definition === discovery ? 2 : 1 },
+          () => new Response(null, { status: 204 }),
+        ),
+      );
+      const result = await settle(runToolContract(definition, { accession }));
+      expect(result.isError).toBe(true);
+      expect(result.structuredContent).toMatchObject({
+        error: {
+          code: definition.errors?.find((entry) => entry.reason === 'entry_not_found')?.code,
+          data: {
+            reason: 'entry_not_found',
+            recovery: { hint: expect.stringContaining(parentUrl) },
+          },
+        },
+      });
+      expect(text(result)).toContain(parentUrl);
+    }
+  });
   /** The notice of an empty first page for `input`, checked on both surfaces. */
-  async function emptyNotice(input: z.input<typeof discovery.input>) {
-    const fetch = network([new Response(null, { status: 204 })]);
+  async function emptyNotice(
+    input: z.input<typeof discovery.input> & { taxonId?: string; proteomeId?: string },
+  ) {
+    const { accession, taxonId = '9606', proteomeId } = input;
+    const accessions = [
+      accession,
+      ...(taxonId === '1' ? [] : [taxonId]),
+      ...(proteomeId ? [proteomeId] : []),
+    ];
+    const fetch = network([new Response(null, { status: 204 }), ...selectorDetails(...accessions)]);
     const result = await settle(runToolContract(discovery, input));
     expect(twin(result).page).toEqual({ total: 0, returned: 0, limit: 20, hasMore: false });
     const { notice } = result.structuredContent as { notice: string };
     expect(text(result)).toContain(notice);
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(
+      fetch.mock.calls.slice(1).map(([url]) => new URL(url).pathname.split('/').at(-2)),
+    ).toEqual(accessions);
     return notice;
   }
   it('characterizes taxonId 1: root route, echo, row taxa, cursor scope, and a clamped page', async () => {

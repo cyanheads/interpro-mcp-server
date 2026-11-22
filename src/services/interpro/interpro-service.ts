@@ -20,8 +20,9 @@ import {
   toCallBudget,
   upstreamStatusError,
 } from './http-adapter.js';
+import { RelationshipGraphSchema } from './relationships.js';
 import { apiUrl } from './routing.js';
-import { isAccession, JsonObjectSchema, JsonValueSchema } from './schemas.js';
+import { detailSchema, isAccession, JsonObjectSchema, JsonValueSchema } from './schemas.js';
 
 /**
  * One request start per second toward EBI. Up to three run at once, so an uncached page that holds
@@ -68,6 +69,8 @@ export interface MissingRecord {
     | 'protein_not_found'
     | 'clan_not_found'
     | 'structure_not_found'
+    | 'taxon_not_found'
+    | 'proteome_not_found'
     | 'isoform_not_found';
   readonly sourceDatabase: string;
 }
@@ -90,6 +93,8 @@ const RECORD_NOUNS = {
   clan_not_found: 'set',
   protein_not_found: 'protein',
   structure_not_found: 'structure',
+  taxon_not_found: 'taxon',
+  proteome_not_found: 'proteome',
   isoform_not_found: 'isoform',
 } as const;
 /** Name a record in a caller-facing message, e.g. `entry PF00870 in pfam`. */
@@ -107,8 +112,30 @@ export interface InterproResponse<T> {
   readonly sourceUrl: string;
 }
 
+/** Clan metadata with upstream fields preserved for per-call projection. */
+export const ClanMetadataSchema = z
+  .object({
+    accession: z.string().describe('Upstream set accession.'),
+    source_database: z.string().describe('Upstream set database.'),
+  })
+  .catchall(JsonValueSchema);
+const ClanDetailSchema = detailSchema(ClanMetadataSchema);
+interface ClanDetail {
+  readonly metadata: z.infer<typeof ClanMetadataSchema>;
+  readonly sourceUrl: string;
+}
+
+/**
+ * Retain at most eight validated detail records, each read under the regular 4 MiB response cap.
+ * Five minutes covers a page walk while allowing the next read to observe a source update.
+ */
+const CLAN_CACHE_MAX_ENTRIES = 8;
+const CLAN_CACHE_TTL_MS = 5 * 60_000;
+
 /** InterPro service; inject only the network seam, retaining the real domain behavior. */
 export class InterproService {
+  private readonly clanDetails = new Map<string, { detail: ClanDetail; expiresAtMs: number }>();
+
   constructor(private readonly fetch: InterproFetch = interproHttpFetch) {}
 
   /** Start a 50-second call budget, once per handler invocation. */
@@ -172,14 +199,26 @@ export class InterproService {
               if (
                 missing &&
                 (response.status === 404 || (response.status === 204 && !missing.list))
-              )
+              ) {
+                const family =
+                  missing.reason === 'entry_not_found' && missing.sourceDatabase === 'panther'
+                    ? /^(PTHR\d+):SF\d+$/.exec(missing.accession)?.[1]
+                    : undefined;
                 throw notFound(`InterPro could not find ${describeRecord(missing)}.`, {
                   reason: missing.reason,
                   retryable: false,
                   status: response.status,
                   accession: missing.accession,
                   sourceDatabase: missing.sourceDatabase,
+                  ...(family
+                    ? {
+                        recovery: {
+                          hint: `Use PANTHER family ${family} as the entry accession. Its subfamilies are listed at ${apiUrl(['entry', 'panther', family])}?subfamilies`,
+                        },
+                      }
+                    : {}),
                 });
+              }
               if (response.status === 204)
                 return { data: null, sourceUrl, headers: response.headers };
               if (response.status === 410) {
@@ -278,6 +317,52 @@ export class InterproService {
         isTransient,
       },
     ).catch((error) => toCallBudget(error, budgetExhausted));
+  }
+
+  /** Reuse validated clan details across pages while retaining independent cold reads. */
+  async clanDetail(
+    call: InterproCall,
+    target: { sourceDatabase: string; accession: string },
+  ): Promise<ClanDetail> {
+    call.ctx.signal.throwIfAborted();
+    const nowMs = performance.now();
+    if (nowMs >= call.deadline) throw budgetExhausted();
+    const key = `${target.sourceDatabase}/${target.accession}`;
+    const cached = this.clanDetails.get(key);
+    this.clanDetails.delete(key);
+    if (cached && cached.expiresAtMs > nowMs) {
+      this.clanDetails.set(key, cached);
+      return structuredClone(cached.detail);
+    }
+
+    const response = await this.request(
+      call,
+      ['set', target.sourceDatabase, target.accession],
+      {},
+      ClanDetailSchema,
+      { missing: { reason: 'clan_not_found', ...target } },
+    );
+    if (!response.data)
+      throw serviceUnavailable('Clan metadata response is missing.', {
+        reason: 'upstream_shape_invalid',
+        retryable: false,
+      });
+    const detail = { metadata: response.data.metadata, sourceUrl: response.sourceUrl };
+    // A caller may omit a malformed optional graph, but a later request for it needs a fresh read.
+    if (!RelationshipGraphSchema.safeParse(detail.metadata.relationships).success) return detail;
+    const loadedAtMs = performance.now();
+    for (const [cachedKey, entry] of this.clanDetails)
+      if (entry.expiresAtMs <= loadedAtMs) this.clanDetails.delete(cachedKey);
+    this.clanDetails.delete(key);
+    if (this.clanDetails.size >= CLAN_CACHE_MAX_ENTRIES) {
+      const oldest = this.clanDetails.keys().next();
+      if (!oldest.done) this.clanDetails.delete(oldest.value);
+    }
+    this.clanDetails.set(key, {
+      detail: structuredClone(detail),
+      expiresAtMs: loadedAtMs + CLAN_CACHE_TTL_MS,
+    });
+    return detail;
   }
 
   /** Retrieve a coherent current release and its complete database-count object. */

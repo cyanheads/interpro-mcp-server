@@ -68,7 +68,7 @@ export function resolveEntry(
     sourceDatabase: source,
   };
 }
-/** Resolve case-sensitive CL clan prefixes, with explicit source disambiguation. */
+/** Resolve Pfam and CDD sets by accession width and normalize their letter case. */
 export function resolveClan(
   accession: string,
   sourceDatabase?: 'pfam' | 'cdd' | 'pirsf',
@@ -76,19 +76,19 @@ export function resolveClan(
   const safe = AccessionSchema.parse(accession);
   const isCl = CLAN_PATTERN.test(safe);
   const isPirsf = /^PIRSF\d+$/i.test(safe);
-  const inferred = /^CL\d+$/.test(safe)
+  const inferred = /^CL\d{4}$/i.test(safe)
     ? 'pfam'
-    : /^cl\d+$/.test(safe)
+    : /^CL\d{5}$/i.test(safe)
       ? 'cdd'
       : isPirsf
         ? 'pirsf'
         : undefined;
   if (
-    (isPirsf && sourceDatabase && sourceDatabase !== 'pirsf') ||
+    (inferred && sourceDatabase && inferred !== sourceDatabase) ||
     (isCl && sourceDatabase === 'pirsf')
   )
     throw validationError(
-      `Set accession ${safe} routes to sourceDatabase ${inferred ?? 'pfam or cdd'} by its prefix, not ${sourceDatabase}.`,
+      `Set accession ${safe} routes to sourceDatabase ${inferred ?? 'pfam or cdd'} by its ${isCl ? 'CL accession pattern' : 'prefix'}, not ${sourceDatabase}.`,
       {
         reason: 'database_mismatch',
         retryable: false,
@@ -101,7 +101,7 @@ export function resolveClan(
   if (!source)
     throw validationError(
       isCl
-        ? `Set accession ${safe} has a mixed-case CL prefix, which can name a Pfam or CDD set, and no sourceDatabase was supplied.`
+        ? `Set accession ${safe} has an unrecognized CL digit count and no sourceDatabase was supplied.`
         : `Set accession ${safe} matches no set prefix, and no sourceDatabase was supplied.`,
       { reason: 'accession_source_unknown', retryable: false, accession: safe },
     );

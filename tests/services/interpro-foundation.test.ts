@@ -22,8 +22,9 @@ describe('routing and continuation boundaries', () => {
       expect(resolveEntry(route.example.toLowerCase()).sourceDatabase).toBe(route.source);
     }
     expect(resolveClan('CL0016').sourceDatabase).toBe('pfam');
-    expect(resolveClan('cl0016').sourceDatabase).toBe('cdd');
-    expect(resolveClan('CL0016', 'cdd').accession).toBe('cl0016');
+    expect(resolveClan('cl0016').sourceDatabase).toBe('pfam');
+    expect(resolveClan('CL21453').sourceDatabase).toBe('cdd');
+    expect(resolveClan('CL016', 'cdd').accession).toBe('cl016');
     expect(() => resolveEntry('PF00870', 'interpro')).toThrow();
     expect(() => resolveEntry('unknown')).toThrow();
     expect(() => resolveClan('CL0016', 'pirsf')).toThrow();
@@ -253,7 +254,7 @@ describe('InterproService at the HTTP seam', () => {
 
   async function serviceFor(responses: Response[]) {
     const { InterproService } = await import('@/services/interpro/interpro-service.js');
-    const fetch = vi.fn(async () => {
+    const fetch = vi.fn(async (_url: string) => {
       const response = responses.shift();
       if (!response) throw new Error('Unexpected additional upstream request');
       return response;
@@ -273,6 +274,102 @@ describe('InterproService at the HTTP seam', () => {
     if ('error' in result) throw result.error;
     return result.value;
   }
+
+  it('keeps independent clan snapshots across hits and reloads after expiry', async () => {
+    const target = { accession: 'CL0016', sourceDatabase: 'pfam' };
+    const { service, ctx, fetch } = await serviceFor([
+      Response.json({
+        metadata: {
+          accession: 'CL0016',
+          source_database: 'pfam',
+          details: { flags: ['original'] },
+        },
+      }),
+      Response.json({
+        metadata: {
+          accession: 'CL0016',
+          source_database: 'pfam',
+          details: { flags: ['refreshed'] },
+        },
+      }),
+    ]);
+    const load = () => settle(service.clanDetail(service.begin(ctx), target));
+    const first = await load();
+    const coldDetails = first.metadata.details;
+    if (!coldDetails || typeof coldDetails !== 'object') throw new Error('Missing clan details');
+    Object.assign(coldDetails, { flags: ['changed by cold caller'] });
+    const second = await load();
+    const warmDetails = second.metadata.details;
+    expect(warmDetails).toEqual({ flags: ['original'] });
+    if (!warmDetails || typeof warmDetails !== 'object') throw new Error('Missing clan details');
+    Object.assign(warmDetails, { flags: ['changed by warm caller'] });
+    expect((await load()).metadata.details).toEqual({ flags: ['original'] });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(5 * 60_000);
+    expect((await load()).metadata.details).toEqual({ flags: ['refreshed'] });
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('evicts the least recently used clan when the retained record count reaches eight', async () => {
+    const { service, ctx, fetch } = await serviceFor([]);
+    fetch.mockImplementation(async (url?: string) => {
+      const accession = new URL(url ?? '').pathname.split('/').at(-2);
+      return Response.json({ metadata: { accession, source_database: 'pfam' } });
+    });
+    const load = (accession: string) =>
+      settle(service.clanDetail(service.begin(ctx), { accession, sourceDatabase: 'pfam' }));
+    for (const accession of [
+      'CL0001',
+      'CL0002',
+      'CL0003',
+      'CL0004',
+      'CL0005',
+      'CL0006',
+      'CL0007',
+      'CL0008',
+      'CL0001',
+      'CL0009',
+      'CL0001',
+      'CL0002',
+    ]) {
+      expect((await load(accession)).metadata.accession).toBe(accession);
+    }
+    expect(fetch.mock.calls.map(([url]) => new URL(url ?? '').pathname.split('/').at(-2))).toEqual([
+      'CL0001',
+      'CL0002',
+      'CL0003',
+      'CL0004',
+      'CL0005',
+      'CL0006',
+      'CL0007',
+      'CL0008',
+      'CL0009',
+      'CL0002',
+    ]);
+  });
+
+  it('keeps cold clan reads independent when one caller cancels', async () => {
+    const { service, ctx, fetch } = await serviceFor([]);
+    const controller = new AbortController();
+    const cancelled = createMockContext({ signal: controller.signal });
+    fetch
+      .mockImplementationOnce(hang)
+      .mockResolvedValueOnce(
+        Response.json({ metadata: { accession: 'CL0016', source_database: 'pfam' } }),
+      );
+    const target = { accession: 'CL0016', sourceDatabase: 'pfam' };
+    const abandoned = timed(service.clanDetail(service.begin(cancelled), target));
+    const second = timed(service.clanDetail(service.begin(ctx), target));
+    await vi.advanceTimersByTimeAsync(0);
+    const reason = new Error('caller cancelled');
+    controller.abort(reason);
+    expect(await abandoned).toMatchObject({ error: reason });
+    await vi.runAllTimersAsync();
+    expect(await second).toMatchObject({ value: { metadata: { accession: 'CL0016' } } });
+    expect(fetch).toHaveBeenCalledTimes(2);
+    await expect(service.clanDetail(service.begin(cancelled), target)).rejects.toBe(reason);
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
 
   it('distinguishes list 204 from detail absence without reading a body', async () => {
     const { service, call, fetch } = await serviceFor([

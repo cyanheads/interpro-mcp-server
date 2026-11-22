@@ -56,6 +56,41 @@ beforeEach(async () => {
 afterEach(() => vi.useRealTimers());
 
 describe('entry search contracts', () => {
+  it.each([{ query: 'missing' }, { entryType: 'family' }, { query: 'PF00870' }] as const)(
+    'preserves existing empty-search recovery for %j',
+    async (input) => {
+      const fetch = network([new Response(null, { status: 204 })]);
+      const result = await settle(runToolContract(interproSearchEntries, input));
+      expect(twin(result).entries).toEqual([]);
+      const hint = `No entries matched the applied filters. Remove query, entryType, goTerm, goCategory, or integratedInto filters that are present; call interpro_list_reference with topic databases to check sourceDatabase.${
+        'query' in input && input.query === 'PF00870'
+          ? ' Use interpro_get_entry with the accession to infer its member database.'
+          : ''
+      }`;
+      expect(result.structuredContent).toMatchObject({ notice: hint });
+      expect(text(result)).toContain(hint);
+      expect(fetch).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it('explains phrase matching after a multi-word miss without retrying the search', async () => {
+    const fetch = network([new Response(null, { status: 204 })]);
+    const query = 'p53 DNA-binding domain';
+    const result = await settle(
+      runToolContract(interproSearchEntries, { query, entryType: 'domain' }),
+    );
+    expect(twin(result).entries).toEqual([]);
+    expect(result.structuredContent).toMatchObject({
+      notice: expect.stringContaining('one distinctive word'),
+    });
+    expect(text(result)).toContain('word order and punctuation');
+    expect(text(result)).toContain('Remove query, entryType');
+    const url = new URL(fetch.mock.calls[0]?.[0] ?? '');
+    expect(url.searchParams.get('search')).toBe(query);
+    expect(url.searchParams.get('type')).toBe('domain');
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
   it.each(['F', 'C'])('rejects a GO term with category %s before requests', async (goCategory) => {
     const fetch = network([]);
     const result = await settle(
@@ -1208,6 +1243,65 @@ describe('withdrawal messages built from upstream 410 text', () => {
 
 describe('clan contracts', () => {
   it.each([
+    ['cl0073', 'pfam', 'CL0073'],
+    ['Cl0073', 'pfam', 'CL0073'],
+    ['CL21453', 'cdd', 'cl21453'],
+  ])('routes %s by digit count', async (accession, sourceDatabase, canonical) => {
+    const fetch = network([
+      detail({ accession: canonical, source_database: sourceDatabase }),
+      list([]),
+    ]);
+    const result = await settle(runToolContract(interproGetClan, { accession }));
+    expect(twin(result)).toMatchObject({ accession: canonical, sourceDatabase });
+    expect(new URL(fetch.mock.calls[0]?.[0] ?? '').pathname).toBe(
+      `/interpro/api/set/${sourceDatabase}/${canonical}/`,
+    );
+  });
+
+  it('reuses validated clan details while advancing a member cursor', async () => {
+    const fetch = network([
+      detail(clan),
+      list([{ metadata: summary, sets: [] }], '?cursor=next-page', 2),
+      list([]),
+    ]);
+    const first = await settle(runToolContract(interproGetClan, { accession: 'CL0016', limit: 1 }));
+    const cursor = twin(first).page.nextCursor;
+    const second = await settle(
+      runToolContract(interproGetClan, { accession: 'CL0016', cursor, includeThumbnail: true }),
+    );
+    expect(twin(second)).toMatchObject({
+      accession: 'CL0016',
+      clan: { wikipedia: { thumbnail: 'data:image/png;base64,iVBORw0KGgoAAA' } },
+      members: [],
+      page: { hasMore: false },
+    });
+    expect(text(second)).toContain('member page is empty');
+    expect(fetch.mock.calls.map(([url]) => new URL(url).searchParams.get('cursor'))).toEqual([
+      null,
+      null,
+      'next-page',
+    ]);
+  });
+
+  it('reads a fresh clan detail after a missing set, invalid detail, or malformed graph', async () => {
+    const fetch = network([
+      new Response(null, { status: 204 }),
+      detail({ accession: 'CL0016' }),
+      detail({ ...clan, relationships: { nodes: [] } }),
+      list([]),
+      detail(clan),
+      list([]),
+    ]);
+    const input = { accession: 'CL0016', includeRelationships: true };
+    for (const reason of ['clan_not_found', 'upstream_shape_invalid', 'upstream_shape_invalid']) {
+      failure(await settle(runToolContract(interproGetClan, input)), reason, interproGetClan);
+    }
+    const result = await settle(runToolContract(interproGetClan, input));
+    expect(twin(result).clan.relationships).toEqual(graph);
+    expect(fetch).toHaveBeenCalledTimes(6);
+  });
+
+  it.each([
     [undefined, 20],
     [1, 1],
     [99, 99],
@@ -1246,8 +1340,10 @@ describe('clan contracts', () => {
     expect(result.structuredContent).toMatchObject({ cap: 100 });
   });
   it.each([
-    ['Cl0016', undefined, 'accession_source_unknown', 'pfam', 'CL0016'],
-    ['Cl0016', undefined, 'accession_source_unknown', 'cdd', 'cl0016'],
+    ['Cl016', undefined, 'accession_source_unknown', 'pfam', 'CL016'],
+    ['Cl016', undefined, 'accession_source_unknown', 'cdd', 'cl016'],
+    ['cl0016', 'cdd', 'database_mismatch', 'pfam', 'CL0016'],
+    ['CL21453', 'pfam', 'database_mismatch', 'cdd', 'cl21453'],
     ['CL0016', 'pirsf', 'database_mismatch', 'pfam', 'CL0016'],
     ['PIRSF000047', 'pfam', 'database_mismatch', 'pirsf', 'PIRSF000047'],
   ] as const)(
@@ -1260,9 +1356,8 @@ describe('clan contracts', () => {
       const result = await settle(runToolContract(interproGetClan, { accession, sourceDatabase }));
       failure(result, reason, interproGetClan);
       const hint = interproGetClan.errors?.find((entry) => entry.reason === reason)?.recovery;
-      expect(hint).toContain('uppercase CL');
-      expect(hint).toContain('lowercase cl');
-      expect(hint).toContain('mixed-case');
+      expect(hint).toContain('CL plus four digits for Pfam');
+      expect(hint).toContain('CL plus five digits for CDD');
       expect(hint).toContain('PIRSF');
       expect(hint).not.toContain('interpro_search_entries');
       expect(fetch).not.toHaveBeenCalled();
@@ -1363,18 +1458,17 @@ describe('clan contracts', () => {
     const fetch = network([
       detail(clan),
       list([], '?cursor=members', 3),
-      detail(clan),
       new Response(null, { status: 204 }),
     ]);
     const first = await settle(runToolContract(interproGetClan, { accession: 'CL0016', limit: 1 }));
     const cursor = twin(first).page.nextCursor;
     expect(first.structuredContent).toMatchObject({ truncated: true, totalCount: 3, shown: 0 });
     const last = await settle(
-      runToolContract(interproGetClan, { accession: 'CL0016', cursor, limit: 3 }),
+      runToolContract(interproGetClan, { accession: 'Cl0016', cursor, limit: 3 }),
     );
     expect(twin(last).members).toEqual([]);
     expect(text(last)).toContain('member page is empty');
-    expect(new URL(fetch.mock.calls[3]?.[0] ?? '').searchParams.get('page_size')).toBe('3');
+    expect(new URL(fetch.mock.calls[2]?.[0] ?? '').searchParams.get('page_size')).toBe('3');
     for (const input of [
       { accession: 'CL0016', includeRelationships: true, cursor },
       { accession: 'CL0017', cursor },
@@ -1384,7 +1478,7 @@ describe('clan contracts', () => {
         'invalid_cursor',
         interproGetClan,
       );
-    expect(fetch).toHaveBeenCalledTimes(4);
+    expect(fetch).toHaveBeenCalledTimes(3);
   });
 
   it('keeps a member cursor valid across includeThumbnail, which shapes only the clan metadata', async () => {
@@ -1395,9 +1489,7 @@ describe('clan contracts', () => {
     const fetch = network([
       detail(clan),
       list([first], '?cursor=members-2', 3),
-      detail(clan),
       list([second], '?cursor=members-3', 3),
-      detail(clan),
       list([third], null, 3),
     ]);
     const start = await settle(runToolContract(interproGetClan, { accession: 'CL0016', limit: 1 }));
@@ -1505,12 +1597,10 @@ describe('clan relationship slices', () => {
       name: 'Domain α '.repeat(12),
     }));
     const relationships = { nodes, links: [] };
-    const fetch = network(
-      Array.from({ length: 3 }, (_, index) => [
-        detail({ ...clan, relationships }),
-        list([], `?cursor=members-${index + 1}`, 10),
-      ]).flat(),
-    );
+    const fetch = network([
+      detail({ ...clan, relationships }),
+      ...Array.from({ length: 3 }, (_, index) => list([], `?cursor=members-${index + 1}`, 10)),
+    ]);
     const first = await settle(
       runToolContract(interproGetClan, {
         accession: 'CL0016',
@@ -1719,32 +1809,17 @@ describe('clan relationship slices', () => {
     // Every upstream record exactly once, whole and verbatim, including the unreferenced node.
     expect(canonical(links)).toEqual(canonical(graph.links));
     expect(nodes.at(-1)?.accession).toBe('PF01199');
-    expect(fetch).toHaveBeenCalledTimes(2 * offsets.length);
+    expect(fetch).toHaveBeenCalledTimes(1 + offsets.length);
   });
 
   it('returns the same slice at an offset however upstream orders the graph', async () => {
     const graph = syntheticGraph(300, 900);
-    graphNetwork(graph);
-    const [first, second] = [
-      twin(
-        await settle(
-          runToolContract(interproGetClan, {
-            accession: 'CL0016',
-            includeRelationships: true,
-            relationshipOffset: 299,
-          }),
-        ),
-      ),
-      twin(
-        await settle(
-          runToolContract(interproGetClan, {
-            accession: 'CL0016',
-            includeRelationships: true,
-            relationshipOffset: 299,
-          }),
-        ),
-      ),
-    ];
+    const fetch = graphNetwork(graph);
+    const args = { accession: 'CL0016', includeRelationships: true, relationshipOffset: 299 };
+    const first = twin(await settle(runToolContract(interproGetClan, args)));
+    await vi.advanceTimersByTimeAsync(5 * 60_000);
+    const second = twin(await settle(runToolContract(interproGetClan, args)));
+    expect(fetch).toHaveBeenCalledTimes(4);
     expect(first).toEqual(second);
     expect(first.clan.relationships.nodes).toEqual([graph.nodes[299]]);
     expect(first.relationshipsPage).toMatchObject({ offset: 299, returnedNodes: 1 });
@@ -1935,7 +2010,6 @@ describe('clan relationship slices', () => {
     const responses = [
       detail({ ...clan, wikipedia: null, relationships: graph }),
       list([member], '?cursor=members-2', 2),
-      detail({ ...clan, wikipedia: null, relationships: graph }),
       list([member], null, 2),
     ];
     const fetch = network(responses);
@@ -1961,7 +2035,7 @@ describe('clan relationship slices', () => {
     const output = twin(resumed);
     expect(output.page).toEqual({ total: 2, returned: 1, limit: 2, hasMore: false });
     expect(output.relationshipsPage.offset).toBe(first.relationshipsPage.nextOffset);
-    expect(new URL(fetch.mock.calls[3]?.[0] ?? '').searchParams.get('cursor')).toBe('members-2');
+    expect(new URL(fetch.mock.calls[2]?.[0] ?? '').searchParams.get('cursor')).toBe('members-2');
     expect(nextCall((resumed.structuredContent as { notice: string }).notice).cursor).toBe(
       first.page.nextCursor,
     );
@@ -2114,7 +2188,7 @@ describe('clan relationship slices', () => {
       expect(output.clan).not.toHaveProperty('relationships');
       expect(zero.structuredContent).toEqual(omitted.structuredContent);
       expect(text(zero)).toContain('Relationships are omitted; set includeRelationships=true');
-      expect(fetch).toHaveBeenCalledTimes(4);
+      expect(fetch).toHaveBeenCalledTimes(3);
     },
   );
 
@@ -2273,7 +2347,7 @@ describe('local routing and schema failures', () => {
       expect(text(result)).not.toContain(declared);
     }
     failure(
-      await settle(runToolContract(interproGetClan, { accession: 'Cl0016' })),
+      await settle(runToolContract(interproGetClan, { accession: 'Cl016' })),
       'accession_source_unknown',
       interproGetClan,
     );
@@ -2321,7 +2395,7 @@ describe('local routing and schema failures', () => {
       'clan',
       { accession: 'CL0016', sourceDatabase: 'pirsf' },
       'database_mismatch',
-      'Set accession CL0016 routes to sourceDatabase pfam by its prefix, not pirsf.',
+      'Set accession CL0016 routes to sourceDatabase pfam by its CL accession pattern, not pirsf.',
       { accession: 'CL0016', sourceDatabase: 'pirsf', inferredSourceDatabase: 'pfam' },
     ],
     [
@@ -2329,7 +2403,7 @@ describe('local routing and schema failures', () => {
       'clan',
       { accession: 'cl21453', sourceDatabase: 'pirsf' },
       'database_mismatch',
-      'Set accession cl21453 routes to sourceDatabase cdd by its prefix, not pirsf.',
+      'Set accession cl21453 routes to sourceDatabase cdd by its CL accession pattern, not pirsf.',
       { accession: 'cl21453', sourceDatabase: 'pirsf', inferredSourceDatabase: 'cdd' },
     ],
     [
@@ -2337,16 +2411,16 @@ describe('local routing and schema failures', () => {
       'clan',
       { accession: 'Cl0016', sourceDatabase: 'pirsf' },
       'database_mismatch',
-      'Set accession Cl0016 routes to sourceDatabase pfam or cdd by its prefix, not pirsf.',
-      { accession: 'Cl0016', sourceDatabase: 'pirsf' },
+      'Set accession Cl0016 routes to sourceDatabase pfam by its CL accession pattern, not pirsf.',
+      { accession: 'Cl0016', sourceDatabase: 'pirsf', inferredSourceDatabase: 'pfam' },
     ],
     [
-      'a mixed-case CL prefix with no database',
+      'an unrecognized CL width with no database',
       'clan',
-      { accession: 'Cl0016' },
+      { accession: 'Cl016' },
       'accession_source_unknown',
-      'Set accession Cl0016 has a mixed-case CL prefix, which can name a Pfam or CDD set, and no sourceDatabase was supplied.',
-      { accession: 'Cl0016' },
+      'Set accession Cl016 has an unrecognized CL digit count and no sourceDatabase was supplied.',
+      { accession: 'Cl016' },
     ],
     [
       'a set accession with no route',

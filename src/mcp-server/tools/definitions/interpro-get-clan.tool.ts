@@ -15,7 +15,7 @@ import {
   normalizeImages,
   projectWikipediaThumbnails,
 } from '@/services/interpro/format.js';
-import { getInterproService } from '@/services/interpro/interpro-service.js';
+import { ClanMetadataSchema, getInterproService } from '@/services/interpro/interpro-service.js';
 import {
   orderRelationships,
   RelationshipGraphSchema,
@@ -24,7 +24,6 @@ import {
 import { resolveClan } from '@/services/interpro/routing.js';
 import {
   AccessionSchema,
-  detailSchema,
   EntrySummarySchema,
   JsonValueSchema,
   listSchema,
@@ -38,12 +37,8 @@ const DEFAULT_RELATIONSHIP_LIMIT = 20;
 /** Below the ~1 MB-per-surface point, since the member page and any thumbnail share the reply. */
 const MAX_RELATIONSHIP_LIMIT = 5_000;
 const ClanSourceSchema = z.enum(['pfam', 'cdd', 'pirsf']).describe('Set database.');
-const ClanMetadataSchema = z
-  .object({
-    accession: z.string().describe('Upstream set accession.'),
-    source_database: z.string().describe('Upstream set database.'),
-  })
-  .catchall(JsonValueSchema);
+const CLAN_ROUTE_RECOVERY =
+  'Retry interpro_get_clan with CL plus four digits for Pfam, CL plus five digits for CDD, or PIRSF plus digits for PIRSF. For an accession outside those patterns, supply its sourceDatabase.';
 const MemberSchema = z
   .object({
     metadata: EntrySummarySchema.describe('Complete member entry metadata.'),
@@ -85,10 +80,10 @@ export const interproGetClan = tool('interpro_get_clan', {
   auth: ['tool:interpro_get_clan:read'],
   input: z.object({
     accession: AccessionSchema.describe(
-      'Set accession, such as CL0016 (Pfam), cl21453 (CDD), or PIRSF000047; no URL syntax.',
+      'Set accession: CL plus four digits for Pfam, CL plus five digits for CDD, or PIRSF plus digits. Letter case does not affect routing; no URL syntax.',
     ),
     sourceDatabase: optionalString(ClanSourceSchema).describe(
-      'Inferred from uppercase CL (Pfam), lowercase cl (CDD), or PIRSF; supply explicitly for mixed-case CL prefixes.',
+      'Inferred from CL plus four digits (Pfam), CL plus five digits (CDD), or PIRSF plus digits. Supply explicitly for nonstandard accessions.',
     ),
     includeRelationships: z
       .boolean()
@@ -169,8 +164,7 @@ export const interproGetClan = tool('interpro_get_clan', {
       code: JsonRpcErrorCode.ValidationError,
       when: 'Explicit database conflicts with accession routing.',
       retryable: false,
-      recovery:
-        'Retry interpro_get_clan with sourceDatabase pfam for uppercase CL, cdd for lowercase cl, or pirsf for PIRSF; supply pfam or cdd explicitly for mixed-case CL prefixes.',
+      recovery: CLAN_ROUTE_RECOVERY,
       thrownBy: 'service',
     },
     {
@@ -178,8 +172,7 @@ export const interproGetClan = tool('interpro_get_clan', {
       code: JsonRpcErrorCode.ValidationError,
       when: 'Accession has no inferred or explicit database.',
       retryable: false,
-      recovery:
-        'Retry interpro_get_clan with sourceDatabase pfam for uppercase CL, cdd for lowercase cl, or pirsf for PIRSF; supply pfam or cdd explicitly for mixed-case CL prefixes.',
+      recovery: CLAN_ROUTE_RECOVERY,
       thrownBy: 'service',
     },
     {
@@ -257,20 +250,12 @@ export const interproGetClan = tool('interpro_get_clan', {
       MAX_RELATIONSHIP_LIMIT,
     );
     const target = resolveClan(input.accession, input.sourceDatabase);
-    // includeThumbnail shapes only the clan metadata reread on every page, so it stays out of scope.
+    // includeThumbnail shapes only the clan metadata, so it stays out of the member cursor scope.
     const scope = { ...target, includeRelationships: input.includeRelationships };
     const cursor = decodeCursor(input.cursor, 'interpro_get_clan', scope);
     const service = getInterproService();
     const call = service.begin(ctx);
-    const detail = await service.request(
-      call,
-      ['set', target.sourceDatabase, target.accession],
-      {},
-      detailSchema(ClanMetadataSchema),
-      { missing: { reason: 'clan_not_found', ...target } },
-    );
-    if (!detail.data)
-      throw ctx.fail('upstream_shape_invalid', 'Clan metadata response is missing.');
+    const detail = await service.clanDetail(call, target);
     const response = await service.request(
       call,
       ['entry', target.sourceDatabase, 'set', target.sourceDatabase, target.accession],
@@ -279,7 +264,7 @@ export const interproGetClan = tool('interpro_get_clan', {
       { continuation: cursor !== undefined },
     );
     const thumbnails = projectWikipediaThumbnails(
-      detail.data.metadata,
+      detail.metadata,
       input.includeThumbnail,
       'interpro_get_clan',
     );
