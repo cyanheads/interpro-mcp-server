@@ -1,6 +1,6 @@
 # interpro-mcp-server - Directory Structure
 
-Generated on: 2026-11-22 01:05:10
+Generated on: 2026-11-22 01:17:45
 
 ```text
 interpro-mcp-server/
@@ -27,6 +27,7 @@ interpro-mcp-server/
 │   ├── 0.1.x/
 │   ├── 0.2.x/
 │   ├── 0.3.x/
+│   ├── 0.4.x/
 │   └── template.md
 ├── docs/
 │   └── design.md

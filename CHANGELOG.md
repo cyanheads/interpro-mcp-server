@@ -2,6 +2,10 @@
 
 All notable changes to this project. Each entry links to its full per-version file in [changelog/](changelog/).
 
+## [0.4.0](changelog/0.4.x/0.4.0.md) — 2026-11-21
+
+Discover domain architectures from domain combinations and filter PDB structures by experimental method, resolution, or organism.
+
 ## [0.3.0](changelog/0.3.x/0.3.0.md) — 2026-11-15 · ⚠️ Breaking
 
 Adds interpro_find_structures to list PDB structures for a protein or entry, maps UniProt isoforms, and pages large results by a caller limit instead of a byte budget. Breaking: interpro_get_protein_domains omits protein.sequence unless includeSequence is true.
