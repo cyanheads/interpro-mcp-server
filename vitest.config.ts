@@ -17,6 +17,8 @@ export default mergeConfig(
   defineConfig({
     resolve: { alias },
     test: {
+      // Vitest's fork watchdog needs an IPC unref() that Bun does not implement.
+      ...(process.versions.bun ? { pool: 'threads' as const } : {}),
       projects: [
         {
           extends: true,
