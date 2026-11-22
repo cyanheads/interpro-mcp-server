@@ -1,7 +1,7 @@
 <div align="center">
   <h1>@cyanheads/interpro-mcp-server</h1>
   <p><b>Search InterPro entries, map domains and functional sites onto UniProt proteins and PDB structures, find proteins by domain, and scan raw protein sequences via MCP. STDIO or Streamable HTTP.</b>
-  <div>10 Tools</div>
+  <div>11 Tools</div>
   </p>
 </div>
 
@@ -29,16 +29,17 @@
 
 ## Overview
 
-Protein families, domains, repeats, and functional sites from [InterPro](https://www.ebi.ac.uk/interpro/) and the member databases it integrates (Pfam, PROSITE, SMART, CDD, PANTHER, and others), read through the keyless EMBL-EBI InterPro API. Search entries, read their full metadata, map a UniProt protein's or a PDB entry's chains to annotations with residue coordinates, list the PDB structures of a protein or entry, walk Pfam, CDD, and PIRSF clans, find proteins that carry a signature, and scan a raw protein sequence. Runs over STDIO, Streamable HTTP, or the public hosted endpoint above, with no credentials to configure; starting new InterProScan jobs needs an operator-set contact email (see [Configuration](#configuration)).
+Protein families, domains, repeats, and functional sites from [InterPro](https://www.ebi.ac.uk/interpro/) and the member databases it integrates (Pfam, PROSITE, SMART, CDD, PANTHER, and others), read through the keyless EMBL-EBI InterPro API. Search entries, read their full metadata, map a UniProt protein's or a PDB entry's chains to annotations with residue coordinates, list the PDB structures of a protein or entry, walk Pfam, CDD, and PIRSF clans, find architectures containing a combination of domains and the proteins that carry them, and scan a raw protein sequence. Runs over STDIO, Streamable HTTP, or the public hosted endpoint above, with no credentials to configure; starting new InterProScan jobs needs an operator-set contact email (see [Configuration](#configuration)).
 
 ### Tools
 
 | Tool | Description |
 |:---|:---|
-| `interpro_search_entries` | Find InterPro entries by GO annotation, or InterPro entries and member signatures by text, entry type, or integrating accession |
+| `interpro_search_entries` | Find InterPro entries by GO annotation, or InterPro entries and member signatures by accession or name, entry type, or integrating accession |
 | `interpro_get_entry` | Read one entry's description, hierarchy, member signatures, GO terms, literature, cross-references, clan membership, and coverage counters |
 | `interpro_get_protein_domains` | Map a UniProt protein's or isoform's domains, families, repeats, and functional sites to sequence coordinates, optionally at one residue |
 | `interpro_get_clan` | Read a Pfam, CDD, or PIRSF set and page through its members, optionally with its relationship graph |
+| `interpro_find_architectures` | Find Pfam domain architectures containing a set of domains and obtain the ID for a protein search |
 | `interpro_find_proteins_by_domain` | Find UniProt proteins carrying an entry, defaulting to reviewed human proteins, optionally within one proteome |
 | `interpro_get_structure_domains` | Map signatures onto the protein chains of one PDB entry, in chain, author, and UniProt numbering |
 | `interpro_find_structures` | List the PDB structures that contain a UniProt protein or match an entry, with experiment type, resolution, and chain records |
@@ -51,6 +52,7 @@ Protein families, domains, repeats, and functional sites from [InterPro](https:/
 ### `interpro_search_entries` <sub>tool</sub>
 
 - `sourceDatabase` (default `interpro`) plus optional `query` (1-300 characters), `entryType`, `goTerm` (`GO:0003677` form), `goCategory` (`P`, `F`, `C`), and `integratedInto` (an `IPR` accession, member databases only); no filter is required, so omitting all of them browses the database
+- Text search matches a case-insensitive substring of an accession, full name, or short name. Word order and punctuation matter. For a phrase miss, try one distinctive word
 - `goTerm` and `goCategory` require `sourceDatabase: "interpro"`; choose one GO filter per call. Combining them fails before network access because upstream ignores the category when a term is supplied. For member signatures, search InterPro with the GO filter, then read `member_databases` with `interpro_get_entry` or search the member database with `integratedInto` set to the matching InterPro accession
 - Cursor-paged, positive integer `limit` capped at 100 (default 20); larger requests are clamped with a notice. Returns `entries`, `page` (`total`, `returned`, `limit`, `hasMore`, `nextCursor`), and the applied `query`; `page.limit` is the effective page size
 
@@ -80,9 +82,18 @@ Protein families, domains, repeats, and functional sites from [InterPro](https:/
 
 ### `interpro_get_clan` <sub>tool</sub>
 
-- `accession` for a Pfam (`CL0016`), CDD (`cl21453`), or PIRSF (`PIRSF000047`) set, with `sourceDatabase` (`pfam`, `cdd`, `pirsf`) inferred from the prefix; members page by `cursor`, with positive integer `limit` capped at 100 (default 20). Larger requests are clamped with a notice; `page.limit` reports the effective size
+- `accession` for a Pfam (`CL0016`), CDD (`cl21453`), or PIRSF (`PIRSF000047`) set, with `sourceDatabase` (`pfam`, `cdd`, `pirsf`) inferred regardless of case: four digits after `CL` select Pfam and five select CDD; members page by `cursor`, with positive integer `limit` capped at 100 (default 20). Larger requests are clamped with a notice; `page.limit` reports the effective size
 - `includeRelationships: true` adds the relationship graph in slices of `relationshipLimit` items, counting nodes, then links (default 20; values above 5,000 are clamped with a notice); `relationshipsPage.nextOffset` goes back in as `relationshipOffset`. A `relationshipOffset` above 0 or any `relationshipLimit` needs `includeRelationships` set, and `relationshipsPage.limit` reports the effective slice size
 - `includeThumbnail` works as on `interpro_get_entry`; a missing set is `clan_not_found`
+- Successive pages reuse the set detail while it is cached. Each request still fetches its own member page
+
+---
+
+### `interpro_find_architectures` <sub>tool</sub>
+
+- Pass `domains` with one or more Pfam or InterPro accessions. `ordered` respects the supplied order, `exact` requires that exact order and composition, and `ignore` excludes architectures containing the named domains
+- Each architecture carries `ida_id`, the number of proteins in the group, and a representative protein with its domain coordinates. Pass `ida_id` as `architectureId` to `interpro_find_proteins_by_domain` together with a domain from that architecture
+- Follow `page.nextCursor` with the same selection. `limit` defaults to 20 and clamps at 200
 
 ---
 
@@ -90,10 +101,10 @@ Protein families, domains, repeats, and functional sites from [InterPro](https:/
 
 - `accession` plus optional `sourceDatabase`; `taxonId` (NCBI, default `9606`; `1`, the taxonomy root, selects all organisms) and `reviewedOnly` (default `true`; `false` covers reviewed and unreviewed proteins) are echoed in `query`
 - Optional `isFragment` selects proteins annotated as fragments (`true`) or not annotated as fragments (`false`); omit it to include both. False does not establish sequence completeness. Explicit selections appear in `query` and must stay unchanged when following cursors
-- Optional `architectureId` accepts `protein.ida_accession` from `interpro_get_protein_domains`: a 40-character hexadecimal identifier, normalized lowercase. Equality means the provider's Pfam architecture grouping, not equivalent function. Keep it unchanged when following cursors
+- Optional `architectureId` accepts `ida_id` from `interpro_find_architectures` or `protein.ida_accession` from `interpro_get_protein_domains`: a 40-character hexadecimal identifier, normalized lowercase. Equality means the provider's Pfam architecture grouping, not equivalent function. Keep it unchanged when following cursors
 - Cursor-paged, positive integer `limit` capped at 50 (default 20); larger requests are clamped with a notice, and `page.limit` is the effective size. Ordinary results keep the protein summary, matched entry locations, taxon lineage, and native `extra_fields.is_fragment` annotation; missing or null status remains unknown. Architecture-filtered rows retain native `extra_fields.ida_id` when supplied and use `detailAvailability` to distinguish unavailable entry/taxon details from actual empty arrays
 - Optional `proteomeId` (`UP` plus nine digits, case-insensitive, canonicalized uppercase; for example `protein.proteome` from `interpro_get_protein_domains`) intersects one UniProt proteome with every other selection. `taxonId` still applies, including its `9606` default, and a proteome returns proteins only when `taxonId` is its organism or an ancestor. Echoed in `query`; keep it unchanged when following cursors. Rows then carry the upstream `proteomes` array, and architecture rows add `detailAvailability.proteomes`
-- No hits is a success with a notice naming only the selections the call used that could still widen it, since the API answers an unknown entry, an unknown taxon, an unknown proteome, and an empty intersection the same way
+- An empty first page checks the entry, taxon and any supplied proteome. Missing selectors return `entry_not_found`, `taxon_not_found`, or `proteome_not_found`. Known selectors with no shared proteins return an empty page
 
 ---
 
@@ -104,12 +115,14 @@ Protein families, domains, repeats, and functional sites from [InterPro](https:/
 - InterPro nests at most 20 chain records per match. `chainRecordLimitReached` flags a match at that limit, which may cover chains not returned; set `chain` to read one chain completely
 - Segments hold up to `limit` whole matches, each with all its chain records (default 10; values above 60 are clamped with a notice); follow `coverage.nextCursor` until `hasMore` is `false`, and `limit` may change between segments. A call reads at most four upstream requests, so a segment can end short of `limit` with a notice. The first segment carries `structure` (metadata, including the protein `chains`)
 - A DNA-only entry succeeds with no matches and a notice; an unknown or obsolete ID fails as `structure_not_found`, and a chain outside the structure's protein chains as `chain_not_found` with `availableChains`
+- When InterPro lists mapped proteins but no entry annotations, the first segment reports the available chain-to-UniProt mappings and their coverage. Follow the protein accession with `interpro_get_protein_domains`; `coverage.complete` refers to the structure match list
 
 ---
 
 ### `interpro_find_structures` <sub>tool</sub>
 
 - Set exactly one of `proteinAccession` (canonical UniProt) or `entryAccession` (InterPro or member signature, with `sourceDatabase` inferred from standard prefixes when omitted); anything else fails as `invalid_target`. Echoed in `query`
+- Filter either target with `experimentType` (`x-ray`, `nmr`, `em`) or `maxResolution` (inclusive upper bound in ångströms). A bound excludes structures with unknown resolution. An entry target also accepts an NCBI `taxonId`. Keep the filters when following a cursor
 - Pages of PDB structures in PDB ID order, cursor-continued: positive integer `limit` clamped to 50 (default 20), with a notice. Each `structures` row carries `metadata` (the PDB ID as `metadata.accession`, experiment type, and resolution, which is `null` where InterPro records none, as for NMR and some EM structures); its chain records are in `chains`, joined by `pdbId`
 - A protein target's chain records map chain positions to UniProt positions, and their `accession` and `source_database` can be `null`. An entry target's records hold the entry's match locations in chain numbering beside author `auth_start`/`auth_end` and in UniProt numbering, with `protein` `null` on unmapped chains, and each carries the chain's sequence, so entry pages can run to hundreds of kilobytes at a large `limit`
 - InterPro nests at most 20 chain records per structure; `chainRecordLimitReached` flags a row at that limit, which may cover chains not returned. A row's `metadata.accession` and a record's case-sensitive chain go to `interpro_get_structure_domains` as `pdbId` and `chain`
@@ -258,7 +271,7 @@ The image defaults to HTTP transport, stateless session mode, and logs to `/var/
 |:---|:---|
 | `src/index.ts` | `createApp()` entry point: registers the tools and starts the InterPro and sequence-scan services. |
 | `src/config` | Server-specific environment parsing (`INTERPRO_SCAN_EMAIL`). |
-| `src/mcp-server/tools` | Tool definitions (`*.tool.ts`). Ten tools. |
+| `src/mcp-server/tools` | Tool definitions (`*.tool.ts`). |
 | `src/services/interpro` | InterPro service: HTTP/1.1 adapter, pacer and deadlines, accession routing, cursors, schemas, and the shared result formatter. |
 | `src/services/sequence-scan` | Sequence parsing, the precalculated lookup, InterProScan job submission and polling, and scan result segmentation. |
 | `skills/` | Published agent skill (`interpro-guide`), served over MCP and shipped with the package. |

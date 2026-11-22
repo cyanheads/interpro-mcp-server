@@ -1,6 +1,6 @@
 # interpro-mcp-server - Directory Structure
 
-Generated on: 2026-11-16 06:16:24
+Generated on: 2026-11-22 01:05:10
 
 ```text
 interpro-mcp-server/
@@ -150,6 +150,7 @@ interpro-mcp-server/
 │   │   │   └── definitions/
 │   │   └── tools/
 │   │       └── definitions/
+│   │           ├── interpro-find-architectures.tool.ts
 │   │           ├── interpro-find-proteins-by-domain.tool.ts
 │   │           ├── interpro-find-structures.tool.ts
 │   │           ├── interpro-get-clan.tool.ts
@@ -202,6 +203,7 @@ interpro-mcp-server/
 │       │   ├── interpro-find-structures.json
 │       │   └── interpro-structures.json
 │       ├── contract-helpers.ts
+│       ├── interpro-architectures.test.ts
 │       ├── interpro-entries.test.ts
 │       ├── interpro-find-structures.test.ts
 │       ├── interpro-list-reference.tool.test.ts
