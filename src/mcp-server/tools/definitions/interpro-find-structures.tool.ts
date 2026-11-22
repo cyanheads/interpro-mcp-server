@@ -38,6 +38,28 @@ import { UPSTREAM_ERRORS } from '@/services/interpro/upstream-errors.js';
 
 const OPERATION = 'interpro_find_structures';
 const MAX_LIMIT = 50;
+/** InterPro's range syntax accepts ordinary decimals and rejects exponential notation. */
+const resolutionDecimal = new Intl.NumberFormat('en-US', {
+  useGrouping: false,
+  maximumSignificantDigits: 21,
+});
+const structureFilters = {
+  experimentType: z
+    .enum(['x-ray', 'nmr', 'em'])
+    .optional()
+    .describe('Experimental method: x-ray, nmr, or em. Omit to include all methods.'),
+  maxResolution: z
+    .number()
+    .positive()
+    .optional()
+    .describe('Inclusive upper resolution bound in ångströms. Excludes null resolutions.'),
+};
+const taxonFilter = z
+  .string()
+  .trim()
+  .regex(/^[1-9][0-9]{0,9}$/, 'Expected a positive NCBI taxonomy identifier such as 9606.')
+  .optional()
+  .describe('Positive NCBI taxonomy identifier of at most 10 digits, for entry targets only.');
 /** Each route's rows, with the nested chain records lifted out from under their upstream key. */
 const ProteinRowsSchema = ProteinStructureRowSchema.transform(({ proteins, ...row }) => ({
   row,
@@ -79,7 +101,7 @@ function entryTarget(accession: string, sourceDatabase: SourceDatabase | undefin
 export const interproFindStructures = tool('interpro_find_structures', {
   title: 'Find PDB structures',
   description:
-    "List the PDB structures that contain a UniProt protein or match an InterPro or member-database entry, a page at a time in PDB ID order, with each structure's experiment type and resolution (null where InterPro records none, as for NMR and some EM structures). Set exactly one of proteinAccession or entryAccession. Each structure's chain records follow in chains, joined by pdbId: for a protein, chain positions mapped to UniProt positions; for an entry, its match locations in chain numbering beside author auth_start/auth_end and in UniProt numbering, with protein null on unmapped chains. InterPro nests at most 20 chain records per structure, flagged by chainRecordLimitReached. A row's metadata.accession and a record's chain feed interpro_get_structure_domains as pdbId and chain. Continue page.nextCursor until hasMore is false.",
+    "List the PDB structures that contain a UniProt protein or match an InterPro or member-database entry, a page at a time in PDB ID order. Filter either target by experimentType and maxResolution; a resolution bound excludes nulls, as for NMR and some EM structures. Optionally filter an entry target by taxonId. Set exactly one of proteinAccession or entryAccession. Each structure's chain records follow in chains, joined by pdbId: for a protein, chain positions mapped to UniProt positions; for an entry, its match locations in chain numbering beside author auth_start/auth_end and in UniProt numbering, with protein null on unmapped chains. InterPro nests at most 20 chain records per structure, flagged by chainRecordLimitReached. A row's metadata.accession and a record's chain feed interpro_get_structure_domains as pdbId and chain. Continue page.nextCursor until hasMore is false.",
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
   auth: ['tool:interpro_find_structures:read'],
   input: z.object({
@@ -92,6 +114,8 @@ export const interproFindStructures = tool('interpro_find_structures', {
     sourceDatabase: optionalString(SourceDatabaseSchema).describe(
       'Database slug for entryAccession, inferred from standard accession prefixes when omitted; not used with proteinAccession.',
     ),
+    ...structureFilters,
+    taxonId: taxonFilter,
     limit: z
       .number()
       .int()
@@ -101,7 +125,7 @@ export const interproFindStructures = tool('interpro_find_structures', {
         'Positive integer page size in structures; values above 50 are clamped to 50 with a notice; defaults to 20. Entry-target rows carry each chain’s sequence, so their pages can run to hundreds of kilobytes.',
       ),
     cursor: optionalString(z.string().trim().max(4096)).describe(
-      'Opaque page.nextCursor with the unchanged proteinAccession, or entryAccession and sourceDatabase; limit may change.',
+      'Opaque page.nextCursor with the same target and filters; limit may change.',
     ),
   }),
   output: z.object({
@@ -110,16 +134,19 @@ export const interproFindStructures = tool('interpro_find_structures', {
         z
           .object({
             proteinAccession: z.string().describe('Uppercase canonical UniProt accession.'),
+            ...structureFilters,
           })
           .describe('Protein target.'),
         z
           .object({
             entryAccession: z.string().describe('Canonical entry accession.'),
             sourceDatabase: SourceDatabaseSchema,
+            ...structureFilters,
+            taxonId: taxonFilter,
           })
           .describe('Entry target.'),
       ])
-      .describe('Applied canonical target.'),
+      .describe('Applied canonical target and explicitly supplied filters.'),
     structures: z
       .array(
         z
@@ -165,7 +192,7 @@ export const interproFindStructures = tool('interpro_find_structures', {
         .nonnegative()
         .optional()
         .describe(
-          'Upstream total structures for the target; absent on an empty continuation page, which reports none.',
+          'Upstream total structures for the target and filters; absent on an empty continuation page.',
         ),
     }).describe('Page coverage and continuation.'),
     sourceUrls: z
@@ -176,20 +203,20 @@ export const interproFindStructures = tool('interpro_find_structures', {
   }),
   enrichment: {
     notice: z.string().optional().describe('Interpretation, continuation, or recovery guidance.'),
-    totalCount: z.number().optional().describe('Upstream total structures for the target.'),
+    totalCount: z.number().optional().describe('Upstream total structures for the applied query.'),
     truncated: z.boolean().optional().describe('More structures remain.'),
     shown: z.number().int().optional().describe('Structures returned.'),
     cap: z.number().int().optional().describe('Effective page size after clamping.'),
-    effectiveQuery: z.string().optional().describe('Applied target as JSON.'),
+    effectiveQuery: z.string().optional().describe('Applied target and filters as JSON.'),
   },
   errors: [
     {
       reason: 'invalid_target',
       code: JsonRpcErrorCode.ValidationError,
-      when: 'The call sets neither or both of proteinAccession and entryAccession, or sourceDatabase beside proteinAccession.',
+      when: 'The call sets neither or both of proteinAccession and entryAccession, or sourceDatabase or taxonId beside proteinAccession.',
       retryable: false,
       recovery:
-        'Retry interpro_find_structures with exactly one of proteinAccession or entryAccession; sourceDatabase accompanies only entryAccession.',
+        'Retry interpro_find_structures with exactly one of proteinAccession or entryAccession; sourceDatabase and taxonId accompany only entryAccession.',
     },
     {
       reason: 'protein_not_found',
@@ -242,7 +269,7 @@ export const interproFindStructures = tool('interpro_find_structures', {
       when: 'Cursor decoding or scope fails, or upstream rejects continuation.',
       retryable: false,
       recovery:
-        'Repeat the same tool without cursor to restart pagination, keeping the intended target.',
+        'Repeat the same tool without cursor to restart pagination with the intended target and filters.',
       thrownBy: 'service',
     },
     {
@@ -266,7 +293,14 @@ export const interproFindStructures = tool('interpro_find_structures', {
     ...UPSTREAM_ERRORS,
   ],
   async handler(input, ctx) {
-    const { proteinAccession, entryAccession, sourceDatabase } = input;
+    const {
+      proteinAccession,
+      entryAccession,
+      sourceDatabase,
+      experimentType,
+      maxResolution,
+      taxonId,
+    } = input;
     const target =
       proteinAccession !== undefined && entryAccession === undefined && sourceDatabase === undefined
         ? proteinTarget(proteinAccession)
@@ -282,7 +316,14 @@ export const interproFindStructures = tool('interpro_find_structures', {
             ? 'proteinAccession and entryAccession are exclusive; set exactly one.'
             : 'sourceDatabase applies only beside entryAccession, never beside proteinAccession.',
       );
-    const { query } = target;
+    if (taxonId !== undefined && proteinAccession !== undefined)
+      throw ctx.fail('invalid_target', 'taxonId applies only beside entryAccession.');
+    const filters = {
+      ...(experimentType !== undefined ? { experimentType } : {}),
+      ...(maxResolution !== undefined ? { maxResolution } : {}),
+      ...(taxonId !== undefined ? { taxonId } : {}),
+    };
+    const query = { ...target.query, ...filters };
     const limit = Math.min(input.limit, MAX_LIMIT);
     const notices =
       input.limit > limit ? [`Requested limit ${input.limit} was clamped to ${limit}.`] : [];
@@ -291,8 +332,19 @@ export const interproFindStructures = tool('interpro_find_structures', {
     const call = service.begin(ctx);
     const response = await service.request(
       call,
-      ['structure', 'pdb', ...target.path],
-      { page_size: limit, cursor },
+      [
+        'structure',
+        'pdb',
+        ...target.path,
+        ...(taxonId !== undefined ? ['taxonomy', 'uniprot', taxonId] : []),
+      ],
+      {
+        page_size: limit,
+        cursor,
+        experiment_type: experimentType,
+        resolution:
+          maxResolution === undefined ? undefined : `0-${resolutionDecimal.format(maxResolution)}`,
+      },
       listSchema(target.rows),
       { continuation: cursor !== undefined, missing: { ...target.missing, list: true } },
     );
@@ -336,8 +388,12 @@ export const interproFindStructures = tool('interpro_find_structures', {
       notices.push(
         cursor
           ? 'This continuation page is empty: InterPro lists no further structure after the previous page.'
-          : target.empty,
+          : Object.keys(filters).length
+            ? 'InterPro lists no PDB structures for this target with the applied filters. Try changing or omitting a filter.'
+            : target.empty,
       );
+    if (!structures.length && maxResolution !== undefined)
+      notices.push('A resolution bound excludes structures with null resolution.');
     if (total !== undefined) ctx.enrich.total(total);
     ctx.enrich.echo(JSON.stringify(query));
     if (next) {

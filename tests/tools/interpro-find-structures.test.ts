@@ -64,6 +64,145 @@ beforeEach(async () => {
 });
 afterEach(() => vi.useRealTimers());
 
+it('accepts a previously issued unfiltered entry cursor without adding query keys', async () => {
+  const cursor = encodeCursor(
+    OPERATION,
+    { entryAccession: 'PF00870', sourceDatabase: 'pfam' },
+    'source|s|2ioi',
+  );
+  const fetch = network([none()]);
+  const output = twin(await call({ entryAccession: 'PF00870', cursor, limit: 4 }));
+  expect(output.query).toEqual({ entryAccession: 'PF00870', sourceDatabase: 'pfam' });
+  expect(output.page).toEqual({ returned: 0, limit: 4, hasMore: false });
+  expect(urls(fetch).map((url) => url.pathname)).toEqual([ENTRY_ROUTE]);
+  expect(Object.fromEntries(urls(fetch)[0]?.searchParams ?? [])).toEqual({
+    page_size: '4',
+    cursor: 'source|s|2ioi',
+  });
+});
+
+it('uses intersecting filters for both pages of an entry search', async () => {
+  const filteredPath = `${ENTRY_ROUTE}taxonomy/uniprot/9606/`;
+  const row = fixture('entryPF00870Page1').results[0];
+  const filters = { experimentType: 'x-ray', maxResolution: 3, taxonId: '9606' };
+  const firstRow = { ...row, taxa: [{ accession: '9606', lineage: ['1', '9606'], chain: 'A' }] };
+  const secondRow = { ...row, metadata: { ...row.metadata, accession: '2ac0' } };
+  const fetch = network([
+    Response.json({
+      previous: null,
+      next: `https://www.ebi.ac.uk${filteredPath}?cursor=source%7Cs%7C1gzh&resolution=0-3&experiment_type=x-ray&page_size=1`,
+      count: 2,
+      results: [firstRow],
+    }),
+    only([secondRow], 2),
+  ]);
+  const request = { entryAccession: 'PF00870', ...filters };
+  const first = twin(await call({ ...request, limit: 1 }));
+  expect(first.query).toEqual({ entryAccession: 'PF00870', sourceDatabase: 'pfam', ...filters });
+  expect(first.page).toMatchObject({ total: 2, returned: 1, hasMore: true });
+  expect(first.structures[0].taxa).toEqual(firstRow.taxa);
+  const cursor = first.page.nextCursor;
+  for (const change of [{ experimentType: 'nmr' }, { maxResolution: 2 }, { taxonId: '10090' }]) {
+    failure(await call({ ...request, ...change, cursor }), 'invalid_cursor');
+  }
+  failure(await call({ entryAccession: 'PF00870', cursor }), 'invalid_cursor');
+  expect(fetch).toHaveBeenCalledTimes(1);
+  const last = twin(await call({ ...request, cursor, limit: 5 }));
+  expect(last.page).toEqual({ total: 2, returned: 1, limit: 5, hasMore: false });
+  expect(last.structures.map((item: Json) => item.metadata.accession)).toEqual(['2ac0']);
+  const requests = urls(fetch);
+  expect(requests.map((url) => url.pathname)).toEqual([filteredPath, filteredPath]);
+  expect(requests.map((url) => Object.fromEntries(url.searchParams))).toEqual([
+    { page_size: '1', experiment_type: 'x-ray', resolution: '0-3' },
+    { page_size: '5', cursor: 'source|s|1gzh', experiment_type: 'x-ray', resolution: '0-3' },
+  ]);
+});
+
+it('explains the canonical accession when a structure list receives an isoform', async () => {
+  const fetch = network([]);
+  const result = await call({ proteinAccession: 'P04637-2' });
+  expect(result.isError).toBe(true);
+  expect(message(result)).toContain('Canonical UniProt accession');
+  expect(text(result)).toContain('P04637');
+  expect(fetch).not.toHaveBeenCalled();
+});
+
+describe('structure filters', () => {
+  it('applies both modifiers on the protein route and emits decimal bounds', async () => {
+    const fetch = network([none(), Response.json({ metadata: { accession: 'P04637' } })]);
+    const result = await call({
+      proteinAccession: 'P04637',
+      experimentType: 'x-ray',
+      maxResolution: 1e-7,
+    });
+    const output = twin(result);
+    expect(output.query).toEqual({
+      proteinAccession: 'P04637',
+      experimentType: 'x-ray',
+      maxResolution: 1e-7,
+    });
+    expect(output.page).toEqual({ total: 0, returned: 0, hasMore: false, limit: 20 });
+    const [list, detail] = urls(fetch);
+    expect(list?.pathname).toBe(PROTEIN_ROUTE);
+    expect(list?.searchParams.get('experiment_type')).toBe('x-ray');
+    expect(list?.searchParams.get('resolution')).toBe('0-0.0000001');
+    expect(detail?.pathname).toBe('/interpro/api/protein/uniprot/P04637/');
+    expect(detail?.search).toBe('');
+    expect(notice(result)).toContain('applied filters');
+    expect(text(result)).toContain('excludes structures with null resolution');
+  });
+
+  it('reports an unknown entry when a filtered first page and plain detail are empty', async () => {
+    const fetch = network([none(), none()]);
+    const result = await call({ entryAccession: 'PF99999', taxonId: '9606' });
+    failure(result, 'entry_not_found');
+    expect(urls(fetch).map((url) => url.pathname)).toEqual([
+      '/interpro/api/structure/pdb/entry/pfam/PF99999/taxonomy/uniprot/9606/',
+      '/interpro/api/entry/pfam/PF99999/',
+    ]);
+  });
+
+  it('keeps filters on a past-end continuation and skips the detail read', async () => {
+    const query = { proteinAccession: 'P04637', experimentType: 'nmr' };
+    const cursor = encodeCursor(OPERATION, query, 'source|s|2ioi');
+    const fetch = network([none()]);
+    const result = await call({ ...query, cursor });
+    const output = twin(result);
+    expect(output.query).toEqual(query);
+    expect(output.page).toEqual({ returned: 0, limit: 20, hasMore: false });
+    expect(urls(fetch)[0]?.searchParams.get('experiment_type')).toBe('nmr');
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(notice(result)).toContain('no further structure');
+  });
+
+  it.each([
+    { experimentType: 'xray' },
+    { maxResolution: 0 },
+    { maxResolution: -1 },
+    { maxResolution: 'invalid' },
+    { maxResolution: Infinity },
+    { taxonId: '0' },
+    { taxonId: '9606/1' },
+    { taxonId: '12345678901' },
+  ])('rejects malformed filters %j locally', async (input) => {
+    const fetch = network([]);
+    const result = await call({ entryAccession: 'PF00870', ...input });
+    expect(result.structuredContent).toMatchObject({
+      error: { code: -32602, data: { reason: 'invalid_arguments' } },
+    });
+    expect(text(result)).toContain('invalid_arguments');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('rejects taxonomy for a protein target', async () => {
+    const fetch = network([]);
+    const result = await call({ proteinAccession: 'P04637', taxonId: '9606' });
+    failure(result, 'invalid_target');
+    expect(message(result)).toContain('taxonId applies only beside entryAccession');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
 describe('protein target', () => {
   it('lists the first P04637 page: 20 structures from 1a1u in PDB ID order, chains lifted, on both surfaces', async () => {
     const fetch = network([Response.json(fixture('proteinP04637Page1'))]);
@@ -401,9 +540,12 @@ describe('protein target', () => {
     expect(Object.keys(schema.properties).sort()).toEqual([
       'cursor',
       'entryAccession',
+      'experimentType',
       'limit',
+      'maxResolution',
       'proteinAccession',
       'sourceDatabase',
+      'taxonId',
     ]);
   });
 });

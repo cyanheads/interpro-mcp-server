@@ -82,7 +82,10 @@ const UNIPROT_CANONICAL =
 export const ProteinAccessionSchema = z
   .string()
   .trim()
-  .regex(new RegExp(`^${UNIPROT_CANONICAL}$`))
+  .regex(new RegExp(`^${UNIPROT_CANONICAL}$`), {
+    error:
+      'Canonical UniProt accession required, such as P04637. Use interpro_get_protein_domains for an isoform such as P04637-2.',
+  })
   .describe('Canonical six- or ten-character UniProt accession, without an isoform suffix.');
 const PROTEIN_OR_ISOFORM_MESSAGE =
   'Expected a UniProt accession such as P04637, or an isoform such as P04637-2.';
