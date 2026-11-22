@@ -3,14 +3,19 @@
  * @module mcp-server/tools/definitions/interpro-get-structure-domains.tool
  */
 import { tool, z } from '@cyanheads/mcp-ts-core';
-import { JsonRpcErrorCode } from '@cyanheads/mcp-ts-core/errors';
+import { JsonRpcErrorCode, McpError, serviceUnavailable } from '@cyanheads/mcp-ts-core/errors';
 import {
   continuation,
   decodePositionCursor,
   encodePositionCursor,
 } from '@/services/interpro/cursors.js';
 import { formatInterpro } from '@/services/interpro/format.js';
-import { getInterproService } from '@/services/interpro/interpro-service.js';
+import {
+  getInterproService,
+  type InterproCall,
+  type InterproService,
+} from '@/services/interpro/interpro-service.js';
+import { apiUrl } from '@/services/interpro/routing.js';
 import {
   detailSchema,
   EntrySummarySchema,
@@ -26,6 +31,8 @@ import {
   PdbIdSchema,
   StructureMatchSchema,
   StructureMetadataSchema,
+  StructureProteinMappingSchema,
+  StructureProteinRowSchema,
   StructureRecordSchema,
 } from '@/services/interpro/structure-schemas.js';
 import { UPSTREAM_ERRORS } from '@/services/interpro/upstream-errors.js';
@@ -82,12 +89,77 @@ const CoverageSchema = z.object({
     .optional()
     .describe('Opaque cursor resuming at the next whole match for the same pdbId and chain.'),
 });
+const MappingPageSchema = z.object({
+  totalProteins: z.number().int().nonnegative().describe('Upstream total distinct proteins.'),
+  returnedProteins: z.number().int().nonnegative().describe('Proteins on this recovery page.'),
+  returnedMappings: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe('Chain mapping rows returned in proteinMappings.'),
+  nextUrl: z.string().optional().describe('Official InterPro API URL for the next protein page.'),
+});
+/** Invalid or absent counters cannot establish that InterPro offers recovery mappings. */
+const MappingCountersSchema = z.object({
+  entries: z.literal(0),
+  proteins: z.number().int().positive(),
+});
+const StructureProteinPageSchema = listSchema(StructureProteinRowSchema);
+
+/** Read one reverse page and expose only a validated continuation on the same API route. */
+async function readProteinMappings(
+  service: InterproService,
+  call: InterproCall,
+  route: readonly string[],
+  sourceUrl: string,
+  chain: string | undefined,
+) {
+  const response = await service.request(
+    call,
+    route,
+    { page_size: PAGE_SIZE },
+    StructureProteinPageSchema,
+  );
+  const rows = response.data?.results ?? [];
+  const proteinMappings = rows.flatMap(({ metadata, structures }) =>
+    structures
+      .filter((record) => chain === undefined || record.chain === chain)
+      .map((record) => ({ proteinAccession: metadata.accession, ...record })),
+  );
+  const next = response.data?.next ?? null;
+  let nextUrl: string | undefined;
+  if (next !== null) {
+    const source = new URL(sourceUrl);
+    const continuationUrl = URL.parse(next, source);
+    if (
+      !continuationUrl ||
+      continuationUrl.origin !== source.origin ||
+      continuationUrl.pathname !== source.pathname ||
+      continuationUrl.username ||
+      continuationUrl.password
+    )
+      throw serviceUnavailable('InterPro returned an invalid protein mapping continuation.', {
+        reason: 'upstream_shape_invalid',
+        retryable: false,
+      });
+    nextUrl = apiUrl(route, { page_size: PAGE_SIZE, cursor: continuation(continuationUrl.href) });
+  }
+  return {
+    proteinMappings,
+    proteinMappingPage: {
+      totalProteins: response.data?.count ?? 0,
+      returnedProteins: rows.length,
+      returnedMappings: proteinMappings.length,
+      ...(nextUrl ? { nextUrl } : {}),
+    },
+  };
+}
 
 /** Map signatures onto one PDB entry's chains in segments of up to `limit` whole matches. */
 export const interproGetStructureDomains = tool('interpro_get_structure_domains', {
   title: 'Map structure domains',
   description:
-    "Retrieve InterPro and member-signature matches on one PDB entry's protein chains. Each chain record keeps match locations in chain numbering (1-based start/end beside author auth_start/auth_end, which can be null), in UniProt numbering, and the chain-to-UniProt residue map, with discontinuous fragments preserved; the UniProt protein is null for unmapped chains. InterPro nests at most 20 chain records per match; set chain to read one chain completely. Each segment holds up to limit whole matches; the first carries structure metadata listing the protein chains. Continue coverage.nextCursor until hasMore is false.",
+    "Retrieve InterPro and member-signature matches on one PDB entry's protein chains. Each chain record keeps match locations in chain numbering (1-based start/end beside author auth_start/auth_end, which can be null), in UniProt numbering, and the chain-to-UniProt residue map, with discontinuous fragments preserved; the UniProt protein is null for unmapped chains. InterPro nests at most 20 chain records per match; set chain to read one chain completely. Each segment holds up to limit whole matches; the first carries structure metadata listing the protein chains. If InterPro lists mapped proteins but zero entries and matches, look for proteinMappings and use interpro_get_protein_domains for the UniProt annotations. Continue coverage.nextCursor until hasMore is false.",
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
   auth: ['tool:interpro_get_structure_domains:read'],
   input: z.object({
@@ -145,6 +217,15 @@ export const interproGetStructureDomains = tool('interpro_get_structure_domains'
       )
       .describe('Every chain record of this segment’s matches, grouped by match in matches order.'),
     coverage: CoverageSchema.describe('Where this segment sits in the structure map.'),
+    proteinMappings: z
+      .array(StructureProteinMappingSchema)
+      .optional()
+      .describe(
+        'Chain mappings from one recovery page when InterPro supplies no structure matches.',
+      ),
+    proteinMappingPage: MappingPageSchema.optional().describe(
+      'Coverage of the optional UniProt recovery page, separate from match coverage.',
+    ),
     url: z.string().describe('Canonical structure website URL.'),
     sourceUrls: z.array(z.string()).describe('Official API URLs this call read.'),
   }),
@@ -167,7 +248,7 @@ export const interproGetStructureDomains = tool('interpro_get_structure_domains'
       when: 'InterPro has no current structure for the PDB ID: unassigned, obsolete, or not yet loaded.',
       retryable: false,
       recovery:
-        'Check the PDB ID at rcsb.org; for a superseded entry retry interpro_get_structure_domains with its replacement ID.',
+        'Check the PDB ID at rcsb.org; for a superseded entry retry interpro_get_structure_domains with its replacement ID. Recently released PDB entries may appear after a later InterPro data load.',
       thrownBy: 'service',
     },
     {
@@ -332,6 +413,7 @@ export const interproGetStructureDomains = tool('interpro_get_structure_domains'
     const notices =
       input.limit > limit ? [`Requested limit ${input.limit} was clamped to ${limit}.`] : [];
     const limited = output.matches.filter((match) => match.chainRecordLimitReached);
+    let recovery: Awaited<ReturnType<typeof readProteinMappings>> | undefined;
     if (limited.length) {
       const named = limited.map((match) => match.metadata.accession).filter(isAccession);
       notices.push(
@@ -346,21 +428,49 @@ export const interproGetStructureDomains = tool('interpro_get_structure_domains'
       notices.push(
         'This is the final resumed segment. Only the combined segments cover the traversal; upstream pagination is not a snapshot.',
       );
-    else if (!coverage.returnedMatches)
-      notices.push(
-        structure && !structure.chains.length
-          ? `${pdbId} has no protein chains, so InterPro maps no domains onto it.`
-          : chain !== undefined
-            ? `InterPro reports no match on chain ${chain} of ${pdbId}.`
-            : `InterPro reports no match on the protein chains of ${pdbId}.`,
-      );
+    else if (!coverage.returnedMatches) {
+      if (
+        totalMatches === 0 &&
+        structure?.chains.length &&
+        MappingCountersSchema.safeParse(structure.counters).success
+      ) {
+        notices.push(
+          chain === undefined
+            ? `No structure matches are available in InterPro for ${pdbId}.`
+            : `No structure matches are available in InterPro for chain ${chain} of ${pdbId}.`,
+        );
+        const route = ['protein', 'uniprot', 'structure', 'pdb', pdbId, ...(chain ? [chain] : [])];
+        const sourceUrl = apiUrl(route, { page_size: PAGE_SIZE });
+        sourceUrls.push(sourceUrl);
+        try {
+          recovery = await readProteinMappings(service, call, route, sourceUrl, chain);
+          if (recovery.proteinMappingPage.nextUrl)
+            notices.push('More mapped proteins are available at proteinMappingPage.nextUrl.');
+          if (recovery.proteinMappings.length)
+            notices.push('Use interpro_get_protein_domains for the mapped UniProt accessions.');
+          else
+            notices.push('The UniProt recovery lookup returned no chain mappings for this scope.');
+        } catch (cause) {
+          ctx.signal.throwIfAborted();
+          if (!(cause instanceof McpError)) throw cause;
+          notices.push(`The UniProt recovery lookup failed. Retry it at ${sourceUrl}.`);
+        }
+      } else
+        notices.push(
+          structure && !structure.chains.length
+            ? `${pdbId} has no protein chains, so InterPro maps no domains onto it.`
+            : chain !== undefined
+              ? `InterPro reports no match on chain ${chain} of ${pdbId}.`
+              : `InterPro reports no match on the protein chains of ${pdbId}.`,
+        );
+    }
     if (start)
       notices.push('Continuation segments omit the structure metadata the first segment returned.');
     ctx.enrich.total(totalMatches);
     ctx.enrich.echo(JSON.stringify(scope));
     if (coverage.nextCursor) ctx.enrich.truncated({ shown: count, cap: limit });
     if (notices.length) ctx.enrich.notice(notices.join(' '));
-    return output;
+    return { ...output, ...recovery };
   },
   format: formatInterpro,
 });

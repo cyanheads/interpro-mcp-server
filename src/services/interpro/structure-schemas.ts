@@ -39,6 +39,24 @@ export const StructureMetadataSchema = z
   })
   .catchall(JsonValueSchema)
   .describe('Complete upstream structure metadata.');
+/** Selected coordinates in one upstream chain-to-UniProt mapping. */
+const MappingRecordSchema = z.object({
+  chain: ChainSchema,
+  structure_protein_locations: z
+    .array(LocationSchema)
+    .describe(
+      'Inclusive fragments with 1-based chain start/end and UniProt protein_start/protein_end.',
+    ),
+});
+/** A protein and its mapped PDB chains from the reverse structure lookup. */
+export const StructureProteinRowSchema = z.object({
+  metadata: z.object({ accession: z.string() }),
+  structures: z.array(MappingRecordSchema),
+});
+/** Chain-to-UniProt mapping lifted from a reverse structure lookup row. */
+export const StructureProteinMappingSchema = MappingRecordSchema.extend({
+  proteinAccession: z.string().describe('Mapped UniProt accession.'),
+}).describe('One chain-to-UniProt residue mapping from the recovery page.');
 /**
  * One upstream chain record of a structure match. `entry_structure_locations` fragments carry
  * 1-based chain `start`/`end` beside author `auth_start`/`auth_end`, which may be null; the

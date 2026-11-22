@@ -67,6 +67,21 @@ const failure = (result: Parameters<typeof assertFailure>[0], reason: string) =>
   assertFailure(result, reason, definition);
 const notice = (result: Awaited<ReturnType<typeof call>>) =>
   (result.structuredContent as { notice?: string }).notice ?? '';
+const recentDetail = () => {
+  const detail = fixture('detail1tsr');
+  detail.metadata.accession = '10ax';
+  detail.metadata.chains = ['A', 'B'];
+  detail.metadata.counters = { entries: 0, proteins: 1 };
+  return detail;
+};
+const recoveryRoute = 'https://www.ebi.ac.uk/interpro/api/protein/uniprot/structure/pdb/10ax/';
+const locations = {
+  fragments: [{ start: 20, end: 482, protein_start: 7, protein_end: 469 }],
+};
+const mappedProtein = (...chains: string[]) => ({
+  metadata: { accession: 'Q8NB12' },
+  structures: chains.map((chain) => ({ chain, structure_protein_locations: [locations] })),
+});
 /**
  * Accessions of every match a cursor walk returns and each segment's match count, following
  * nextCursor for at most `segments` calls; the walk must end within them.
@@ -223,6 +238,9 @@ describe('interpro_get_structure_domains first segment', () => {
     const result = await call({ pdbId: '9yyy' });
     failure(result, 'structure_not_found');
     expect(text(result)).toContain('InterPro could not find structure 9yyy in pdb.');
+    expect(text(result)).toContain(
+      'Recently released PDB entries may appear after a later InterPro data load.',
+    );
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 
@@ -280,11 +298,178 @@ describe('interpro_get_structure_domains first segment', () => {
   });
 
   it('returns zero matches with a chain notice when a protein chain carries no match', async () => {
-    network([Response.json(fixture('detail1tsr')), none()]);
+    const fetch = network([Response.json(fixture('detail1tsr')), none()]);
     const result = await call({ pdbId: '1tsr', chain: 'B' });
-    expect(twin(result).matches).toEqual([]);
+    const output = twin(result);
+    expect(output.matches).toEqual([]);
+    expect(output.coverage).toEqual({
+      totalMatches: 0,
+      returnedMatches: 0,
+      complete: true,
+      hasMore: false,
+    });
     expect(notice(result)).toBe('InterPro reports no match on chain B of 1tsr.');
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(output).not.toHaveProperty('proteinMappings');
   });
+
+  it('reports annotation availability and returns recovery mappings for 10ax chain A', async () => {
+    const fetch = network([
+      Response.json(recentDetail()),
+      none(),
+      Response.json({
+        previous: null,
+        next: null,
+        count: 1,
+        results: [mappedProtein('A', 'B')],
+      }),
+    ]);
+    const result = await call({ pdbId: '10ax', chain: 'A' });
+    expect(notice(result)).toContain('No structure matches are available in InterPro');
+    const output = twin(result);
+    expect(output.coverage).toEqual({
+      totalMatches: 0,
+      returnedMatches: 0,
+      complete: true,
+      hasMore: false,
+    });
+    expect(output.proteinMappings).toEqual([
+      {
+        proteinAccession: 'Q8NB12',
+        chain: 'A',
+        structure_protein_locations: [locations],
+      },
+    ]);
+    expect(output.proteinMappingPage).toEqual({
+      totalProteins: 1,
+      returnedProteins: 1,
+      returnedMappings: 1,
+    });
+    expect(urls(fetch)[2]?.pathname).toBe('/interpro/api/protein/uniprot/structure/pdb/10ax/A/');
+    expect(output.sourceUrls).toEqual(urls(fetch).map((url) => url.href));
+    expect(text(result)).toContain('interpro_get_protein_domains');
+  });
+
+  it('caps recovery at one protein page, preserving fragments and exposing a scoped continuation', async () => {
+    const protein = mappedProtein('A', 'B');
+    protein.structures[1]?.structure_protein_locations.push({
+      fragments: [{ start: 500, end: 550, protein_start: 487, protein_end: 537 }],
+    });
+    const fetch = network([
+      Response.json(recentDetail()),
+      none(),
+      Response.json({
+        previous: null,
+        next: '?cursor=source%7Cs%7Cq8nb12&page_size=20&unexpected=ignored',
+        count: 24,
+        results: [protein],
+      }),
+    ]);
+    const result = await call({ pdbId: '10ax' });
+    const output = twin(result);
+    expect(output.proteinMappings).toEqual(
+      protein.structures.map((record) => ({ ...record, proteinAccession: 'Q8NB12' })),
+    );
+    expect(output.proteinMappingPage).toEqual({
+      totalProteins: 24,
+      returnedProteins: 1,
+      returnedMappings: 2,
+      nextUrl: `${recoveryRoute}?page_size=20&cursor=source%7Cs%7Cq8nb12`,
+    });
+    expect(output.coverage).toMatchObject({ complete: true, hasMore: false });
+    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(urls(fetch)[2]?.href).toBe(`${recoveryRoute}?page_size=20`);
+    expect(notice(result)).toContain('More mapped proteins are available');
+  });
+
+  it('discloses an empty recovery page independently of the empty match map', async () => {
+    network([Response.json(recentDetail()), none(), none()]);
+    const result = await call({ pdbId: '10ax' });
+    expect(twin(result)).toMatchObject({
+      matches: [],
+      proteinMappings: [],
+      proteinMappingPage: { totalProteins: 0, returnedProteins: 0, returnedMappings: 0 },
+    });
+    expect(notice(result)).toContain('returned no chain mappings');
+  });
+
+  it.each([
+    () => new Response(null, { status: 404 }),
+    () =>
+      Response.json({
+        previous: null,
+        next: 'https://example.com/?cursor=1',
+        count: 5,
+        results: [mappedProtein('A')],
+      }),
+    () =>
+      Response.json({
+        previous: null,
+        next: '../1tsr/?cursor=1',
+        count: 5,
+        results: [mappedProtein('A')],
+      }),
+    () =>
+      Response.json({
+        previous: null,
+        next: '?page_size=20',
+        count: 5,
+        results: [mappedProtein('A')],
+      }),
+  ])(
+    'keeps the empty match map when recovery fails or its continuation is invalid',
+    async (response) => {
+      const fetch = network([Response.json(recentDetail()), none(), response()]);
+      const result = await call({ pdbId: '10ax' });
+      const output = twin(result);
+      expect(output.matches).toEqual([]);
+      expect(output).not.toHaveProperty('proteinMappingPage');
+      expect(output.sourceUrls).toContain(`${recoveryRoute}?page_size=20`);
+      expect(notice(result)).toContain('The UniProt recovery lookup failed.');
+      expect(text(result)).not.toContain('example.com');
+      expect(fetch).toHaveBeenCalledTimes(3);
+    },
+  );
+
+  it('propagates caller cancellation during recovery', async () => {
+    const controller = new AbortController();
+    init(
+      vi.fn(async (url: string) => {
+        if (url.startsWith(recoveryRoute)) {
+          controller.abort();
+          return none();
+        }
+        return new URL(url).pathname.startsWith('/interpro/api/structure/')
+          ? Response.json(recentDetail())
+          : none();
+      }),
+    );
+    const result = await settle(
+      runToolContract(
+        definition,
+        { pdbId: '10ax' },
+        {
+          context: { signal: controller.signal },
+        },
+      ),
+    );
+    expect(controller.signal.aborted).toBe(true);
+    expect(result.structuredContent).toMatchObject({ error: { code: -32011 } });
+    expect(result.isError).toBe(true);
+  });
+
+  it.each([undefined, { entries: '0', proteins: 1 }, { entries: 0, proteins: 0 }])(
+    'skips recovery when counters are %j',
+    async (counters) => {
+      const detail = recentDetail();
+      detail.metadata.counters = counters;
+      const fetch = network([Response.json(detail), none()]);
+      const result = await call({ pdbId: '10ax' });
+      expect(twin(result)).not.toHaveProperty('proteinMappings');
+      expect(notice(result)).toBe('InterPro reports no match on the protein chains of 10ax.');
+      expect(fetch).toHaveBeenCalledTimes(2);
+    },
+  );
 });
 
 describe('chain selection', () => {
